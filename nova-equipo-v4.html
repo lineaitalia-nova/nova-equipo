@@ -445,18 +445,35 @@ input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) bri
 <!-- MODAL AVANCE -->
 <div class="modal-bg" id="modal-avance">
   <div class="modal">
-    <div class="modal-title">📊 Actualizar avance</div>
+    <div class="modal-title" id="av-modal-title">📊 Editar tarea</div>
     <div class="form-grid">
-      <div><label class="lbl">% Avance</label>
-        <input class="input" type="number" id="av-pct" min="0" max="100" placeholder="0-100"/>
+      <div><label class="lbl">Descripción</label>
+        <input class="input" id="av-desc" placeholder="Descripción de la tarea"/>
       </div>
-      <div><label class="lbl">Estado</label>
-        <select class="input" id="av-status">
-          <option value="pending">⏳ Pendiente</option>
-          <option value="progress">🔄 En proceso</option>
-          <option value="done">✅ Completada</option>
-          <option value="blocked">🚫 Bloqueada</option>
-        </select>
+      <div class="form-row">
+        <div><label class="lbl">% Avance</label>
+          <input class="input" type="number" id="av-pct" min="0" max="100" placeholder="0-100"/>
+        </div>
+        <div><label class="lbl">Estado</label>
+          <select class="input" id="av-status">
+            <option value="pending">⏳ Pendiente</option>
+            <option value="progress">🔄 En proceso</option>
+            <option value="done">✅ Completada</option>
+            <option value="blocked">🚫 Bloqueada</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div><label class="lbl">Prioridad</label>
+          <select class="input" id="av-prior">
+            <option value="Alta">🔴 Alta</option>
+            <option value="Media">🟡 Media</option>
+            <option value="Baja">🟢 Baja</option>
+          </select>
+        </div>
+        <div><label class="lbl">Fecha límite</label>
+          <input class="input" type="date" id="av-due"/>
+        </div>
       </div>
       <div><label class="lbl">Nota de avance</label>
         <textarea class="input" id="av-nota" placeholder="¿Qué avanzaste?"></textarea>
@@ -464,7 +481,7 @@ input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) bri
     </div>
     <div class="modal-footer">
       <button class="btn secondary" onclick="closeModal('modal-avance')">Cancelar</button>
-      <button class="btn primary" id="btn-save-av">Actualizar</button>
+      <button class="btn primary" id="btn-save-av">Guardar cambios</button>
     </div>
   </div>
 </div>
@@ -596,7 +613,6 @@ async function gsPull(){
   if(!GS_URL||!SESSION)return;
   setSyncTxt('Sincronizando…');
   try{
-    // Cargamos los datos de TODOS los usuarios para tener visibilidad completa
     const r=await fetch(GS_URL+'?action=load_all');
     const txt=await r.text();
     if(!txt||txt==='{}'){setSyncTxt('Sin datos remotos');return;}
@@ -608,31 +624,37 @@ async function gsPull(){
 
     Object.entries(allUsers).forEach(([userId,entry])=>{
       try{
-        const userData=JSON.parse(entry.data||'{}');
-        if(userData.tareas)allTareas=[...allTareas,...userData.tareas];
-        if(userData.reportes)allReportes=[...allReportes,...userData.reportes];
-        if(userData.prototipos)allPrototipos=[...allPrototipos,...userData.prototipos];
-        if(userId===SESSION.id&&userData.eval_progreso)myEval=userData.eval_progreso;
-        if(userData._savedAt&&userData._savedAt>latestSaved)latestSaved=userData._savedAt;
+        const raw=entry.data||'{}';
+        if(!raw||raw==='{}')return;
+        const userData=JSON.parse(raw);
+        if(userData.tareas&&Array.isArray(userData.tareas))
+          allTareas=[...allTareas,...userData.tareas];
+        if(userData.reportes&&Array.isArray(userData.reportes))
+          allReportes=[...allReportes,...userData.reportes];
+        if(userData.prototipos&&Array.isArray(userData.prototipos))
+          allPrototipos=[...allPrototipos,...userData.prototipos];
+        if(userId===SESSION.id&&userData.eval_progreso)
+          myEval=userData.eval_progreso;
+        if(userData._savedAt&&userData._savedAt>latestSaved)
+          latestSaved=userData._savedAt;
       }catch(e){}
     });
 
-    // Deduplicar por id
-    const dedupe=(arr)=>{const seen=new Set();return arr.filter(i=>{if(!i.id||seen.has(i.id))return false;seen.add(i.id);return true;});};
+    const dedupe=(arr)=>{
+      const seen=new Set();
+      return arr.filter(i=>{if(!i||!i.id||seen.has(i.id))return false;seen.add(i.id);return true;});
+    };
 
-    if(latestSaved>(DB._savedAt||0)){
-      DB.tareas=dedupe(allTareas);
-      DB.reportes=dedupe(allReportes);
-      DB.prototipos=dedupe(allPrototipos);
-      DB.eval_progreso=myEval;
-      DB._savedAt=latestSaved;
-      saveLocal();
-      setSyncTxt('Sincronizado ✓');
-      renderView(currentView);
-      updateBadges();
-    }else{
-      setSyncTxt('Al día ✓');
-    }
+    // Siempre actualizamos — no comparamos _savedAt para garantizar sincronización
+    DB.tareas=dedupe(allTareas);
+    DB.reportes=dedupe(allReportes);
+    DB.prototipos=dedupe(allPrototipos);
+    if(Object.keys(myEval).length>0)DB.eval_progreso=myEval;
+    if(latestSaved>0)DB._savedAt=latestSaved;
+    saveLocal();
+    setSyncTxt('Sincronizado ✓');
+    renderView(currentView);
+    updateBadges();
   }catch(e){setSyncTxt('Usando datos locales');}
 }
 
@@ -675,15 +697,12 @@ function applySession(){
   const isLider=SESSION.rol==='lider';
   const isCoord=SESSION.rol==='coordinador';
 
-  // Sección Líder y Equipo — coordinadores y René
   document.querySelectorAll('.lider-only').forEach(el=>el.style.display=(isLider||isCoord)?'':'none');
 
-  // Taller — SOLO René
   document.querySelectorAll('[data-view="taller"]').forEach(el=>{
     el.style.display=isRene?'flex':'none';
   });
 
-  // Control de accesos — SOLO René
   document.querySelectorAll('[data-view="accesos"]').forEach(el=>{
     el.style.display=isRene?'flex':'none';
   });
@@ -693,7 +712,6 @@ function applySession(){
   gsPull();
   goView('dashboard');
   updateBadges();
-  // Show welcome modal after short delay
   setTimeout(showWelcome, 400);
   setInterval(()=>{if(SESSION)gsPull();},60000);
 }
@@ -936,21 +954,24 @@ function calcStreak(){
 // ══ MIS TAREAS ════════════════════════════════════════════════
 function rMisTareas(){
   const el=document.getElementById('view-mis-tareas');
-  const tareas=getMyTasks().sort((a,b)=>{
-    const p={Alta:0,Media:1,Baja:2};return(p[a.prioridad]||1)-(p[b.prioridad]||1);
-  });
-  const pend=tareas.filter(t=>t.status!=='done');
-  const done=tareas.filter(t=>t.status==='done');
-
+  let tareas=getMyTasks();
+  if(misTareasFilter.status!=='all') tareas=tareas.filter(t=>t.status===misTareasFilter.status);
+  if(misTareasFilter.prioridad!=='all') tareas=tareas.filter(t=>t.prioridad===misTareasFilter.prioridad);
+  tareas=tareas.sort((a,b)=>{const p={Alta:0,Media:1,Baja:2};return(p[a.prioridad]||1)-(p[b.prioridad]||1);});
+  const sF=[{k:'all',l:'Todas'},{k:'pending',l:'⏳ Pendientes'},{k:'progress',l:'🔄 En proceso'},{k:'done',l:'✅ Completadas'},{k:'blocked',l:'🚫 Bloqueadas'}];
+  const pF=[{k:'all',l:'Todas'},{k:'Alta',l:'🔴 Alta'},{k:'Media',l:'🟡 Media'},{k:'Baja',l:'🟢 Baja'}];
   el.innerHTML=`
-  ${pend.length===0?`<div class="empty"><div class="empty-icon">✓</div><div>Sin tareas pendientes.</div></div>`:`
-  <div class="sh"><div class="sl">Pendientes (${pend.length})</div></div>
-  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${pend.map(t=>taskRow(t,false)).join('')}</tbody></table></div>
-  <hr class="div">`}
-  ${done.length>0?`
-  <div class="sh"><div class="sl">Completadas recientes</div></div>
-  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${done.slice(-10).map(t=>taskRow(t,false)).join('')}</tbody></table></div>`:''}`;
+  <div class="filter-row">
+    <div style="font-size:11px;color:var(--text3);font-weight:600">Estado:</div>
+    ${sF.map(f=>`<button class="filter-btn ${misTareasFilter.status===f.k?'active':''}" onclick="setMisFilter('status','${f.k}')">${f.l}</button>`).join('')}
+    <div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:8px">Prioridad:</div>
+    ${pF.map(f=>`<button class="filter-btn ${misTareasFilter.prioridad===f.k?'active':''}" onclick="setMisFilter('prioridad','${f.k}')">${f.l}</button>`).join('')}
+    <span style="font-size:11px;color:var(--text3);margin-left:4px">${tareas.length} tarea${tareas.length!==1?'s':''}</span>
+  </div>
+  ${tareas.length===0?`<div class="empty"><div class="empty-icon">✓</div><div>Sin tareas con ese filtro.</div></div>`:`
+  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${tareas.map(t=>taskRow(t,false)).join('')}</tbody></table></div>`}`;
 }
+function setMisFilter(tipo,val){misTareasFilter[tipo]=val;rMisTareas();}
 
 // ══ KANBAN ════════════════════════════════════════════════════
 function rKanban(){
@@ -1759,23 +1780,31 @@ document.getElementById('btn-save-tarea').onclick=()=>{
 function openAvanceModal(id){
   const t=DB.tareas.find(t=>t.id===id);if(!t)return;
   avanceTargetId=id;
+  document.getElementById('av-modal-title').textContent='📋 Editar tarea — '+t.desc.slice(0,40);
+  document.getElementById('av-desc').value=t.desc||'';
   document.getElementById('av-pct').value=t.avance||0;
   document.getElementById('av-status').value=t.status||'pending';
+  document.getElementById('av-prior').value=t.prioridad||'Media';
+  document.getElementById('av-due').value=t.due||'';
   document.getElementById('av-nota').value='';
   document.getElementById('modal-avance').classList.add('open');
 }
 
 document.getElementById('btn-save-av').onclick=()=>{
   const t=DB.tareas.find(t=>t.id===avanceTargetId);if(!t)return;
+  const desc=document.getElementById('av-desc').value.trim();
+  if(desc)t.desc=desc;
   t.avance=Math.min(100,Math.max(0,parseInt(document.getElementById('av-pct').value)||0));
   t.status=document.getElementById('av-status').value;
+  t.prioridad=document.getElementById('av-prior').value;
+  t.due=document.getElementById('av-due').value||t.due;
   t.updatedAt=Date.now();
   if(t.status==='done'){t.avance=100;t.completedAt=Date.now();}
   const nota=document.getElementById('av-nota').value.trim();
   if(nota){if(!t.historial)t.historial=[];t.historial.push({fecha:todayStr(),nota,avance:t.avance});}
   saveLocal();gsPush();closeModal('modal-avance');
   renderView(currentView);updateBadges();
-  showToast('✓ Avance actualizado');
+  showToast('✓ Tarea actualizada');
 };
 
 function deleteTask(id){
@@ -1961,6 +1990,7 @@ function drawDonut(canvasId,done,prog,pend,block,total){
 
 // ══ HISTORIAL ════════════════════════════════════════════════
 let historialFilter='all';
+let misTareasFilter={status:'all',prioridad:'all'};
 let historialMes='';
 
 function rHistorial(){
