@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NOVA · Línea Italia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#070D1A;--bg2:#0D1829;--surface:#0F1E35;--surface2:#152540;--surface3:#1A2D4A;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.05);
+  --text:#F0F4FF;--text2:#B8C8E0;--text3:#7A90AE;
+  --navy:#0D1B3E;--gold:#C9A84C;--gold2:#E8C96B;--gold3:rgba(201,168,76,.15);
+  --blue:#3B82F6;--blue-l:rgba(59,130,246,.15);
+  --green:#22C55E;--green-l:rgba(34,197,94,.15);
+  --amber:#F59E0B;--amber-l:rgba(245,158,11,.15);
+  --red:#EF4444;--red-l:rgba(239,68,68,.15);
+  --purple:#A78BFA;--purple-l:rgba(167,139,250,.15);
+  --teal:#2DD4BF;--teal-l:rgba(45,212,191,.15);
+  --r:8px;--r2:12px;--r3:16px;--r4:20px;
+  --sidebar:256px;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--text);height:100dvh;display:flex;overflow:hidden}
+button,input,select,textarea{font-family:'DM Sans',sans-serif}
+button{cursor:pointer}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px}
+
+/* ═══ LOGIN ═══════════════════════════════════════════════ */
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:500;transition:opacity .4s,visibility .4s}
+#login-screen.hidden{opacity:0;visibility:hidden}
+.login-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(201,168,76,.08) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 80% 80%,rgba(59,130,246,.06) 0%,transparent 50%);pointer-events:none}
+.login-wrap{width:420px;position:relative;z-index:1}
+.login-brand{text-align:center;margin-bottom:36px}
+.login-logo{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--gold);line-height:1;letter-spacing:-2px}
+.login-tagline{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.14em;margin-top:6px}
+.login-card{background:var(--surface);border:1px solid rgba(201,168,76,.15);border-radius:var(--r4);padding:32px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.login-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:8px}
+.login-input{width:100%;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:12px 16px;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;margin-bottom:16px}
+.login-input:focus{border-color:var(--gold)}
+.login-input::placeholder{color:var(--text3)}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0D1B3E;border:none;border-radius:var(--r);padding:13px;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;letter-spacing:.02em;margin-top:4px}
+.login-btn:hover{box-shadow:0 8px 32px rgba(201,168,76,.3);transform:translateY(-1px)}
+.login-err{background:var(--red-l);border:1px solid rgba(239,68,68,.3);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--red);margin-top:12px;display:none}
+.login-footer{text-align:center;margin-top:20px;font-size:10px;color:var(--text3);letter-spacing:.06em}
+
+/* ═══ SIDEBAR ════════════════════════════════════════════ */
+#sidebar{width:var(--sidebar);flex:0 0 var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+.brand{padding:20px 16px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.brand-logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--gold)}
+.brand-sub{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.user-chip{margin:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:10px}
+.uc-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;border:2px solid var(--gold)}
+.uc-info{flex:1;min-width:0}
+.uc-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uc-role{font-size:10px;color:var(--text3);margin-top:1px}
+.uc-out{all:unset;cursor:pointer;font-size:10px;color:var(--text3);padding:3px 7px;border-radius:4px;border:1px solid var(--border);transition:all .15s}
+.uc-out:hover{border-color:var(--red);color:var(--red)}
+.nav-sec{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:14px 16px 5px}
+.nb{all:unset;display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:12px;color:var(--text2);cursor:pointer;width:100%;transition:all .15s;border-left:2px solid transparent;border-radius:0}
+.nb:hover{color:var(--text);background:var(--surface2)}
+.nb.active{color:var(--gold);background:var(--gold3);border-left-color:var(--gold)}
+.nb .ni{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;min-width:18px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.sync-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3)}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ═══ MAIN ═══════════════════════════════════════════════ */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text)}
+.tb-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.page{flex:1;overflow-y:auto;padding:20px 24px}
+.view{display:none}.view.active{display:block}
+
+/* ═══ COMPONENTS ════════════════════════════════════════ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:12px}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px}
+.kpi-val{font-family:'DM Mono',monospace;font-size:30px;font-weight:500;line-height:1}
+.kpi-lbl{font-size:10px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.kpi.ok .kpi-val{color:var(--green)}.kpi.warn .kpi-val{color:var(--amber)}.kpi.bad .kpi-val{color:var(--red)}.kpi.gold .kpi-val{color:var(--gold)}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px}
+.tag.ok{background:var(--green-l);color:var(--green)}
+.tag.warn{background:var(--amber-l);color:var(--amber)}
+.tag.bad{background:var(--red-l);color:var(--red)}
+.tag.info{background:var(--blue-l);color:var(--blue)}
+.tag.muted{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.tag.gold{background:var(--gold3);color:var(--gold)}
+.tag.purple{background:var(--purple-l);color:var(--purple)}
+.tag.teal{background:var(--teal-l);color:var(--teal)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r);font-size:12px;font-weight:600;border:1px solid transparent;transition:all .15s;cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--gold);color:#0D1B3E;border-color:var(--gold)}
+.btn.primary:hover{background:var(--gold2)}
+.btn.secondary{background:var(--surface2);color:var(--text);border-color:var(--border)}
+.btn.secondary:hover{background:var(--surface3)}
+.btn.danger{background:var(--red-l);color:var(--red);border-color:rgba(239,68,68,.2)}
+.btn.sm{padding:5px 10px;font-size:11px}
+.btn.xs{padding:3px 8px;font-size:10px}
+
+/* FORM */
+.lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px}
+.input{width:100%;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:9px 12px;font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+.input:focus{border-color:var(--gold)}
+.input::placeholder{color:var(--text3)}
+textarea.input{min-height:72px;resize:vertical}
+select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23506480' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.form-grid{display:grid;gap:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:22px;width:min(560px,95vw);max-height:88vh;overflow-y:auto;box-shadow:var(--shadow)}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* DIVIDERS & MISC */
+hr.div{border:none;border-top:1px solid var(--border);margin:14px 0}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.empty{text-align:center;padding:40px;color:var(--text3)}
+.empty-icon{font-size:36px;margin-bottom:8px}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.tab{all:unset;cursor:pointer;padding:8px 16px;font-size:12px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab:hover:not(.active){color:var(--text)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:var(--r);font-size:13px;font-weight:500;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;box-shadow:var(--shadow)}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:start}
+.kanban-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.kanban-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.kanban-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.kanban-count{font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)}
+.kanban-body{padding:10px;min-height:200px;display:flex;flex-direction:column;gap:6px}
+.kanban-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;cursor:pointer;transition:border-color .15s}
+.kanban-card:hover{border-color:var(--gold)}
+.kc-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:6px;line-height:1.3}
+.kc-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.kc-assign{display:flex;align-items:center;gap:5px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border2)}
+.kc-av{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0}
+
+/* TASK TABLE */
+.task-table{width:100%;border-collapse:collapse}
+.task-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.task-table td{padding:9px 10px;border-bottom:1px solid var(--border2);font-size:12px;vertical-align:middle}
+.task-table tr:hover td{background:var(--surface2)}
+.task-table tr:last-child td{border-bottom:none}
+.td-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);width:36px}
+.progress-bar{height:4px;background:var(--surface3);border-radius:99px;overflow:hidden;width:60px}
+.progress-fill{height:100%;border-radius:99px;background:var(--green);transition:width .3s}
+
+/* GANTT */
+.gantt-wrap{overflow-x:auto}
+.gantt-table{border-collapse:collapse;min-width:100%}
+.gantt-table th,.gantt-table td{border:1px solid var(--border2);padding:4px 8px;font-size:11px;white-space:nowrap}
+.gantt-table th{background:var(--surface2);color:var(--text3);font-weight:600}
+.gantt-bar{height:20px;border-radius:4px;background:var(--blue);opacity:.8;min-width:4px}
+
+/* DASHBOARD PERSONAL */
+.greeting{margin-bottom:20px}
+.greeting-name{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text)}
+.greeting-sub{font-size:13px;color:var(--text3);margin-top:4px}
+.streak-badge{display:inline-flex;align-items:center;gap:6px;background:var(--gold3);border:1px solid rgba(201,168,76,.3);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:600;color:var(--gold);margin-top:8px}
+
+/* VALORES */
+.valor-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+.valor-card:hover{border-color:var(--gold)}
+.valor-card.active{border-color:var(--gold);border-left:3px solid var(--gold)}
+.valor-header{display:flex;align-items:center;gap:12px}
+.valor-icon{width:38px;height:38px;border-radius:var(--r);background:var(--gold3);border:1px solid rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.valor-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text)}
+.valor-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.valor-body{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none}
+.valor-body.open{display:block}
+.valor-section{margin-bottom:12px}
+.valor-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:6px}
+.valor-text{font-size:12px;color:var(--text2);line-height:1.7}
+
+/* LIBRO */
+.libro-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:10px;overflow:hidden}
+.libro-header{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.libro-cover{width:40px;height:52px;border-radius:4px;object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.libro-info{flex:1}
+.libro-title{font-size:13px;font-weight:600;color:var(--text)}
+.libro-autor{font-size:11px;color:var(--text3);margin-top:1px}
+.libro-prog{display:flex;align-items:center;gap:8px;margin-top:6px}
+.libro-bar{flex:1;height:4px;background:var(--surface3);border-radius:99px;overflow:hidden}
+.libro-bar-fill{height:100%;border-radius:99px;transition:width .3s}
+.libro-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)}
+.libro-body{display:none;border-top:1px solid var(--border)}
+.libro-body.open{display:block}
+.libro-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 16px}
+.libro-tab{all:unset;cursor:pointer;padding:8px 12px;font-size:11px;font-weight:500;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.libro-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.libro-content{padding:14px 16px}
+.eval-q{margin-bottom:12px}
+.eval-q-text{font-size:12px;color:var(--text);margin-bottom:8px;line-height:1.4}
+.eval-btns{display:flex;gap:8px}
+.eval-btn{all:unset;cursor:pointer;padding:6px 14px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid var(--border);color:var(--text3);transition:all .15s}
+.eval-btn:hover{border-color:var(--gold);color:var(--gold)}
+.eval-btn.sel-si{background:var(--green-l);border-color:var(--green);color:var(--green)}
+.eval-btn.sel-no{background:var(--red-l);border-color:var(--red);color:var(--red)}
+.nivel-badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px}
+
+/* PROTOTIPO */
+.proto-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-bottom:8px}
+.proto-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.proto-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+.proto-status{display:flex;gap:8px;margin-top:8px}
+.ps-btn{all:unset;cursor:pointer;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid var(--border);color:var(--text3);transition:all .15s}
+.ps-btn.active{background:var(--gold3);border-color:var(--gold);color:var(--gold)}
+
+/* WELCOME MODAL */
+#welcome-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:450;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#welcome-modal.open{display:flex}
+.welcome-card{background:var(--surface);border:1px solid rgba(201,168,76,.2);border-radius:var(--r4);width:min(680px,95vw);max-height:88vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.6)}
+.welcome-header{background:linear-gradient(135deg,var(--navy),var(--bg2));padding:22px 24px;border-bottom:1px solid var(--border);border-radius:var(--r4) var(--r4) 0 0}
+.welcome-date{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.welcome-name{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--text);margin-bottom:4px}
+.welcome-sub{font-size:12px;color:var(--text3)}
+.welcome-body{padding:20px 24px}
+.welcome-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.welcome-section{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:14px}
+.ws-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ws-item{font-size:12px;color:var(--text2);padding:5px 0;border-bottom:1px solid var(--border2);line-height:1.3;display:flex;align-items:center;gap:8px}
+.ws-item:last-child{border-bottom:none}
+.ws-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0;width:24px}
+.pct-badge{font-family:'DM Mono',monospace;font-size:10px;padding:1px 6px;border-radius:4px;margin-left:auto;flex-shrink:0}
+.welcome-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface)}
+/* CHART */
+.donut-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+.donut-center{position:absolute;text-align:center}
+.donut-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500}
+.donut-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+/* DATE INPUT */
+input[type="date"].input{color-scheme:dark;color:var(--text)}
+input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) brightness(.7);cursor:pointer;padding:2px}
+/* HISTORIAL FILTERS */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filter-btn{all:unset;cursor:pointer;padding:5px 14px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid var(--border);color:var(--text3);transition:all .15s}
+.filter-btn.active{background:var(--gold3);border-color:var(--gold);color:var(--gold)}
+/* PDF */
+@media print{
+  #sidebar,#topbar-actions,.btn,#welcome-modal,.modal-bg,button{display:none!important}
+  body,#main,.page,.view{overflow:visible!important;height:auto!important}
+  .card{break-inside:avoid}
+}
+.perf-item{background:var(--surface2);border-radius:var(--r);padding:10px;text-align:center}
+.perf-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--gold)}
+.perf-lbl{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* PERSON CARDS */
+.person-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:16px}
+.person-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;transition:border-color .15s}
+.person-card:hover{border-color:var(--gold)}
+.pc-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.pc-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.pc-name{font-size:13px;font-weight:600;color:var(--text)}
+.pc-area{font-size:10px;color:var(--text3);margin-top:1px}
+.pc-sem{width:10px;height:10px;border-radius:50%;margin-left:auto;flex-shrink:0}
+.pc-body{padding:12px 14px}
+.pc-bar-wrap{height:4px;background:var(--surface3);border-radius:99px;overflow:hidden;margin:8px 0}
+.pc-mini-bar{height:100%;border-radius:99px;transition:width .3s}
+.chart-bars{display:flex;align-items:flex-end;gap:3px;height:50px;margin-top:8px}
+.chart-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s}
+
+/* COMP BUTTONS REPORTE */
+.comp-btns{display:flex;gap:8px;flex-wrap:wrap}
+.comp-btn{all:unset;cursor:pointer;padding:7px 16px;border-radius:99px;font-size:12px;font-weight:600;border:1.5px solid var(--border);color:var(--text3);transition:all .15s}
+.comp-btn:hover{border-color:var(--gold);color:var(--gold)}
+.comp-btn.sel-ok{background:var(--green-l);border-color:var(--green);color:var(--green)}
+.comp-btn.sel-warn{background:var(--amber-l);border-color:var(--amber);color:var(--amber)}
+.comp-btn.sel-bad{background:var(--red-l);border-color:var(--red);color:var(--red)}
+
+/* PNUM */
+.pnum{width:20px;height:20px;border-radius:50%;background:var(--gold3);border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- ════ LOGIN ════ -->
+<div id="login-screen">
+  <div class="login-bg"></div>
+  <div class="login-wrap">
+    <div class="login-brand">
+      <div class="login-logo">NOVA</div>
+      <div class="login-tagline">Línea Italia · Gestión de Equipo · 2026</div>
+    </div>
+    <div class="login-card">
+      <label class="login-lbl">Tu nombre</label>
+      <input class="login-input" type="text" id="li-nombre" placeholder="Escribe tu nombre…" autocomplete="off"/>
+      <label class="login-lbl">Contraseña</label>
+      <input class="login-input" type="password" id="li-pass" placeholder="••••••••"/>
+      <div class="login-err" id="login-err">Nombre o contraseña incorrectos. Verifica con René.</div>
+      <button class="login-btn" id="btn-login">Iniciar sesión →</button>
+    </div>
+    <div class="login-footer">ECCELLENZA IN MOBILE · © 2026</div>
+  </div>
+</div>
+
+<!-- ════ SIDEBAR ════ -->
+<div id="sidebar">
+  <div class="brand">
+    <div>
+      <div class="brand-logo">NOVA</div>
+      <div class="brand-sub">Línea Italia</div>
+    </div>
+  </div>
+  <div class="user-chip">
+    <div class="uc-av" id="sb-av" style="background:var(--gold);color:#0D1B3E">?</div>
+    <div class="uc-info">
+      <div class="uc-name" id="sb-name">—</div>
+      <div class="uc-role" id="sb-role">—</div>
+    </div>
+    <button class="uc-out" onclick="logout()">✕</button>
+  </div>
+
+  <div class="nav-sec">Principal</div>
+  <button class="nb active" data-view="dashboard"><span class="ni">◉</span> Dashboard</button>
+  <button class="nb" data-view="mis-tareas"><span class="ni">✓</span> Mis tareas</button>
+  <button class="nb" data-view="kanban"><span class="ni">⬛</span> Kanban</button>
+
+  <div class="nav-sec lider-only" style="display:none">Líder</div>
+  <button class="nb lider-only" data-view="equipo" style="display:none"><span class="ni">◈</span> Equipo</button>
+  <button class="nb lider-only" data-view="taller" style="display:none"><span class="ni">🔨</span> Taller</button>
+  <button class="nb" data-view="evaluacion"><span class="ni">★</span> Mi evaluación</button>
+
+  <div class="nav-sec">Reportes</div>
+  <button class="nb" data-view="historial"><span class="ni">🕐</span> Historial</button>
+  <button class="nb lider-only" data-view="accesos" style="display:none"><span class="ni">🔐</span> Control de accesos</button>
+  <button class="nb" data-view="biblioteca"><span class="ni">📚</span> Biblioteca</button>
+  <button class="nb" data-view="valores"><span class="ni">⬡</span> Nostri Valori</button>
+  <button class="nb" data-view="vto"><span class="ni">🎯</span> VTO 2026</button>
+
+  <div class="sidebar-footer">
+    <div class="sync-row"><div class="sync-dot"></div><span id="sync-txt">Sincronizado</span></div>
+  </div>
+</div>
+
+<!-- ════ MAIN ════ -->
+<div id="main">
+  <div class="topbar">
+    <div>
+      <div class="tb-title" id="tb-title">Dashboard</div>
+      <div class="tb-sub" id="tb-sub">Bienvenido a NOVA</div>
+    </div>
+    <div style="display:flex;gap:8px" id="tb-actions"></div>
+  </div>
+  <div class="page">
+    <div class="view active" id="view-dashboard"></div>
+    <div class="view" id="view-mis-tareas"></div>
+    <div class="view" id="view-kanban"></div>
+    <div class="view" id="view-equipo"></div>
+    <div class="view" id="view-taller"></div>
+    <div class="view" id="view-evaluacion"></div>
+    <div class="view" id="view-historial"></div>
+    <div class="view" id="view-accesos"></div>
+    <div class="view" id="view-biblioteca"></div>
+    <div class="view" id="view-valores"></div>
+    <div class="view" id="view-vto"></div>
+  </div>
+</div>
+
+<!-- MODAL TAREA -->
+<div class="modal-bg" id="modal-tarea">
+  <div class="modal">
+    <div class="modal-title" id="mt-title">📋 Nueva tarea</div>
+    <div class="form-grid">
+      <div><label class="lbl">Descripción</label><input class="input" id="t-desc" placeholder="¿Qué hay que hacer?"/></div>
+      <div class="form-row3">
+        <div><label class="lbl">Área</label>
+          <select class="input" id="t-area">
+            <option value="NPD">NPD / Innovación</option>
+            <option value="Ingeniería">Ingeniería</option>
+            <option value="Costos">Costos y Folios</option>
+            <option value="Taller">Taller de Innovación</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div><label class="lbl">Proyecto</label><input class="input" id="t-proyecto" placeholder="Nombre del proyecto"/></div>
+        <div><label class="lbl">Tipo</label>
+          <select class="input" id="t-tipo">
+            <option value="Tarea">Tarea</option>
+            <option value="Diseño">Diseño</option>
+            <option value="Folio">Folio</option>
+            <option value="Previo">Previo</option>
+            <option value="Instructivo">Instructivo</option>
+            <option value="Ficha Técnica">Ficha Técnica</option>
+            <option value="Especificación">Especificación</option>
+            <option value="Costo">Costo</option>
+            <option value="Bloque">Bloque</option>
+            <option value="Render">Render</option>
+            <option value="IGES">IGES</option>
+            <option value="DXF">DXF</option>
+            <option value="Prototipo">Prototipo</option>
+            <option value="Reingeniería">Reingeniería</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div><label class="lbl">Prioridad</label>
+          <select class="input" id="t-prior">
+            <option value="Alta">🔴 Alta</option>
+            <option value="Media" selected>🟡 Media</option>
+            <option value="Baja">🟢 Baja</option>
+          </select>
+        </div>
+        <div><label class="lbl">Fecha límite</label><input class="input" type="date" id="t-due"/></div>
+      </div>
+      <div id="t-assign-wrap" style="display:none">
+        <label class="lbl">Asignar a</label>
+        <select class="input" id="t-assign"></select>
+      </div>
+      <div><label class="lbl">Notas</label><textarea class="input" id="t-notes" placeholder="Contexto, referencias, instrucciones…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary" onclick="closeModal('modal-tarea')">Cancelar</button>
+      <button class="btn primary" id="btn-save-tarea">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AVANCE -->
+<div class="modal-bg" id="modal-avance">
+  <div class="modal">
+    <div class="modal-title">📊 Actualizar avance</div>
+    <div class="form-grid">
+      <div><label class="lbl">% Avance</label>
+        <input class="input" type="number" id="av-pct" min="0" max="100" placeholder="0-100"/>
+      </div>
+      <div><label class="lbl">Estado</label>
+        <select class="input" id="av-status">
+          <option value="pending">⏳ Pendiente</option>
+          <option value="progress">🔄 En proceso</option>
+          <option value="done">✅ Completada</option>
+          <option value="blocked">🚫 Bloqueada</option>
+        </select>
+      </div>
+      <div><label class="lbl">Nota de avance</label>
+        <textarea class="input" id="av-nota" placeholder="¿Qué avanzaste?"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary" onclick="closeModal('modal-avance')">Cancelar</button>
+      <button class="btn primary" id="btn-save-av">Actualizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER REPORTE -->
+<div class="modal-bg" id="modal-rep">
+  <div class="modal">
+    <div class="modal-title">Reporte semanal</div>
+    <div id="modal-rep-content"></div>
+    <div class="modal-footer"><button class="btn secondary" onclick="closeModal('modal-rep')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- WELCOME MODAL -->
+<div id="welcome-modal">
+  <div class="welcome-card">
+    <div class="welcome-header">
+      <div class="welcome-date" id="wm-date"></div>
+      <div class="welcome-name" id="wm-name"></div>
+      <div class="welcome-sub" id="wm-sub"></div>
+    </div>
+    <div class="welcome-body">
+      <div class="welcome-grid">
+        <div class="welcome-section">
+          <div class="ws-title" style="color:var(--red)">🔴 Críticas — vencidas o urgentes</div>
+          <div id="wm-criticas"><div style="font-size:12px;color:var(--text3);font-style:italic">Sin tareas críticas ✓</div></div>
+        </div>
+        <div class="welcome-section">
+          <div class="ws-title" style="color:var(--amber)">📅 Vencen esta semana</div>
+          <div id="wm-semana"><div style="font-size:12px;color:var(--text3);font-style:italic">Sin vencimientos esta semana</div></div>
+        </div>
+        <div class="welcome-section">
+          <div class="ws-title" style="color:var(--blue)">📊 Avance general</div>
+          <div id="wm-avance" style="display:flex;align-items:center;gap:16px">
+            <canvas id="wm-donut" width="100" height="100"></canvas>
+            <div id="wm-avance-stats"></div>
+          </div>
+        </div>
+        <div class="welcome-section">
+          <div class="ws-title" style="color:var(--green)">✅ Completadas recientes</div>
+          <div id="wm-completadas"><div style="font-size:12px;color:var(--text3);font-style:italic">Sin completadas recientes</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="welcome-footer">
+      <button class="btn secondary" onclick="closeWelcome()">Cerrar</button>
+      <button class="btn primary" onclick="closeWelcome();goView('mis-tareas')">Ver mis tareas →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ CONFIG ═══════════════════════════════════════════════════
+const GS_URL='https://script.google.com/macros/s/AKfycbwPlxKJakC48iHwxSZ7ZoKhg9L7QxqIYQ0ipZ1gB9rH9ouuBqS05AuZNWw4jMte3bAu9w/exec';
+const LS_KEY='nova_li_v2';
+
+// ══ USUARIOS ═════════════════════════════════════════════════
+const USERS=[
+  {id:'rene',nombre:'René',apellido:'Esparza',rol:'lider',area:'Gerencia',color:'#C9A84C',pass:'rene2026'},
+  // NPD Innovación
+  {id:'ramon',nombre:'Ramón',apellido:'Barraza',rol:'coordinador',area:'NPD',color:'#3B82F6',pass:'ramon2026'},
+  {id:'paco',nombre:'Francisco',apellido:'Javier',rol:'coordinador',area:'NPD',color:'#60A5FA',pass:'paco2026'},
+  {id:'paulina',nombre:'Paulina',apellido:'Román',rol:'ingeniero',area:'NPD',color:'#93C5FD',pass:'paulina2026'},
+  {id:'frida',nombre:'Frida Paola',apellido:'Pérez',rol:'becario',area:'NPD',color:'#BFDBFE',pass:'frida2026'},
+  {id:'luiscarlo',nombre:'Luis Carlo',apellido:'Prado',rol:'becario',area:'NPD',color:'#93C5FD',pass:'luiscarlo2026'},
+  // Ingeniería
+  {id:'alexis',nombre:'Raúl Alexis',apellido:'Esparza',rol:'coordinador',area:'Ingeniería',color:'#A78BFA',pass:'alexis2026'},
+  {id:'kevin',nombre:'Kevin',apellido:'Obed',rol:'ingeniero',area:'Ingeniería',color:'#C4B5FD',pass:'kevin2026'},
+  {id:'everardo',nombre:'Everardo',apellido:'Aguayo',rol:'ingeniero',area:'Ingeniería',color:'#8B5CF6',pass:'everardo2026'},
+  {id:'karina',nombre:'Karina Valeria',apellido:'Pérez',rol:'becario',area:'Ingeniería',color:'#DDD6FE',pass:'karina2026'},
+  // Costos — Luis Enrique reporta a Brenda
+  {id:'brenda',nombre:'Brenda',apellido:'Yañez',rol:'coordinador',area:'Costos',color:'#2DD4BF',pass:'brenda2026'},
+  {id:'enrique',nombre:'Luis Enrique',apellido:'Romo',rol:'ingeniero',area:'Costos',color:'#7C3AED',pass:'enrique2026'},
+  {id:'danna',nombre:'Danna Paola',apellido:'Ponce',rol:'auxiliar',area:'Costos',color:'#5EEAD4',pass:'danna2026'},
+  {id:'natalia',nombre:'Natalia',apellido:'Estefanía',rol:'auxiliar',area:'Costos',color:'#99F6E4',pass:'natalia2026'},
+  {id:'luisrub',nombre:'Luis Rubén',apellido:'López',rol:'auxiliar',area:'Costos',color:'#0F766E',pass:'luisrub2026'},
+];
+
+// Coordinators map: who reports to whom
+const REPORTS_TO={
+  luiscarlo:'paco',                                    // NPD: Luis Carlo → Paco
+  frida:'ramon',                                       // NPD: Frida → Ramón
+  kevin:'alexis', everardo:'alexis', karina:'alexis', // Ingeniería → Alexis
+  enrique:'brenda', danna:'brenda', natalia:'brenda', luisrub:'brenda', // Costos → Brenda
+  // Ramón, Paco, Paulina reportan directo a René
+};
+
+// ══ DB ═══════════════════════════════════════════════════════
+let DB={tareas:[],reportes:[],prototipos:[],eval_progreso:{},_savedAt:0};
+let SESSION=null;
+let _syncing=false;
+let avanceTargetId=null;
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function weekStr(){const d=new Date();const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);const m=new Date(d);m.setDate(diff);return m.toISOString().split('T')[0];}
+function fmtDate(s){if(!s)return'—';const[y,m,d]=s.split('-');const ms=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];return`${d} ${ms[parseInt(m)-1]}`;}
+function isOverdue(t){return t.status!=='done'&&t.due&&new Date(t.due)<new Date();}
+function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)DB=JSON.parse(r);}catch(e){}}
+function saveLocal(){DB._savedAt=Date.now();localStorage.setItem(LS_KEY,JSON.stringify(DB));}
+function showToast(msg,dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ══ SYNC POR USUARIO — cada quien tiene su propia fila ═══════
+async function gsPush(){
+  if(!GS_URL||!SESSION||_syncing)return;
+  _syncing=true;setSyncTxt('Guardando…');
+  try{
+    // Solo guardamos los datos de este usuario
+    const payload={
+      userId:SESSION.id,
+      data:JSON.stringify({
+        tareas:DB.tareas,
+        reportes:DB.reportes,
+        prototipos:DB.prototipos||[],
+        eval_progreso:DB.eval_progreso||{},
+        _savedAt:Date.now()
+      })
+    };
+    await fetch(GS_URL,{method:'POST',body:JSON.stringify(payload),mode:'no-cors'});
+    setSyncTxt('Guardado ✓');
+  }catch(e){setSyncTxt('Sin conexión');}
+  _syncing=false;
+}
+
+async function gsPull(){
+  if(!GS_URL||!SESSION)return;
+  setSyncTxt('Sincronizando…');
+  try{
+    // Cargamos los datos de TODOS los usuarios para tener visibilidad completa
+    const r=await fetch(GS_URL+'?action=load_all');
+    const txt=await r.text();
+    if(!txt||txt==='{}'){setSyncTxt('Sin datos remotos');return;}
+    const allUsers=JSON.parse(txt);
+
+    // Merge: combinamos tareas, reportes y prototipos de todos los usuarios
+    let allTareas=[];let allReportes=[];let allPrototipos=[];let myEval={};
+    let latestSaved=0;
+
+    Object.entries(allUsers).forEach(([userId,entry])=>{
+      try{
+        const userData=JSON.parse(entry.data||'{}');
+        if(userData.tareas)allTareas=[...allTareas,...userData.tareas];
+        if(userData.reportes)allReportes=[...allReportes,...userData.reportes];
+        if(userData.prototipos)allPrototipos=[...allPrototipos,...userData.prototipos];
+        if(userId===SESSION.id&&userData.eval_progreso)myEval=userData.eval_progreso;
+        if(userData._savedAt&&userData._savedAt>latestSaved)latestSaved=userData._savedAt;
+      }catch(e){}
+    });
+
+    // Deduplicar por id
+    const dedupe=(arr)=>{const seen=new Set();return arr.filter(i=>{if(!i.id||seen.has(i.id))return false;seen.add(i.id);return true;});};
+
+    if(latestSaved>(DB._savedAt||0)){
+      DB.tareas=dedupe(allTareas);
+      DB.reportes=dedupe(allReportes);
+      DB.prototipos=dedupe(allPrototipos);
+      DB.eval_progreso=myEval;
+      DB._savedAt=latestSaved;
+      saveLocal();
+      setSyncTxt('Sincronizado ✓');
+      renderView(currentView);
+      updateBadges();
+    }else{
+      setSyncTxt('Al día ✓');
+    }
+  }catch(e){setSyncTxt('Usando datos locales');}
+}
+
+function setSyncTxt(t){document.getElementById('sync-txt').textContent=t;}
+
+
+// ══ AUTH ══════════════════════════════════════════════════════
+function initLogin(){
+  document.getElementById('btn-login').onclick=doLogin;
+  document.getElementById('li-pass').onkeydown=e=>{if(e.key==='Enter')doLogin();};
+  document.getElementById('li-nombre').onkeydown=e=>{if(e.key==='Enter')document.getElementById('li-pass').focus();};
+}
+
+function doLogin(){
+  const nombre=document.getElementById('li-nombre').value.trim().toLowerCase();
+  const pass=document.getElementById('li-pass').value;
+  const err=document.getElementById('login-err');
+  if(!nombre){showToast('Escribe tu nombre');return;}
+  const found=USERS.find(u=>{
+    return u.nombre.toLowerCase().includes(nombre)||
+           (u.nombre+' '+u.apellido).toLowerCase().includes(nombre)||
+           u.id===nombre;
+  });
+  if(!found||pass!==found.pass){err.style.display='block';return;}
+  err.style.display='none';
+  SESSION=found;
+  applySession();
+}
+
+function applySession(){
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('sb-name').textContent=SESSION.nombre+' '+SESSION.apellido;
+  document.getElementById('sb-role').textContent=getRolLabel(SESSION.rol)+' · '+SESSION.area;
+  const av=document.getElementById('sb-av');
+  av.textContent=SESSION.nombre.charAt(0);
+  av.style.background=SESSION.color;
+  av.style.color=SESSION.id==='rene'?'#0D1B3E':'#fff';
+
+  const isRene=SESSION.id==='rene';
+  const isLider=SESSION.rol==='lider';
+  const isCoord=SESSION.rol==='coordinador';
+
+  // Sección Líder y Equipo — coordinadores y René
+  document.querySelectorAll('.lider-only').forEach(el=>el.style.display=(isLider||isCoord)?'':'none');
+
+  // Taller — SOLO René
+  document.querySelectorAll('[data-view="taller"]').forEach(el=>{
+    el.style.display=isRene?'flex':'none';
+  });
+
+  // Control de accesos — SOLO René
+  document.querySelectorAll('[data-view="accesos"]').forEach(el=>{
+    el.style.display=isRene?'flex':'none';
+  });
+
+  updateAssignOpts();
+  loadLocal();
+  gsPull();
+  goView('dashboard');
+  updateBadges();
+  // Show welcome modal after short delay
+  setTimeout(showWelcome, 400);
+  setInterval(()=>{if(SESSION)gsPull();},60000);
+}
+
+function logout(){
+  SESSION=null;
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('li-nombre').value='';
+  document.getElementById('li-pass').value='';
+  document.getElementById('login-err').style.display='none';
+}
+
+function getRolLabel(r){return{lider:'Líder',coordinador:'Coordinador',ingeniero:'Ingeniero',auxiliar:'Auxiliar'}[r]||r;}
+
+// Usuarios que pueden asignar tareas al Taller de Innovación
+const PUEDE_ASIGNAR_TALLER=['rene','ramon','paco','alexis','kevin','enrique','paulina','everardo'];
+
+function updateAssignOpts(){
+  if(!SESSION)return;
+  const sel=document.getElementById('t-assign');
+  const wrap=document.getElementById('t-assign-wrap');
+  const canAssign=SESSION.rol==='lider'||SESSION.rol==='coordinador'||PUEDE_ASIGNAR_TALLER.includes(SESSION.id);
+  wrap.style.display=canAssign?'block':'none';
+  if(canAssign){
+    let opts=[];
+    if(SESSION.rol==='lider'){
+      opts=USERS.filter(u=>u.id!==SESSION.id);
+    } else {
+      // coordinador asigna a sus reportes directos
+      opts=USERS.filter(u=>REPORTS_TO[u.id]===SESSION.id);
+    }
+    // Agregar opciones del Taller si el usuario está en la lista permitida
+    const tallerOpts=[
+      {id:'taller-jorge',nombre:'Jorge Javier',apellido:'Macías',area:'Taller'},
+      {id:'taller-omar',nombre:'Omar',apellido:'Alejandro',area:'Taller'},
+      {id:'taller-acero',nombre:'Jorge',apellido:'Acero',area:'Taller'}
+    ];
+    if(PUEDE_ASIGNAR_TALLER.includes(SESSION.id)){
+      opts=[...opts,...tallerOpts];
+    }
+    sel.innerHTML=`<option value="${SESSION.id}">Yo mismo (${SESSION.nombre})</option>`+
+      opts.map(u=>`<option value="${u.id}">${u.nombre} ${u.apellido} (${u.area||'Taller'})</option>`).join('');
+  }
+}
+
+// ══ NAVIGATION ════════════════════════════════════════════════
+let currentView='dashboard';
+const VIEW_META={
+  'dashboard':{t:'Dashboard',s:'Vista general'},
+  'mis-tareas':{t:'Mis tareas',s:'Tus tareas activas'},
+  'kanban':{t:'Kanban',s:'Vista por estado'},
+  'equipo':{t:'Equipo completo',s:'Tareas de todo el equipo'},
+  'taller':{t:'Taller de Innovación',s:'Prototipos y trabajos del taller'},
+  'evaluacion':{t:'Mi evaluación',s:'PT Score y desempeño mensual'},
+  'historial':{t:'Historial de tareas',s:'Todas las tareas con filtros'},
+  'accesos':{t:'Control de accesos',s:'Gestión de usuarios — solo gerente'},
+  'biblioteca':{t:'Biblioteca Gerencial',s:'4 libros con autoevaluación'},
+  'valores':{t:'Nostri Valori',s:'Los 4 valores medulares de Línea Italia'},
+  'vto':{t:'VTO 2026',s:'Visión · Tracción y Organización'},
+};
+
+document.querySelectorAll('.nb[data-view]').forEach(b=>b.onclick=()=>goView(b.dataset.view));
+
+function goView(v){
+  currentView=v;
+  document.querySelectorAll('.nb').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('view-'+v);
+  if(el)el.classList.add('active');
+  const meta=VIEW_META[v]||{t:v,s:''};
+  document.getElementById('tb-title').textContent=meta.t;
+  document.getElementById('tb-sub').textContent=meta.s;
+  document.getElementById('tb-actions').innerHTML=topActions(v);
+  if(el)renderView(v);
+}
+
+function topActions(v){
+  const canCreate=SESSION.rol==='lider'||SESSION.rol==='coordinador'||SESSION.rol==='ingeniero'||SESSION.rol==='auxiliar'||SESSION.rol==='becario';
+  if(v==='mis-tareas')return`<button class="btn primary" onclick="openTareaModal()">+ Nueva tarea</button>`;
+  if(v==='equipo')return`<button class="btn primary" onclick="openTareaModal(true)">+ Asignar tarea</button>`;
+  if(v==='taller')return`<button class="btn primary" onclick="openProtoModal()">+ Prototipo</button>`;
+  if(v==='historial')return`<button class="btn secondary" onclick="generarPDF()">📄 Exportar PDF</button>`;
+  return'';
+}
+
+function renderView(v){
+  if(!SESSION)return;
+  const map={
+    'dashboard':rDash,'mis-tareas':rMisTareas,'kanban':rKanban,
+    'equipo':rEquipo,'taller':rTaller,'evaluacion':rEval,
+    'historial':rHistorial,'accesos':rAccesos,
+    'biblioteca':rBiblioteca,'valores':rValores,'vto':rVto
+  };
+  if(map[v])map[v]();
+}
+
+// ══ TASK HELPERS ═══════════════════════════════════════════════
+function getMisTareas(){
+  if(SESSION.rol==='lider')return DB.tareas;
+  if(SESSION.rol==='coordinador'){
+    const myTeam=USERS.filter(u=>REPORTS_TO[u.id]===SESSION.id).map(u=>u.id);
+    return DB.tareas.filter(t=>t.assignedTo===SESSION.id||(!t.assignedTo&&t.createdBy===SESSION.id)||myTeam.includes(t.assignedTo));
+  }
+  return DB.tareas.filter(t=>t.assignedTo===SESSION.id||(!t.assignedTo&&t.createdBy===SESSION.id));
+}
+
+function getMyTasks(){
+  return DB.tareas.filter(t=>t.assignedTo===SESSION.id||(!t.assignedTo&&t.createdBy===SESSION.id));
+}
+
+function statusLabel(s){return{pending:'Pendiente',progress:'En proceso',done:'Completada',blocked:'Bloqueada'}[s]||s;}
+function statusColor(s){return{pending:'warn',progress:'info',done:'ok',blocked:'bad'}[s]||'muted';}
+function prioColor(p){return{Alta:'bad',Media:'warn',Baja:'ok'}[p]||'muted';}
+function userById(id){return USERS.find(u=>u.id===id)||{nombre:id,color:'#64748B'};}
+
+function taskRow(t,showAssign=true){
+  const u=userById(t.assignedTo||t.createdBy);
+  const isOver=isOverdue(t);
+  return`<tr onclick="openAvanceModal('${t.id}')">
+    <td class="td-num">#${t.num||'—'}</td>
+    <td style="max-width:200px"><div style="font-size:12px;font-weight:500;color:var(--text);line-height:1.3">${t.desc}</div>${t.notas?`<div style="font-size:10px;color:var(--text3);margin-top:2px">${t.notas.slice(0,60)}</div>`:''}</td>
+    <td><span class="tag muted">${t.area||'—'}</span></td>
+    <td style="font-size:11px;color:var(--text2)">${t.proyecto||'—'}</td>
+    <td><span class="tag muted">${t.tipo||'—'}</span></td>
+    <td><span class="tag ${prioColor(t.prioridad)}">${t.prioridad||'—'}</span></td>
+    <td><span class="tag ${statusColor(t.status)}">${statusLabel(t.status)}</span></td>
+    ${showAssign?`<td><div style="display:flex;align-items:center;gap:5px"><div style="width:18px;height:18px;border-radius:50%;background:${u.color||'#64748B'};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0">${(u.nombre||'?').charAt(0)}</div><span style="font-size:11px;color:var(--text2)">${u.nombre}</span></div></td>`:''}
+    <td style="font-size:11px;color:var(--text3)">${fmtDate(t.fechaInicio)}</td>
+    <td style="font-size:11px;color:${isOver?'var(--red)':'var(--text3)'};font-weight:${isOver?'600':'400'}">${isOver?'⚠ ':''}${fmtDate(t.due)}</td>
+    <td>
+      <div class="progress-bar"><div class="progress-fill" style="width:${t.avance||0}%;background:${t.avance>=100?'var(--green)':t.avance>50?'var(--blue)':'var(--amber)'}" ></div></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace">${t.avance||0}%</div>
+    </td>
+    <td style="font-size:11px;color:var(--text3);max-width:120px">${(t.notas||'').slice(0,40)||'—'}</td>
+    <td><button class="btn xs danger" onclick="event.stopPropagation();deleteTask('${t.id}')">✕</button></td>
+  </tr>`;
+}
+
+function taskTableHeaders(showAssign=true){
+  return`<thead><tr>
+    <th>#</th><th>Tarea</th><th>Área</th><th>Proyecto</th><th>Tipo</th><th>Prioridad</th><th>Estado</th>
+    ${showAssign?'<th>Responsable</th>':''}
+    <th>F. Inicio</th><th>F. Límite</th><th>Avance</th><th>Notas</th><th></th>
+  </tr></thead>`;
+}
+
+// ══ DASHBOARD ════════════════════════════════════════════════
+function rDash(){
+  const el=document.getElementById('view-dashboard');
+  const myTasks=getMyTasks();
+  const all=DB.tareas;
+  const pending=myTasks.filter(t=>t.status!=='done');
+  const overdue=myTasks.filter(isOverdue);
+  const done=myTasks.filter(t=>t.status==='done');
+  const hoy=myTasks.filter(t=>t.due===todayStr()&&t.status!=='done');
+
+  // Streak calc
+  const streak=calcStreak();
+  const hora=new Date().getHours();
+  const saludoFinal=hora<12?'Buenos días':hora<18?'Buenas tardes':'Buenas noches';
+
+  const isLider=SESSION.rol==='lider';
+  const isCoord=SESSION.rol==='coordinador';
+
+  el.innerHTML=`
+  <div class="greeting">
+    <div class="greeting-name">${saludoFinal}, ${SESSION.nombre} 👋</div>
+    <div class="greeting-sub">${hoy.length>0?`Tienes <strong style="color:var(--gold)">${hoy.length}</strong> tarea${hoy.length>1?'s':''} para hoy.`:'Sin tareas para hoy — ¡excelente!'} Semana del ${weekStr()}.</div>
+    ${streak>0?`<div class="streak-badge">🔥 ${streak} semana${streak>1?'s':''} consecutivas completando tareas a tiempo</div>`:''}
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi ${overdue.length>0?'bad':'ok'}"><div class="kpi-val">${overdue.length}</div><div class="kpi-lbl">Vencidas</div></div>
+    <div class="kpi ${pending.length>5?'warn':'ok'}"><div class="kpi-val">${pending.length}</div><div class="kpi-lbl">Pendientes</div></div>
+    <div class="kpi ok"><div class="kpi-val">${done.length}</div><div class="kpi-lbl">Completadas</div></div>
+    <div class="kpi gold"><div class="kpi-val">${myTasks.length}</div><div class="kpi-lbl">Total</div></div>
+  </div>
+
+  ${isLider||isCoord?`
+  <div class="sh" style="margin-bottom:10px"><div class="sl">Equipo — semáforo rápido</div><button class="btn sm secondary" onclick="goView('equipo')">Ver equipo →</button></div>
+  <div class="person-grid">${getMiEquipo().map(u=>miniPersonCard(u)).join('')}</div>
+  <hr class="div">`:''}
+
+  ${hoy.length>0?`
+  <div class="sh"><div class="sl">Para hoy</div></div>
+  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${hoy.slice(0,5).map(t=>taskRow(t,false)).join('')}</tbody></table></div>
+  <hr class="div">`:''}
+
+  ${overdue.length>0?`
+  <div class="sh"><div class="sl" style="color:var(--red)">⚠ Vencidas</div></div>
+  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${overdue.map(t=>taskRow(t,false)).join('')}</tbody></table></div>`:''}
+
+  ${pending.length===0&&overdue.length===0?`<div class="empty"><div class="empty-icon">🎉</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">¡Sin pendientes!</div><div>Estás al día esta semana.</div></div>`:''}`;
+}
+
+function getMiEquipo(){
+  if(SESSION.rol==='lider')return USERS.filter(u=>u.id!==SESSION.id);
+  if(SESSION.rol==='coordinador')return USERS.filter(u=>REPORTS_TO[u.id]===SESSION.id);
+  return[];
+}
+
+function miniPersonCard(u){
+  const tareas=DB.tareas.filter(t=>t.assignedTo===u.id);
+  const pend=tareas.filter(t=>t.status!=='done');
+  const venc=tareas.filter(isOverdue);
+  const done=tareas.filter(t=>t.status==='done');
+  const pct=tareas.length>0?Math.round(done.length/tareas.length*100):0;
+  const sem=venc.length>0?'var(--red)':pend.length>4?'var(--amber)':'var(--green)';
+  return`<div class="person-card" onclick="goView('equipo')">
+    <div class="pc-head">
+      <div class="pc-av" style="background:${u.color};color:#fff">${u.nombre.charAt(0)}</div>
+      <div><div class="pc-name">${u.nombre}</div><div class="pc-area">${u.area}</div></div>
+      <div class="pc-sem" style="background:${sem}"></div>
+    </div>
+    <div class="pc-body">
+      <div style="display:flex;gap:16px;margin-bottom:6px">
+        <div style="text-align:center"><div style="font-family:'DM Mono',monospace;font-size:16px;color:${sem}">${pend.length}</div><div style="font-size:9px;color:var(--text3)">Pendientes</div></div>
+        <div style="text-align:center"><div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--red)">${venc.length}</div><div style="font-size:9px;color:var(--text3)">Vencidas</div></div>
+        <div style="text-align:center"><div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--green)">${done.length}</div><div style="font-size:9px;color:var(--text3)">Hechas</div></div>
+      </div>
+      <div class="pc-bar-wrap"><div class="pc-mini-bar" style="width:${pct}%;background:${sem}"></div></div>
+    </div>
+  </div>`;
+}
+
+function calcStreak(){
+  const myDone=DB.tareas.filter(t=>t.createdBy===SESSION.id||t.assignedTo===SESSION.id).filter(t=>t.status==='done'&&t.completedAt);
+  if(!myDone.length)return 0;
+  let streak=0;
+  const now=new Date();
+  for(let i=0;i<12;i++){
+    const wStart=new Date(now);wStart.setDate(now.getDate()-now.getDay()-(i*7)+1);wStart.setHours(0,0,0,0);
+    const wEnd=new Date(wStart);wEnd.setDate(wStart.getDate()+6);wEnd.setHours(23,59,59,999);
+    const inWeek=myDone.filter(t=>{const d=new Date(t.completedAt);return d>=wStart&&d<=wEnd;});
+    if(inWeek.length>0)streak++;else break;
+  }
+  return streak;
+}
+
+// ══ MIS TAREAS ════════════════════════════════════════════════
+function rMisTareas(){
+  const el=document.getElementById('view-mis-tareas');
+  const tareas=getMyTasks().sort((a,b)=>{
+    const p={Alta:0,Media:1,Baja:2};return(p[a.prioridad]||1)-(p[b.prioridad]||1);
+  });
+  const pend=tareas.filter(t=>t.status!=='done');
+  const done=tareas.filter(t=>t.status==='done');
+
+  el.innerHTML=`
+  ${pend.length===0?`<div class="empty"><div class="empty-icon">✓</div><div>Sin tareas pendientes.</div></div>`:`
+  <div class="sh"><div class="sl">Pendientes (${pend.length})</div></div>
+  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${pend.map(t=>taskRow(t,false)).join('')}</tbody></table></div>
+  <hr class="div">`}
+  ${done.length>0?`
+  <div class="sh"><div class="sl">Completadas recientes</div></div>
+  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${done.slice(-10).map(t=>taskRow(t,false)).join('')}</tbody></table></div>`:''}`;
+}
+
+// ══ KANBAN ════════════════════════════════════════════════════
+function rKanban(){
+  const el=document.getElementById('view-kanban');
+  const tareas=getMisTareas();
+  const cols=[
+    {key:'pending',label:'Pendientes',color:'var(--amber)'},
+    {key:'progress',label:'En proceso',color:'var(--blue)'},
+    {key:'done',label:'Completadas',color:'var(--green)'},
+    {key:'blocked',label:'Bloqueadas',color:'var(--red)'},
+  ];
+  el.innerHTML=`<div class="kanban">${cols.map(col=>{
+    const items=tareas.filter(t=>t.status===col.key);
+    return`<div class="kanban-col">
+      <div class="kanban-header">
+        <div class="kanban-title" style="color:${col.color}">${col.label}</div>
+        <div class="kanban-count">${items.length}</div>
+      </div>
+      <div class="kanban-body">
+        ${items.length===0?`<div style="text-align:center;padding:20px;font-size:11px;color:var(--text3)">Sin tareas</div>`:''}
+        ${items.map(t=>{
+          const u=userById(t.assignedTo||t.createdBy);
+          const isOver=isOverdue(t);
+          return`<div class="kanban-card" onclick="openAvanceModal('${t.id}')">
+            <div class="kc-title">${t.desc}</div>
+            <div class="kc-meta">
+              <span class="tag ${prioColor(t.prioridad)}" style="font-size:9px">${t.prioridad}</span>
+              <span class="tag muted" style="font-size:9px">${t.tipo||t.area}</span>
+              ${isOver?`<span class="tag bad" style="font-size:9px">⚠ Vencida</span>`:''}
+            </div>
+            ${t.due?`<div style="font-size:10px;color:${isOver?'var(--red)':'var(--text3)'};margin-top:4px">${fmtDate(t.due)}</div>`:''}
+            <div class="kc-assign">
+              <div class="kc-av" style="background:${u.color||'#64748B'};color:#fff">${(u.nombre||'?').charAt(0)}</div>
+              <span style="font-size:10px;color:var(--text3)">${u.nombre||'?'}</span>
+              <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${t.avance||0}%</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ══ REPORTE SEMANAL ════════════════════════════════════════════
+let compSel=null;
+function rReporte(){
+  const el=document.getElementById('view-reporte');
+  const semana=weekStr();
+  const existing=DB.reportes.find(r=>r.userId===SESSION.id&&r.semana===semana);
+  if(existing){
+    el.innerHTML=`
+    <div class="card" style="border-left:3px solid var(--green);margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:2px">✓ Reporte enviado esta semana</div>
+      <div style="font-size:11px;color:var(--text3)">Semana del ${semana}</div>
+    </div>
+    ${renderRepCard(existing)}
+    <button class="btn secondary" style="margin-top:12px" onclick="editRep()">✏ Editar reporte</button>`;
+    return;
+  }
+  compSel=null;
+  el.innerHTML=`
+  <div style="max-width:620px">
+    <div style="margin-bottom:20px">
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px">Reporte semanal — ${weekStr()}</div>
+      <div style="font-size:12px;color:var(--text3)">Llénalo antes del viernes 4pm. René lo revisa antes de la junta del lunes.</div>
+    </div>
+    ${['¿Qué avancé esta semana?','¿Qué está bloqueado y por qué?','¿Qué necesitas de René para desbloquearte?','¿Hay cambio de diseño o costo que René deba saber?'].map((q,i)=>`
+    <div style="margin-bottom:16px">
+      <label class="lbl" style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span class="pnum">${i+1}</span> ${q}</label>
+      <textarea class="input" id="r${i}" placeholder="${['Lista tareas completadas…','Solo bloqueos reales…','Acción específica o "Nada esta semana"…','Modificación que afecte specs, materiales o precio…'][i]}"></textarea>
+    </div>`).join('')}
+    <div style="margin-bottom:16px">
+      <label class="lbl" style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span class="pnum">5</span> ¿Vas a cumplir tu próxima fecha compromiso?</label>
+      <div class="comp-btns">
+        <button class="comp-btn" id="cb-ok" onclick="selComp('ok')">✓ Sí, en tiempo</button>
+        <button class="comp-btn" id="cb-warn" onclick="selComp('warn')">⚠ En riesgo</button>
+        <button class="comp-btn" id="cb-bad" onclick="selComp('bad')">✗ No voy a cumplir</button>
+      </div>
+      <input class="input" id="r-comp-nota" style="margin-top:8px;display:none" placeholder="Explica brevemente y nueva fecha propuesta…"/>
+    </div>
+    <button class="btn primary" onclick="saveReporte()">Enviar reporte →</button>
+  </div>`;
+}
+
+function selComp(v){
+  compSel=v;
+  ['ok','warn','bad'].forEach(k=>{
+    const b=document.getElementById('cb-'+k);if(b){b.className='comp-btn';if(k===v)b.classList.add('sel-'+k);}
+  });
+  const n=document.getElementById('r-comp-nota');if(n)n.style.display=(v==='warn'||v==='bad')?'block':'none';
+}
+
+function saveReporte(){
+  const vals=[0,1,2,3].map(i=>document.getElementById('r'+i)?.value.trim());
+  if(!vals[0]){showToast('Completa la pregunta 1');return;}
+  if(!compSel){showToast('Selecciona el estatus de fecha compromiso');return;}
+  const rep={id:uid(),userId:SESSION.id,semana:weekStr(),fecha:todayStr(),
+    avance:vals[0],bloqueo:vals[1],necesito:vals[2],cambio:vals[3],
+    compromiso:compSel,compNota:document.getElementById('r-comp-nota')?.value.trim(),
+    createdAt:Date.now()};
+  DB.reportes=DB.reportes.filter(r=>!(r.userId===SESSION.id&&r.semana===weekStr()));
+  DB.reportes.push(rep);
+  saveLocal();gsPush();showToast('✓ Reporte enviado');rReporte();
+}
+
+function editRep(){DB.reportes=DB.reportes.filter(r=>!(r.userId===SESSION.id&&r.semana===weekStr()));compSel=null;rReporte();}
+
+function renderRepCard(r){
+  const u=userById(r.userId);
+  const compC={ok:'var(--green)',warn:'var(--amber)',bad:'var(--red)'};
+  const compL={ok:'✓ En tiempo',warn:'⚠ En riesgo',bad:'✗ No cumplirá'};
+  return`<div class="card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="width:30px;height:30px;border-radius:50%;background:${u.color||'#64748B'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">${(u.nombre||'?').charAt(0)}</div>
+      <div><div style="font-size:13px;font-weight:600">${u.nombre} ${u.apellido||''}</div><div style="font-size:10px;color:var(--text3)">Semana del ${r.semana}</div></div>
+    </div>
+    ${[['¿Qué avancé?',r.avance],['¿Bloqueado?',r.bloqueo],['¿Necesita de René?',r.necesito],['¿Cambio de diseño/costo?',r.cambio]].map(([l,v])=>`
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);margin-bottom:4px">${l}</div>
+      <div style="font-size:12px;color:var(--text2);background:var(--surface2);border-radius:6px;padding:8px 10px;line-height:1.5">${v||'—'}</div>
+    </div>`).join('')}
+    <div style="font-size:13px;font-weight:600;color:${compC[r.compromiso]}">${compL[r.compromiso]||'—'}</div>
+    ${r.compNota?`<div style="font-size:11px;color:var(--text3);margin-top:4px">${r.compNota}</div>`:''}
+  </div>`;
+}
+
+// ══ EQUIPO ═══════════════════════════════════════════════════
+function rEquipo(){
+  const el=document.getElementById('view-equipo');
+  const equipo=getMiEquipo();
+  const areas=[...new Set(equipo.map(u=>u.area))];
+  el.innerHTML=`
+  <div style="margin-bottom:14px"><div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(true)}<tbody>${getMisTareas().filter(t=>t.status!=='done').map(t=>taskRow(t,true)).join('')}</tbody></table></div></div>`;
+}
+
+// ══ DELEGAR ══════════════════════════════════════════════════
+function rDelegar(){
+  const el=document.getElementById('view-delegar');
+  const delegadas=DB.tareas.filter(t=>t.createdBy===SESSION.id&&t.assignedTo&&t.assignedTo!==SESSION.id&&t.status!=='done');
+  el.innerHTML=delegadas.length===0?
+    `<div class="empty"><div class="empty-icon">↗</div><div>No tienes tareas delegadas activas.</div></div>`:
+    `<div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(true)}<tbody>${delegadas.map(t=>taskRow(t,true)).join('')}</tbody></table></div>`;
+}
+
+// ══ SEMÁFORO ═════════════════════════════════════════════════
+function rSemaforo(){
+  const el=document.getElementById('view-semaforo');
+  const semana=weekStr();
+  const equipo=getMiEquipo();
+  el.innerHTML=`
+  <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Semana del ${semana}</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+  ${equipo.map(u=>{
+    const rep=DB.reportes.find(r=>r.userId===u.id&&r.semana===semana);
+    const tareas=DB.tareas.filter(t=>t.assignedTo===u.id);
+    const venc=tareas.filter(isOverdue);
+    const compC={ok:'var(--green)',warn:'var(--amber)',bad:'var(--red)'};
+    const sem=!rep?'var(--text3)':compC[rep.compromiso]||'var(--text3)';
+    return`<div class="card" style="border-left:3px solid ${sem}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:34px;height:34px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff">${u.nombre.charAt(0)}</div>
+        <div><div style="font-size:13px;font-weight:600">${u.nombre} ${u.apellido}</div><div style="font-size:10px;color:var(--text3)">${u.area}</div></div>
+        ${venc.length>0?`<span class="tag bad" style="margin-left:auto">${venc.length} venc.</span>`:''}
+      </div>
+      ${rep?`
+        <div style="font-size:12px;font-weight:600;color:${sem};margin-bottom:6px">● ${{ok:'En tiempo',warn:'En riesgo',bad:'No cumplirá'}[rep.compromiso]}</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.4">${(rep.avance||'').slice(0,100)}${(rep.avance||'').length>100?'…':''}</div>
+        ${rep.bloqueo&&rep.bloqueo!=='Sin bloqueos'?`<div style="font-size:11px;color:var(--red);background:var(--red-l);border-radius:4px;padding:4px 8px;margin-top:6px">⚠ ${rep.bloqueo?.slice(0,80)}</div>`:''}
+        <button class="btn xs secondary" style="margin-top:8px" onclick="verRep('${u.id}','${semana}')">Ver reporte →</button>
+      `:`<div style="font-size:12px;color:var(--text3);font-style:italic">Sin reporte esta semana</div>`}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function verRep(uid,semana){
+  const r=DB.reportes.find(r=>r.userId===uid&&r.semana===semana);if(!r)return;
+  document.getElementById('modal-rep-content').innerHTML=renderRepCard(r);
+  document.getElementById('modal-rep').classList.add('open');
+}
+
+// ══ GANTT ════════════════════════════════════════════════════
+function rGantt(){
+  const el=document.getElementById('view-gantt');
+  const tareas=getMisTareas().filter(t=>t.due&&t.status!=='done');
+  if(tareas.length===0){el.innerHTML=`<div class="empty"><div class="empty-icon">📅</div><div>Sin tareas con fecha límite.</div></div>`;return;}
+
+  const hoy=new Date();
+  const minDate=new Date(Math.min(...tareas.map(t=>new Date(t.fechaInicio||t.due))));
+  const maxDate=new Date(Math.max(...tareas.map(t=>new Date(t.due))));
+  const totalDays=Math.max(1,Math.ceil((maxDate-minDate)/(1000*60*60*24)))+7;
+
+  // Generate week headers
+  const weeks=[];
+  const cur=new Date(minDate);
+  while(cur<=maxDate){
+    weeks.push(`${cur.getDate()}/${cur.getMonth()+1}`);
+    cur.setDate(cur.getDate()+7);
+  }
+
+  el.innerHTML=`<div class="gantt-wrap">
+  <table class="gantt-table">
+    <thead><tr>
+      <th style="min-width:200px">Tarea</th>
+      <th>Responsable</th>
+      ${weeks.map(w=>`<th style="min-width:60px;text-align:center">${w}</th>`).join('')}
+    </tr></thead>
+    <tbody>
+    ${tareas.map(t=>{
+      const u=userById(t.assignedTo||t.createdBy);
+      const start=new Date(t.fechaInicio||t.due);
+      const end=new Date(t.due);
+      const startOff=Math.max(0,Math.ceil((start-minDate)/(1000*60*60*24)));
+      const dur=Math.max(1,Math.ceil((end-start)/(1000*60*60*24)));
+      const totalCols=weeks.length;
+      const startCol=Math.floor(startOff/7);
+      const durCols=Math.max(1,Math.ceil(dur/7));
+      const isOver=isOverdue(t);
+      const cells=weeks.map((_,i)=>{
+        if(i>=startCol&&i<startCol+durCols){
+          return`<td><div class="gantt-bar" style="background:${isOver?'var(--red)':t.status==='progress'?'var(--blue)':'var(--amber)'}"></div></td>`;
+        }
+        return'<td></td>';
+      }).join('');
+      return`<tr>
+        <td style="font-size:11px;font-weight:500">${t.desc.slice(0,40)}</td>
+        <td style="font-size:10px;color:var(--text3)">${u.nombre}</td>
+        ${cells}
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+// ══ TALLER ════════════════════════════════════════════════════
+function rTaller(){
+  const el=document.getElementById('view-taller');
+  const protos=DB.prototipos||[];
+  const tareasTaller=DB.tareas.filter(t=>t.area==='Taller');
+
+  const statusOpts=['Solicitado','En proceso','Armado','Revisión','Aprobado','Rechazado'];
+  const statusColors={Solicitado:'muted',  'En proceso':'info',Armado:'warn',Revisión:'warn',Aprobado:'ok',Rechazado:'bad'};
+
+  el.innerHTML=`
+  <div class="tabs">
+    <button class="tab active" onclick="tallerTab('prototipos',this)">Prototipos (${protos.length})</button>
+    <button class="tab" onclick="tallerTab('tareas-taller',this)">Tareas del taller (${tareasTaller.length})</button>
+  </div>
+
+  <div id="taller-prototipos">
+  ${protos.length===0?`<div class="empty"><div class="empty-icon">🔨</div><div>No hay prototipos registrados.</div></div>`:''}
+  ${protos.map(p=>`<div class="proto-card">
+    <div class="proto-header">
+      <span class="tag gold" style="font-size:11px">Prototipo #${p.num}</span>
+      <div style="font-size:13px;font-weight:600;flex:1;margin-left:8px">${p.nombre}</div>
+      <span class="tag ${statusColors[p.status]||'muted'}">${p.status}</span>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${p.proyecto||'—'} · Responsable: ${p.responsable||'—'}</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${p.descripcion||''}</div>
+    <div class="proto-status">
+      ${statusOpts.map(s=>`<button class="ps-btn ${p.status===s?'active':''}" onclick="setProtoStatus('${p.id}','${s}')">${s}</button>`).join('')}
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <div class="progress-bar" style="width:120px;height:6px"><div class="progress-fill" style="width:${p.avance||0}%"></div></div>
+      <span style="font-size:10px;color:var(--text3)">${p.avance||0}%</span>
+      <button class="btn xs secondary" onclick="setProtoAvance('${p.id}')">% Avance</button>
+      <button class="btn xs danger" onclick="deleteProto('${p.id}')">✕</button>
+    </div>
+  </div>`).join('')}
+  </div>
+
+  <div id="taller-tareas-taller" style="display:none">
+  ${tareasTaller.length===0?`<div class="empty"><div class="empty-icon">✓</div><div>Sin tareas del taller.</div></div>`:`
+  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(true)}<tbody>${tareasTaller.map(t=>taskRow(t,true)).join('')}</tbody></table></div>`}
+  </div>`;
+}
+
+function tallerTab(id,btn){
+  document.querySelectorAll('#taller-prototipos,#taller-tareas-taller').forEach(el=>el.style.display='none');
+  document.getElementById('taller-'+id).style.display='block';
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setProtoStatus(id,status){
+  const p=DB.prototipos.find(p=>p.id===id);if(!p)return;
+  p.status=status;saveLocal();gsPush();rTaller();showToast('Estado actualizado');
+}
+
+function setProtoAvance(id){
+  const pct=prompt('% de avance (0-100):');
+  if(pct===null)return;
+  const p=DB.prototipos.find(p=>p.id===id);if(!p)return;
+  p.avance=Math.min(100,Math.max(0,parseInt(pct)||0));
+  saveLocal();gsPush();rTaller();
+}
+
+function deleteProto(id){
+  if(!confirm('¿Eliminar prototipo?'))return;
+  DB.prototipos=DB.prototipos.filter(p=>p.id!==id);
+  saveLocal();gsPush();rTaller();showToast('Prototipo eliminado');
+}
+
+let protoModal=null;
+function openProtoModal(){
+  const nombre=prompt('Nombre del prototipo:');if(!nombre)return;
+  const proyecto=prompt('Proyecto NPD:');
+  const responsable=prompt('Responsable del taller:');
+  const proto={id:uid(),num:(DB.prototipos.length+1),nombre,proyecto,responsable,status:'Solicitado',avance:0,descripcion:'',createdAt:Date.now()};
+  if(!DB.prototipos)DB.prototipos=[];
+  DB.prototipos.push(proto);
+  saveLocal();gsPush();rTaller();showToast('✓ Prototipo registrado');
+}
+
+// ══ EVALUACIÓN ═══════════════════════════════════════════════
+function rEval(){
+  const el=document.getElementById('view-evaluacion');
+  const u=SESSION;
+  const now=new Date();
+  const mesActual=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const mesEl=document.getElementById('eval-mes');
+  const mes=mesEl?mesEl.value:mesActual;
+
+  const tareas=DB.tareas.filter(t=>{
+    if(t.assignedTo!==u.id)return false;
+    const d=t.fechaInicio||new Date(t.createdAt).toISOString().split('T')[0];
+    return !mes||d?.slice(0,7)===mes||(t.completedAt&&new Date(t.completedAt).toISOString().slice(0,7)===mes);
+  });
+
+  const done=tareas.filter(t=>t.status==='done');
+  const prog=tareas.filter(t=>t.status==='progress');
+  const pend=tareas.filter(t=>t.status==='pending');
+  const block=tareas.filter(t=>t.status==='blocked');
+  const venc=tareas.filter(isOverdue);
+  const pct=tareas.length>0?Math.round(done.length/tareas.length*100):0;
+  const avgAv=tareas.length>0?Math.round(tareas.reduce((s,t)=>s+(t.avance||0),0)/tareas.length):0;
+  const reportes=DB.reportes.filter(r=>r.userId===u.id&&(!mes||r.semana?.slice(0,7)===mes)).length;
+  const ptScore=Math.max(0,Math.round(pct*0.5+avgAv*0.3+(reportes>0?20:0)-venc.length*5));
+  const desemp=ptScore>=90?'Excelente':ptScore>=75?'Muy bueno':ptScore>=60?'Bueno':ptScore>=40?'Regular':'Por mejorar';
+  const dColor={Excelente:'ok','Muy bueno':'ok',Bueno:'info',Regular:'warn','Por mejorar':'bad'}[desemp];
+  const scoreColor=ptScore>=75?'var(--green)':ptScore>=50?'var(--amber)':'var(--red)';
+
+  const mLabel=mes?new Date(mes+'-01').toLocaleDateString('es-MX',{month:'long',year:'numeric'}):'General';
+
+  el.innerHTML=`
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--text)">Mi evaluación de desempeño</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${u.nombre} ${u.apellido} · ${u.area}</div>
+    </div>
+    <input type="month" class="input" id="eval-mes" value="${mes}" style="width:180px;margin-left:auto" onchange="rEval()"/>
+    <button class="btn primary" onclick="generarPDFPersonal()">📄 Generar PDF</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:20px">
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+      <canvas id="eval-donut" width="140" height="140"></canvas>
+      <div style="text-align:center;margin-top:12px">
+        <div style="font-family:'DM Mono',monospace;font-size:32px;font-weight:500;color:${scoreColor}">${ptScore}</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">PT Score</div>
+        <span class="tag ${dColor}" style="margin-top:8px">${desemp}</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:start">
+      <div class="kpi ok"><div class="kpi-val">${done.length}</div><div class="kpi-lbl">Completadas</div></div>
+      <div class="kpi ${prog.length>0?'':'ok'}"><div class="kpi-val" style="color:var(--blue)">${prog.length}</div><div class="kpi-lbl">En proceso</div></div>
+      <div class="kpi ${venc.length>0?'bad':'ok'}"><div class="kpi-val">${venc.length}</div><div class="kpi-lbl">Vencidas</div></div>
+      <div class="kpi"><div class="kpi-val" style="color:var(--amber)">${pct}%</div><div class="kpi-lbl">% Cumplimiento</div></div>
+      <div class="kpi"><div class="kpi-val" style="color:var(--blue)">${avgAv}%</div><div class="kpi-lbl">Avance promedio</div></div>
+      <div class="kpi ${reportes>0?'ok':'warn'}"><div class="kpi-val">${reportes}</div><div class="kpi-lbl">Reportes enviados</div></div>
+    </div>
+  </div>
+
+  <div class="sh"><div class="sl">Mis tareas del período — ${mLabel}</div></div>
+  ${tareas.length===0?`<div class="empty"><div class="empty-icon">📋</div><div>Sin tareas en este período.</div></div>`:`
+  <div style="overflow-x:auto"><table class="task-table">
+    ${taskTableHeaders(false)}
+    <tbody>${tareas.sort((a,b)=>b.createdAt-a.createdAt).map(t=>taskRow(t,false)).join('')}</tbody>
+  </table></div>`}`;
+
+  // Draw donut after render
+  setTimeout(()=>{
+    drawDonut('eval-donut',done.length,prog.length,pend.length,block.length,tareas.length||1);
+  },50);
+}
+
+function generarPDFPersonal(){
+  const u=SESSION;
+  const mesEl=document.getElementById('eval-mes');
+  const mes=mesEl?mesEl.value:'';
+  const mLabel=mes?new Date(mes+'-01').toLocaleDateString('es-MX',{month:'long',year:'numeric'}):'General';
+  const tareas=DB.tareas.filter(t=>{
+    if(t.assignedTo!==u.id)return false;
+    const d=t.fechaInicio||new Date(t.createdAt).toISOString().split('T')[0];
+    return !mes||d?.slice(0,7)===mes||(t.completedAt&&new Date(t.completedAt).toISOString().slice(0,7)===mes);
+  });
+  const done=tareas.filter(t=>t.status==='done');
+  const venc=tareas.filter(isOverdue);
+  const pct=tareas.length>0?Math.round(done.length/tareas.length*100):0;
+  const avgAv=tareas.length>0?Math.round(tareas.reduce((s,t)=>s+(t.avance||0),0)/tareas.length):0;
+  const reportes=DB.reportes.filter(r=>r.userId===u.id&&(!mes||r.semana?.slice(0,7)===mes)).length;
+  const ptScore=Math.max(0,Math.round(pct*0.5+avgAv*0.3+(reportes>0?20:0)-venc.length*5));
+  const desemp=ptScore>=90?'Excelente':ptScore>=75?'Muy bueno':ptScore>=60?'Bueno':ptScore>=40?'Regular':'Por mejorar';
+
+  const statusLabel={pending:'Pendiente',progress:'En proceso',done:'Completada',blocked:'Bloqueada'};
+  const prioLabel={Alta:'🔴 Alta',Media:'🟡 Media',Baja:'🟢 Baja'};
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>Evaluación PT — ${u.nombre} — ${mLabel}</title>
+  <style>
+    body{font-family:Calibri,Arial,sans-serif;font-size:12px;color:#1E293B;padding:28px;background:#fff;max-width:900px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0D1B3E}
+    h1{font-size:20px;color:#0D1B3E;margin:0 0 4px}
+    h2{font-size:13px;color:#64748B;font-weight:400;margin:0}
+    .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:20px}
+    .kpi{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px;text-align:center}
+    .kv{font-size:22px;font-weight:700;color:#0D1B3E}
+    .kl{font-size:9px;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+    .score-box{background:#0D1B3E;color:#fff;border-radius:10px;padding:14px 20px;text-align:center;margin-bottom:20px}
+    .score-val{font-size:36px;font-weight:700}
+    .score-lbl{font-size:12px;opacity:.7;margin-top:2px}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:11px}
+    th{background:#0D1B3E;color:#fff;padding:8px 10px;text-align:left;font-size:10px}
+    td{padding:7px 10px;border-bottom:1px solid #F1F5F9;vertical-align:middle}
+    tr:nth-child(even)td{background:#F8FAFC}
+    .ok{color:#16A34A}.warn{color:#D97706}.bad{color:#DC2626}
+    .firma-row{display:flex;gap:40px;margin-top:48px}
+    .firma{flex:1;border-top:1px solid #1E293B;padding-top:8px;font-size:10px;color:#64748B;text-align:center}
+    .footer{margin-top:24px;font-size:9px;color:#94A3B8;display:flex;justify-content:space-between;border-top:1px solid #E2E8F0;padding-top:10px}
+  </style></head><body>
+  <div class="header">
+    <div>
+      <h1>Evaluación de Desempeño — PT Score</h1>
+      <h2>Línea Italia · Gerencia de Innovación y Diseño · ${mLabel}</h2>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#64748B">
+      <div style="font-size:14px;font-weight:700;color:#0D1B3E">${u.nombre} ${u.apellido}</div>
+      <div>${u.area} · ${u.rol}</div>
+      <div style="margin-top:4px">Generado: ${new Date().toLocaleDateString('es-MX')}</div>
+    </div>
+  </div>
+  <div class="score-box">
+    <div class="score-val">${ptScore}/100</div>
+    <div class="score-lbl">PT Score · ${desemp}</div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="kv">${tareas.length}</div><div class="kl">Tareas totales</div></div>
+    <div class="kpi"><div class="kv ok">${done.length}</div><div class="kl">Completadas</div></div>
+    <div class="kpi"><div class="kv ${pct>=80?'ok':pct>=50?'warn':'bad'}">${pct}%</div><div class="kl">% Cumplimiento</div></div>
+    <div class="kpi"><div class="kv ${venc.length>0?'bad':''}">${venc.length}</div><div class="kl">Vencidas</div></div>
+    <div class="kpi"><div class="kv">${avgAv}%</div><div class="kl">Avance prom.</div></div>
+    <div class="kpi"><div class="kv">${reportes}</div><div class="kl">Reportes</div></div>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Tarea</th><th>Área</th><th>Tipo</th><th>Prioridad</th><th>Estado</th><th>F. Inicio</th><th>F. Límite</th><th>Avance</th></tr></thead>
+    <tbody>
+    ${tareas.map((t,i)=>`<tr>
+      <td>${i+1}</td>
+      <td>${t.desc}</td>
+      <td>${t.area||'—'}</td>
+      <td>${t.tipo||'—'}</td>
+      <td>${t.prioridad||'—'}</td>
+      <td class="${t.status==='done'?'ok':t.status==='blocked'?'bad':''}">${statusLabel[t.status]||t.status}</td>
+      <td>${t.fechaInicio||'—'}</td>
+      <td class="${isOverdue(t)?'bad':''}">${t.due||'—'}</td>
+      <td>${t.avance||0}%</td>
+    </tr>`).join('')}
+    </tbody>
+  </table>
+  <div class="firma-row">
+    <div class="firma">${u.nombre} ${u.apellido}<br>Colaborador</div>
+    <div class="firma">René Orlando Esparza Martínez<br>Gerente de Innovación y Diseño</div>
+    <div class="firma">Recursos Humanos<br>Firma y sello</div>
+  </div>
+  <div class="footer">
+    <span>NOVA · Línea Italia · Sistema de Gestión de Equipo</span>
+    <span>${new Date().toLocaleString('es-MX')}</span>
+  </div>
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),600);
+}
+
+// ══ BIBLIOTECA ══════════════════════════════════════════════
+const LIBROS_DATA=[
+  {
+    id:'traccion',title:'Tracción',autor:'Gino Wickman',color:'#EF4444',
+    desc:'El sistema EOS completo para obtener control de tu negocio. Los 6 componentes que hacen que una empresa funcione: Visión, Personas, Datos, Issues, Procesos y Tracción.',
+    conceptos:[
+      {t:'Los 6 componentes del EOS',d:'Visión (todos saben a dónde va), Personas (el rol correcto), Datos (Scorecard), Issues (lista resuelta en junta), Procesos (documentados), Tracción (Rocas + reuniones de pulso).'},
+      {t:'Rocas trimestrales',d:'3-7 objetivos por trimestre con dueño y fecha. Si todo es prioridad, nada lo es. Tus Rocas activas: Anzio Light, Estaciones Abiertas, Cabina Acústica, One Shot.'},
+      {t:'Level 10 Meeting',d:'90 minutos semanales: Segue (5), Scorecard (5), Rocas (5), Titulares (5), To-do (5), IDS Issues (60), Conclude (5). Dura exactamente 90 min — sin excepción.'},
+      {t:'IDS — Identify, Discuss, Solve',d:'Todo problema en junta: Identifica en 1 oración el problema REAL, discute máx 5 min, resuelve con dueño y fecha. Sin IDS los problemas se discuten infinitamente.'},
+    ],
+    aplicacion:'Tu junta de Pulso Innovación ya tiene el 70% del Level 10. Lo que falta: formalizar el IDS para que cada issue salga con dueño y fecha, agregar el Segue y el Conclude.',
+    ejercicio:'Esta semana en tu junta del lunes: cuando aparezca un problema, di "vamos a hacer IDS". 1 oración para identificarlo, máx 5 min de discusión, dueño + fecha antes de pasar al siguiente.',
+    reflexiones:['¿Mis Rocas tienen criterio de éxito medible o son aspiraciones?','¿Los Issues de mi lista tienen dueño y fecha?','¿Mi junta dura exactamente 90 min?','¿El equipo conoce las Rocas sin que yo se las recuerde?'],
+    eval:[{p:'¿Tienes Rocas trimestrales con criterio de éxito medible?',w:3},{p:'¿Cada Issue de tu lista tiene dueño y fecha?',w:3},{p:'¿Tu junta semanal tiene los 7 segmentos del Level 10?',w:2},{p:'¿El equipo conoce las Rocas sin que tú se las recuerdes?',w:2}]
+  },
+  {
+    id:'eos-empleados',title:'¿Qué rayos es EOS?',autor:'Gino Wickman & Tom Bouwer',color:'#F97316',
+    desc:'La guía para empleados que trabajan en empresas con EOS. Explica cómo participar, qué se espera de ti y cómo aprovechar el sistema.',
+    conceptos:[
+      {t:'Tu rol en EOS como colaborador',d:'Entender que tú eres parte del sistema. Tus Rocas, tus To-dos, tu participación en las juntas no son opcional — son el mecanismo que hace funcionar a toda la empresa.'},
+      {t:'Cómo participar en el Level 10',d:'Llegar preparado. El Scorecard lleno antes de la junta. Los Issues identificados. Los To-dos revisados. La junta es para decidir, no para enterarse.'},
+      {t:'La cultura de accountability',d:'Cuando dices que vas a hacer algo, lo haces. No esperas que te recuerden. No hay excusas — hay contexto y hay nuevas fechas, pero siempre hay responsabilidad.'},
+      {t:'Pedir el balón',d:'La persona de EOS levanta la mano cuando hay problemas, propone soluciones, no espera que el jefe traiga las iniciativas. Esto conecta directamente con el valor de Proactividad de Línea Italia.'},
+    ],
+    aplicacion:'En tu equipo: Ramón, Paco, Paulina, Alexis, Brenda — todos deben entender que el reporte semanal, las Rocas y los Issues no son burocracia. Son el sistema que los hace crecer.',
+    ejercicio:'Comparte este libro con tu equipo esta semana. Páginas 1-50 antes del próximo lunes. Agenda 20 minutos en la junta para discutir: ¿qué cambiaría en nuestro equipo si todos viviéramos estos principios?',
+    reflexiones:['¿Mi equipo entiende por qué existe el Level 10 Meeting?','¿Alexis participa activamente en las juntas o solo escucha?','¿El equipo propone Issues o espera que yo los identifique?','¿El reporte semanal se ve como burocracia o como herramienta?'],
+    eval:[{p:'¿Tu equipo entiende el propósito del Level 10 Meeting?',w:3},{p:'¿Cada persona tiene Rocas propias este trimestre?',w:3},{p:'¿El equipo llega a la junta con los To-dos revisados?',w:2},{p:'¿Alguien del equipo propuso un Issue esta semana sin que tú lo pidieras?',w:2}]
+  },
+  {
+    id:'carnegie',title:'Cómo ganar amigos e influir sobre las personas',autor:'Dale Carnegie',color:'#8B5CF6',
+    desc:'El clásico de liderazgo e influencia. Principios atemporales para ganarse la confianza y el respeto de las personas, comunicarse efectivamente y resolver conflictos.',
+    conceptos:[
+      {t:'No critiques, no condenes, no te quejes',d:'La crítica genera resentimiento, no cambio. Cuando Alexis falla en fechas, la conversación que diseñamos — directa pero empática — es Carnegie puro: reconoces antes de señalar.'},
+      {t:'Elogio sincero y específico',d:'No "buen trabajo". Sino: "Alexis, el reporte del viernes llegó a tiempo y tenía exactamente la información que necesitaba para la junta del lunes — eso es lo que espero." Así funciona el elogio.'},
+      {t:'Habla de los intereses del otro',d:'Para negociar con manufactura el tiempo de prototipado: primero entiende qué les duele a ellos. "¿Qué es lo más difícil para ti cuando te pedimos prototipos urgentes?" Eso abre la negociación real.'},
+      {t:'Haz que el otro se sienta importante',d:'Brenda lleva casi 2 años con datos perfectos. ¿Se lo has dicho explícitamente en términos de impacto para el departamento? Eso consolida la lealtad más que cualquier aumento.'},
+    ],
+    aplicacion:'Antes de tu próxima conversación difícil — con manufactura, con Alexis, con tu jefe — escribe en papel qué es lo que quiere la otra persona. Diseña tu propuesta como solución a su problema, no al tuyo.',
+    ejercicio:'Esta semana: da un elogio específico (no general) a alguien de tu equipo en la junta. Y antes de la conversación con manufactura, pregunta "¿qué es lo más difícil para ti cuando les pedimos prototipos?" Escucha primero.',
+    reflexiones:['¿La última vez que felicité a alguien fue específico o genérico?','¿Entiendo qué quiere manufactura antes de pedirles algo?','¿Mis conversaciones difíciles empiezan con reconocimiento o con el problema?','¿Mi equipo sabe que valoro su trabajo específicamente?'],
+    eval:[{p:'¿Diste un elogio específico (no general) a alguien esta semana?',w:3},{p:'¿Antes de negociar con otra área, entiendes primero qué quieren ellos?',w:3},{p:'¿Tus conversaciones difíciles empiezan con reconocimiento?',w:2},{p:'¿Brenda, Ramón o Paco saben que reconoces su trabajo de manera específica?',w:2}]
+  },
+  {
+    id:'compromise',title:'Compromiso excepcional',autor:'Jocko Willink & Leif Babin',color:'#22C55E',
+    desc:'Lecciones de los SEAL para liderar equipos en entornos de alta presión. Extreme Ownership: el líder es responsable de todo lo que pasa en su equipo, sin excepciones.',
+    conceptos:[
+      {t:'Extreme Ownership — el líder es responsable de todo',d:'Si Alexis no cumple fechas, es responsabilidad tuya — no porque seas el culpable, sino porque tú eres quien diseña el sistema, pone las expectativas y da el seguimiento. No hay "es que él no…". Hay "yo no hice X".'},
+      {t:'Decentralized Command — delegar autoridad real',d:'Los mejores líderes delegan decisiones reales, no solo tareas. Cuando le das a Alexis la responsabilidad de coordinar ingeniería, tiene que poder decidir sin preguntarte. Si siempre te pregunta, no delegaste — asignaste.'},
+      {t:'Cover and Move — trabajo en equipo cross-área',d:'Tu problema con manufactura no es "ellos vs nosotros". Es que los dos equipos tienen el mismo objetivo: productos excelentes. La estrategia de negociación es encontrar ese objetivo común y construir desde ahí.'},
+      {t:'Simple — la claridad elimina el caos',d:'Si Alexis no sabe exactamente qué se espera de él esta semana, el caos es predecible. 3 compromisos concretos al inicio de la semana, revisión al final. Simple. Repetible. Efectivo.'},
+    ],
+    aplicacion:'Extreme Ownership en tu departamento: la próxima vez que algo salga mal — un prototipo tarde, un folio con error, un proyecto estancado — antes de preguntar qué hizo mal el equipo, pregúntate qué podrías haber hecho tú diferente.',
+    ejercicio:'Esta semana: elige un problema recurrente en tu departamento. Escribe en papel cómo tu sistema (o falta de él) contribuyó a ese problema. Luego escribe qué cambias tú — no qué debe cambiar el equipo.',
+    reflexiones:['¿Hay algún problema recurrente que en realidad es un problema de sistema, no de persona?','¿Alexis tiene autoridad real para tomar decisiones en ingeniería o me pregunta todo?','¿Mi equipo entiende claramente sus 3 prioridades esta semana?','¿Actúo como si fuera responsable de todo lo que pasa en mi equipo?'],
+    eval:[{p:'¿Puedes identificar cómo tu sistema contribuyó al último problema de tu equipo?',w:3},{p:'¿Alexis puede tomar decisiones de ingeniería sin consultarte?',w:3},{p:'¿Tu equipo tiene 3 prioridades claras y concretas cada lunes?',w:2},{p:'¿Cuando algo sale mal, tu primer análisis empieza por ti mismo?',w:2}]
+  },
+];
+
+function rBiblioteca(){
+  const el=document.getElementById('view-biblioteca');
+  if(!DB.eval_progreso)DB.eval_progreso={};
+
+  el.innerHTML=`
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px">
+    <div class="kpi gold"><div class="kpi-val">${LIBROS_DATA.filter(l=>getNivel(l.id).pct>=80).length}</div><div class="kpi-lbl">Dominados</div></div>
+    <div class="kpi ok"><div class="kpi-val">${LIBROS_DATA.filter(l=>{const p=getNivel(l.id).pct;return p>=50&&p<80;}).length}</div><div class="kpi-lbl">Practicando</div></div>
+  </div>
+  ${LIBROS_DATA.map(l=>libroCard(l)).join('')}`;
+}
+
+function getNivel(id){
+  const resp=(DB.eval_progreso||{})[id]||{};
+  const lib=LIBROS_DATA.find(l=>l.id===id);if(!lib)return{pct:0,label:'Por iniciar',color:'var(--text3)'};
+  let tot=0,max=0;
+  lib.eval.forEach((q,i)=>{max+=q.w;if(resp[i]===true)tot+=q.w;});
+  const pct=max>0?Math.round(tot/max*100):0;
+  const label=pct>=80?'Dominado':pct>=50?'Practicando':pct>=20?'Conocido':'Por iniciar';
+  const color=pct>=80?'var(--green)':pct>=50?'var(--amber)':pct>=20?'var(--blue)':'var(--text3)';
+  return{pct,label,color};
+}
+
+function libroCard(l){
+  const nv=getNivel(l.id);
+  const activeTab=(DB.eval_progreso||{})[l.id+'_tab']||'conceptos';
+  const isOpen=(DB.eval_progreso||{})[l.id+'_open']||false;
+  const resp=(DB.eval_progreso||{})[l.id]||{};
+
+  const tabContent={
+    conceptos:`${l.conceptos.map(c=>`<div style="padding:10px 0;border-bottom:1px solid var(--border2)"><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">${c.t}</div><div style="font-size:12px;color:var(--text2);line-height:1.5">${c.d}</div></div>`).join('')}`,
+    aplicacion:`<div style="background:var(--surface2);border-left:3px solid ${l.color};border-radius:0 var(--r) var(--r) 0;padding:12px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${l.color};margin-bottom:6px">Cómo aplica en tu departamento</div><div style="font-size:12px;color:var(--text2);line-height:1.6">${l.aplicacion}</div></div>`,
+    ejercicio:`<div style="background:var(--surface2);border-left:3px solid var(--gold);border-radius:0 var(--r) var(--r) 0;padding:12px;margin-bottom:12px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);margin-bottom:6px">Ejercicio de esta semana</div><div style="font-size:12px;color:var(--text2);line-height:1.6">${l.ejercicio}</div></div>`,
+    reflexion:`<div style="font-size:10px;color:var(--text3);margin-bottom:10px">Preguntas para tu bloque del viernes 4-5pm</div>${l.reflexiones.map((r,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border2)"><span class="pnum">${i+1}</span><div style="font-size:12px;color:var(--text);line-height:1.4;font-style:italic">"${r}"</div></div>`).join('')}`,
+    evaluacion:`<div style="font-size:11px;color:var(--text3);margin-bottom:12px">Responde honestamente. El sistema calcula tu nivel de dominio real.</div>
+    ${l.eval.map((q,i)=>`<div class="eval-q"><div class="eval-q-text">${q.p}</div><div class="eval-btns">
+      <button class="eval-btn ${resp[i]===true?'sel-si':''}" onclick="evalResp('${l.id}',${i},true)">✓ Sí</button>
+      <button class="eval-btn ${resp[i]===false?'sel-no':''}" onclick="evalResp('${l.id}',${i},false)">✗ No</button>
+    </div></div>`).join('')}
+    <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:var(--r);text-align:center;border:1px solid ${nv.color}40">
+      <div style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:${nv.color}">${nv.pct}%</div>
+      <div style="font-size:12px;font-weight:600;color:${nv.color};margin-top:4px">${nv.label}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">${nv.pct<20?'Empieza con el ejercicio práctico esta semana.':nv.pct<50?'Sigue aplicando — el hábito tarda 21 días.':nv.pct<80?'Vas bien. ¿Qué pregunta falta?':'¡Nivel experto! Enseña este concepto a tu equipo.'}</div>
+    </div>`,
+  };
+
+  return`<div class="libro-card">
+    <div class="libro-header" onclick="toggleLibro('${l.id}')">
+      <div class="libro-cover" style="background:${l.color}22;border:1px solid ${l.color}33">${l.id==='traccion'?'📗':l.id==='eos-empleados'?'📙':l.id==='carnegie'?'📕':'📘'}</div>
+      <div class="libro-info">
+        <div class="libro-title">${l.title}</div>
+        <div class="libro-autor">${l.autor}</div>
+        <div class="libro-prog">
+          <div class="libro-bar"><div class="libro-bar-fill" style="width:${nv.pct}%;background:${nv.color}"></div></div>
+          <div class="libro-pct">${nv.pct}% · ${nv.label}</div>
+        </div>
+      </div>
+      <div style="font-size:16px;color:var(--text3);transition:transform .2s;transform:rotate(${isOpen?90:0}deg)">›</div>
+    </div>
+    <div class="libro-body ${isOpen?'open':''}" id="libro-body-${l.id}">
+      <div class="libro-tabs">
+        ${['conceptos','aplicacion','ejercicio','reflexion','evaluacion'].map(t=>`
+        <button class="libro-tab ${activeTab===t?'active':''}" onclick="setLibroTab('${l.id}','${t}')">${{conceptos:'💡',aplicacion:'🏭',ejercicio:'💪',reflexion:'🪞',evaluacion:'📊'}[t]} ${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('')}
+      </div>
+      <div class="libro-content" id="libro-content-${l.id}">${tabContent[activeTab]||''}</div>
+    </div>
+  </div>`;
+}
+
+function toggleLibro(id){
+  if(!DB.eval_progreso)DB.eval_progreso={};
+  DB.eval_progreso[id+'_open']=!DB.eval_progreso[id+'_open'];
+  saveLocal();rBiblioteca();
+}
+
+function setLibroTab(id,tab){
+  if(!DB.eval_progreso)DB.eval_progreso={};
+  DB.eval_progreso[id+'_tab']=tab;
+  saveLocal();rBiblioteca();
+}
+
+function evalResp(libroId,idx,val){
+  if(!DB.eval_progreso)DB.eval_progreso={};
+  if(!DB.eval_progreso[libroId])DB.eval_progreso[libroId]={};
+  DB.eval_progreso[libroId][idx]=val;
+  saveLocal();gsPush();rBiblioteca();
+}
+
+// ══ VALORES ══════════════════════════════════════════════════
+const VALORES_DATA=[
+  {
+    id:'proactividad',icon:'⚡',title:'Proactividad',sub:'Proattivitá',color:'#F59E0B',
+    que:'Tener iniciativa. Buscar soluciones, adelantarse a los problemas, proponer, levantar la mano, ser activos y detonadores.',
+    como:['Una persona proactiva siempre busca el cómo SÍ.','Se adelanta por su propia iniciativa a mejorar procesos y evitar problemas.','Busca cumplir los objetivos que tiene tanto ella como su departamento.','No se conforma con el trabajo que tiene, no vive en su zona de confort.','Siempre estará activa haciendo nuevas iniciativas y terminando sus objetivos.'],
+    no:['Ser pasivo, esperar órdenes, esperar a que digan qué hacer.','Esperar a que el jefe traiga la iniciativa y esté encima para lograrla.','Vivir en el mañana: mañana lo entrego, mañana lo hago.','Hacer tiempo libre para visitar otras áreas sin adelantar proyectos.'],
+    ejemplo:'Ingeniería: Desarrollar nuevos productos que tengan tendencia en el mercado, no esperar a que ventas diga qué hacer.',
+  },
+  {
+    id:'efectivos',icon:'🎯',title:'Efectivos y Cumplidos',sub:'Siamo Efficaci e Realizzati',color:'#22C55E',
+    que:'Una persona que cumple en lo que se compromete. Responsable en todo aspecto, constante y disciplinada con lo que inicia. Cumple por su propia voluntad.',
+    como:['Es una persona que dice "Yo me encargo".','Fija sus propias fechas de entrega y revisión.','Cumple su palabra respetando las fechas establecidas.','Se esfuerza para que el primer entregable sea correcto.','Cumple con todas sus Rocas establecidas en el trimestre.'],
+    no:['No se hace responsable de las fallas de su área, culpa a otros.','Pasan días, semanas y meses sin entregar ningún resultado palpable.','Cumple solo cuando se le recuerda. No lleva lista de actividades.','No da seguimiento a su proyecto cuando pasa por otras áreas.'],
+    ejemplo:'Ingeniería: Entrega en tiempo y forma los productos nuevos solicitados. No se equivoca constantemente y genera reingenerías.',
+  },
+  {
+    id:'lideres',icon:'🦁',title:'Somos Buenos Líderes',sub:'Siamo Buoni Leader',color:'#3B82F6',
+    que:'Persona seria, profesional y responsable moral y éticamente. Toma buenas decisiones con respecto a su equipo. Tiene visión y es buen estratega. Su equipo lo sigue por convicción.',
+    como:['Lidera en 360 grados: hacia abajo, hacia los lados y hacia arriba.','Constantemente se capacita. Ha leído los libros institucionales.','Administra bien sus tiempos, actividades y calendarios.','Se acerca con su equipo, se preocupa por ellos, busca ayudarles.','Está cómodo "en medio de un huracán". Pide el balón, da la cara.'],
+    no:['Delega el trabajo pero no conoce sus KPIs ni sabe usar los sistemas.','Cree que ser buen líder solo aplica a quien tiene reportes directos.','Le da miedo tocar temas difíciles con su equipo.','Huye de los nuevos retos, prefiere su zona de confort.'],
+    ejemplo:'Ingeniería: Mejora continua, lidera a otras áreas operativas en una forma más eficiente de producción. Los capacita.',
+  },
+  {
+    id:'francos',icon:'💎',title:'Francos y Transparentes',sub:'Schietto e Trasparente',color:'#A78BFA',
+    que:'Una persona transparente dice los problemas como son, sin miedo a molestar, siempre siendo profesional. No es doble cara. Levanta la mano, habla de inconformidades justificadas.',
+    como:['Evita y odia los chismes y conversaciones sobre otros empleados.','No dice mentiras. No oculta sus errores operativos, no maquilla resultados.','Mantiene el mismo nivel de profesionalismo con todos los empleados.','Demuestra humildad, no tiene miedo a verse vulnerable por no saber algo.','Toma la iniciativa para acercarse a resolver problemas directamente.'],
+    no:['Esconde comentarios en junta para después pasárselos a personas que no estuvieron.','Es radiopasillero, distrayendo a los demás con el chisme del día.','Forma grupos donde se critican decisiones institucionales.','Revela información confidencial como aumentos, contrataciones o liquidaciones.'],
+    ejemplo:'Ingeniería: Levantan la mano sin miedo con comercial, pero de manera profesional cuando la solicitud que piden no es viable.',
+  },
+];
+
+function rValores(){
+  const el=document.getElementById('view-valores');
+  el.innerHTML=`
+  <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Los 4 valores medulares de Línea Italia · Nostri Valori</div>
+  ${VALORES_DATA.map(v=>{
+    const isOpen=(DB.eval_progreso||{})[v.id+'_val_open']||false;
+    return`<div class="valor-card ${isOpen?'active':''}" onclick="toggleValor('${v.id}')">
+      <div class="valor-header">
+        <div class="valor-icon">${v.icon}</div>
+        <div><div class="valor-title" style="color:${v.color}">${v.title}</div><div class="valor-sub">${v.sub}</div></div>
+        <div style="margin-left:auto;font-size:16px;color:var(--text3)">›</div>
+      </div>
+      <div class="valor-body ${isOpen?'open':''}">
+        <div class="valor-section">
+          <div class="valor-section-title">¿Qué es?</div>
+          <div class="valor-text">${v.que}</div>
+        </div>
+        <div class="valor-section">
+          <div class="valor-section-title">¿Cómo se ve?</div>
+          ${v.como.map(c=>`<div class="valor-text" style="padding:4px 0;border-bottom:1px solid var(--border2)">✓ ${c}</div>`).join('')}
+        </div>
+        <div class="valor-section">
+          <div class="valor-section-title" style="color:var(--red)">Lo que NO es</div>
+          ${v.no.map(n=>`<div class="valor-text" style="padding:4px 0;border-bottom:1px solid var(--border2)">✗ ${n}</div>`).join('')}
+        </div>
+        <div class="valor-section">
+          <div class="valor-section-title">Ejemplo en Ingeniería</div>
+          <div class="valor-text" style="background:var(--surface2);padding:10px;border-radius:var(--r);border-left:3px solid ${v.color}">${v.ejemplo}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function toggleValor(id){
+  if(!DB.eval_progreso)DB.eval_progreso={};
+  DB.eval_progreso[id+'_val_open']=!DB.eval_progreso[id+'_val_open'];
+  saveLocal();rValores();
+}
+
+// ══ VTO ══════════════════════════════════════════════════════
+function rVto(){
+  const el=document.getElementById('view-vto');
+  el.innerHTML=`
+  <div style="max-width:800px">
+    <div class="card" style="border-left:3px solid var(--gold);margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:8px">Misión + Visión · Enfoque Medular</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);line-height:1.5">"Ser la marca de muebles de oficina más reconocida de México, con el mejor servicio a nuestros clientes, y con el mejor ambiente de trabajo de todo el país."</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="card">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:10px">Perspectiva a 3 años · 2027</div>
+        ${['Top 3 empresas en México de muebles para oficina','8 showrooms más en todo el país','50+ asesores de ventas propios','Líneas de productos reconocidas por diseño y funcionalidad','Mejor empresa para trabajar en el Estado','72 MDP de utilidad operación mensual','45 MDP de flujo de operaciones anual'].map(i=>`<div style="font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border2);line-height:1.3">• ${i}</div>`).join('')}
+      </div>
+      <div class="card">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--purple);margin-bottom:10px">Perspectiva a 10 años · 2034</div>
+        ${['Top 1 empresa en México de muebles para oficina','15+ showrooms propios en todo el país','6 showrooms en USA','120+ asesores en México','Cultura organizacional reconocida en Latinoamérica','30,000 m² de fábrica','Marca reconocida en EE.UU. y Canadá','1,000+ empleados'].map(i=>`<div style="font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border2);line-height:1.3">• ${i}</div>`).join('')}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin-bottom:12px">Valores Medulares</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+        ${VALORES_DATA.map(v=>`<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:var(--r);padding:10px;border-left:3px solid ${v.color}">
+          <span style="font-size:20px">${v.icon}</span>
+          <div><div style="font-size:12px;font-weight:600;color:${v.color}">${v.title}</div><div style="font-size:10px;color:var(--text3)">${v.sub}</div></div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:10px">Objetivos Estratégicos 2025</div>
+      ${[
+        {n:'1',t:'Reclutar y entrenar nuevos asesores comerciales',d:'Desarrollar la capacidad para que en 3-4 meses sean los mejores de la industria.'},
+        {n:'2',t:'Nueva infraestructura comercial sistemática',d:'Showrooms, oficinas, exhibiciones de alta calidad e independiente de gerencias comerciales.'},
+        {n:'3',t:'Unificar mejores prácticas comerciales',d:'Estandarizar cómo prospectamos, cazamos y cuidamos clientes. Atacar en manada.'},
+        {n:'4',t:'Capacidad financiera — análisis, control, contraloría',d:'Que CYF pueda hacer análisis financiero, control presupuestal y contraloría de manera autónoma.'},
+        {n:'5',t:'Líneas de productos AAA',d:'Desarrollar productos de calidad que no parezcan de Línea Italia — que sorprendan.'},
+        {n:'6',t:'Área de mejora continua — $5MDP de ahorros anuales',d:'Proyectos de reducción de costos, incremento de productividad, reducción de gastos generales.'},
+        {n:'7',t:'Cultura consistente en todas las gerencias',d:'Responsabilizar a todas las gerencias de la misma manera. Meritocracia y justicia.'},
+      ].map(o=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border2)">
+        <div style="width:24px;height:24px;border-radius:50%;background:var(--gold3);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0">${o.n}</div>
+        <div><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px">${o.t}</div><div style="font-size:11px;color:var(--text3);line-height:1.4">${o.d}</div></div>
+      </div>`).join('')}
+    </div>
+
+    <div class="card">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:10px">Tu rol como Gerente de Innovación en el VTO</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7">
+        El objetivo estratégico #6 te pertenece directamente: <strong style="color:var(--gold)">desarrollar el área de mejora continua para generar $5MDP de ahorros anuales</strong>. Tu departamento de Ingeniería, en conjunto con producción y manufactura, es el motor de ese objetivo.<br><br>
+        El objetivo #5 también: <strong style="color:var(--gold)">líneas de productos AAA que sorprendan</strong>. Eso es exactamente tu portafolio NPD con 16 proyectos activos.<br><br>
+        Cuando tu departamento funciona con la metodología MGID — Scorecard activo, Level 10 Meeting, KPIs claros, equipo desarrollado — estás contribuyendo directamente a la visión de Línea Italia en 2027 y 2034.
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══ MODAL TAREA ══════════════════════════════════════════════
+let tareaNum=1;
+function openTareaModal(delegando=false){
+  tareaNum=DB.tareas.length+1;
+  document.getElementById('mt-title').textContent=delegando?'↗ Delegar tarea':'📋 Nueva tarea';
+  document.getElementById('t-desc').value='';
+  document.getElementById('t-notes').value='';
+  document.getElementById('t-due').value='';
+  document.getElementById('t-prior').value='Media';
+  document.getElementById('t-area').value='General';
+  document.getElementById('t-tipo').value='Tarea';
+  document.getElementById('t-proyecto').value='';
+  const wrap=document.getElementById('t-assign-wrap');
+  const canAssign=delegando||(SESSION?.rol==='lider'||SESSION?.rol==='coordinador');
+  wrap.style.display=canAssign?'block':'none';
+  document.getElementById('modal-tarea').classList.add('open');
+}
+
+document.getElementById('btn-save-tarea').onclick=()=>{
+  const desc=document.getElementById('t-desc').value.trim();
+  if(!desc){showToast('Escribe la descripción');return;}
+  const wrap=document.getElementById('t-assign-wrap');
+  const canAssign=wrap.style.display!=='none';
+  const assignedTo=canAssign?document.getElementById('t-assign').value:SESSION.id;
+  const t={
+    id:uid(),num:DB.tareas.length+1,desc,
+    area:document.getElementById('t-area').value,
+    proyecto:document.getElementById('t-proyecto').value.trim(),
+    tipo:document.getElementById('t-tipo').value,
+    prioridad:document.getElementById('t-prior').value,
+    status:'pending',avance:0,
+    assignedTo:assignedTo||SESSION.id,
+    createdBy:SESSION.id,
+    due:document.getElementById('t-due').value||null,
+    notas:document.getElementById('t-notes').value.trim(),
+    fechaInicio:todayStr(),createdAt:Date.now(),updatedAt:Date.now(),completedAt:null,
+  };
+  DB.tareas.push(t);
+  saveLocal();gsPush();closeModal('modal-tarea');
+  renderView(currentView);updateBadges();
+  showToast('✓ Tarea guardada');
+};
+
+// ══ MODAL AVANCE ══════════════════════════════════════════════
+function openAvanceModal(id){
+  const t=DB.tareas.find(t=>t.id===id);if(!t)return;
+  avanceTargetId=id;
+  document.getElementById('av-pct').value=t.avance||0;
+  document.getElementById('av-status').value=t.status||'pending';
+  document.getElementById('av-nota').value='';
+  document.getElementById('modal-avance').classList.add('open');
+}
+
+document.getElementById('btn-save-av').onclick=()=>{
+  const t=DB.tareas.find(t=>t.id===avanceTargetId);if(!t)return;
+  t.avance=Math.min(100,Math.max(0,parseInt(document.getElementById('av-pct').value)||0));
+  t.status=document.getElementById('av-status').value;
+  t.updatedAt=Date.now();
+  if(t.status==='done'){t.avance=100;t.completedAt=Date.now();}
+  const nota=document.getElementById('av-nota').value.trim();
+  if(nota){if(!t.historial)t.historial=[];t.historial.push({fecha:todayStr(),nota,avance:t.avance});}
+  saveLocal();gsPush();closeModal('modal-avance');
+  renderView(currentView);updateBadges();
+  showToast('✓ Avance actualizado');
+};
+
+function deleteTask(id){
+  if(!confirm('¿Eliminar esta tarea?'))return;
+  DB.tareas=DB.tareas.filter(t=>t.id!==id);
+  saveLocal();gsPush();renderView(currentView);updateBadges();
+  showToast('Tarea eliminada');
+}
+
+function updateBadges(){
+  // Badge removido — delegar eliminado
+}
+
+// ══ CONTROL DE ACCESOS (solo René) ═══════════════════════════
+function rAccesos(){
+  if(SESSION.rol!=='lider'){
+    document.getElementById('view-accesos').innerHTML=`<div class="empty"><div class="empty-icon">🔐</div><div>Acceso restringido — solo el gerente.</div></div>`;
+    return;
+  }
+  const el=document.getElementById('view-accesos');
+
+  // Load custom users from DB
+  if(!DB.usuarios_custom)DB.usuarios_custom=[...USERS];
+
+  el.innerHTML=`
+  <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Gestión de usuarios de NOVA Equipo · Solo visible para el Gerente</div>
+
+  <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn primary" onclick="abrirNuevoUsuario()">+ Nuevo usuario</button>
+  </div>
+
+  <div style="overflow-x:auto"><table class="task-table">
+    <thead><tr>
+      <th>Usuario</th><th>Nombre</th><th>Apellido</th><th>Área</th><th>Rol</th><th>Contraseña</th><th>Estado</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${USERS.map(u=>`<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${u.id}</td>
+      <td><div style="display:flex;align-items:center;gap:8px">
+        <div style="width:26px;height:26px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${u.nombre.charAt(0)}</div>
+        <span style="font-size:12px;font-weight:500">${u.nombre}</span>
+      </div></td>
+      <td style="font-size:12px;color:var(--text2)">${u.apellido}</td>
+      <td><span class="tag muted">${u.area}</span></td>
+      <td><span class="tag ${u.rol==='lider'?'gold':u.rol==='coordinador'?'info':u.rol==='becario'?'muted':'ok'}">${u.rol}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${u.pass}</td>
+      <td><span class="tag ok">Activo</span></td>
+      <td>
+        <button class="btn xs secondary" onclick="editarContrasena('${u.id}','${u.pass}')">✏ Contraseña</button>
+      </td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>
+
+  <div class="card" style="margin-top:16px;border-left:3px solid var(--amber)">
+    <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:6px">⚠ Notas importantes</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8">
+      • Para cambiar la contraseña de un usuario haz clic en <strong>✏ Contraseña</strong><br>
+      • El ID de usuario no se puede cambiar — es el identificador interno del sistema<br>
+      • Si necesitas agregar un usuario nuevo, usa el botón <strong>+ Nuevo usuario</strong><br>
+      • Los cambios de contraseña aplican inmediatamente — informa al usuario su nueva contraseña
+    </div>
+  </div>`;
+}
+
+function editarContrasena(userId, passActual){
+  const nueva=prompt(`Nueva contraseña para ${userId} (actual: ${passActual}):`);
+  if(!nueva||nueva.trim()==='')return;
+  const u=USERS.find(u=>u.id===userId);
+  if(u){u.pass=nueva.trim();showToast(`✓ Contraseña de ${u.nombre} actualizada`);rAccesos();}
+}
+
+function abrirNuevoUsuario(){
+  const id=prompt('ID del usuario (sin espacios, minúsculas. Ej: pedro):');
+  if(!id||id.trim()==='')return;
+  if(USERS.find(u=>u.id===id.trim())){showToast('Ese ID ya existe');return;}
+  const nombre=prompt('Nombre:');if(!nombre)return;
+  const apellido=prompt('Apellido:');if(!apellido)return;
+  const area=prompt('Área (NPD / Ingeniería / Costos / General):');if(!area)return;
+  const rol=prompt('Rol (lider / coordinador / ingeniero / auxiliar / becario):');if(!rol)return;
+  const pass=prompt('Contraseña inicial:');if(!pass)return;
+  const colores=['#3B82F6','#8B5CF6','#2DD4BF','#F59E0B','#EF4444','#22C55E','#A78BFA'];
+  const color=colores[Math.floor(Math.random()*colores.length)];
+  USERS.push({id:id.trim(),nombre:nombre.trim(),apellido:apellido.trim(),rol:rol.trim(),area:area.trim(),color,pass:pass.trim()});
+  showToast(`✓ Usuario ${nombre} creado. Contraseña: ${pass}`);
+  rAccesos();
+}
+
+
+
+// ══ WELCOME MODAL ════════════════════════════════════════════
+function showWelcome(){
+  if(!SESSION)return;
+  const dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const now=new Date();
+  const hora=now.getHours();
+  const saludo=hora<12?'Buenos días':hora<18?'Buenas tardes':'Buenas noches';
+  document.getElementById('wm-date').textContent=`${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+  document.getElementById('wm-name').textContent=`${saludo}, ${SESSION.nombre} 👋`;
+
+  const myTasks=getMyTasks();
+  const hoy=todayStr();
+  const weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+(7-weekEnd.getDay()));
+  const weekEndStr=weekEnd.toISOString().split('T')[0];
+
+  // Sub info
+  const pendientes=myTasks.filter(t=>t.status!=='done').length;
+  document.getElementById('wm-sub').textContent=`${pendientes} tarea${pendientes!==1?'s':''} pendiente${pendientes!==1?'s':''} · Semana del ${weekStr()}`;
+
+  // Críticas
+  const criticas=myTasks.filter(t=>t.status!=='done'&&(isOverdue(t)||t.prioridad==='Alta')).slice(0,5);
+  document.getElementById('wm-criticas').innerHTML=criticas.length===0?
+    `<div style="font-size:12px;color:var(--green);font-style:italic">✓ Sin tareas críticas</div>`:
+    criticas.map(t=>`<div class="ws-item">
+      <span style="font-size:10px">${isOverdue(t)?'🔴':'🟡'}</span>
+      <span style="flex:1;font-size:11px">${t.desc.slice(0,45)}${t.desc.length>45?'…':''}</span>
+      <span class="pct-badge" style="background:${isOverdue(t)?'var(--red-l)':'var(--amber-l)'};color:${isOverdue(t)?'var(--red)':'var(--amber)'}">${t.avance||0}%</span>
+    </div>`).join('');
+
+  // Vencen esta semana
+  const semana=myTasks.filter(t=>t.status!=='done'&&t.due&&t.due>=hoy&&t.due<=weekEndStr).slice(0,5);
+  document.getElementById('wm-semana').innerHTML=semana.length===0?
+    `<div style="font-size:12px;color:var(--text3);font-style:italic">Sin vencimientos esta semana</div>`:
+    semana.map(t=>`<div class="ws-item">
+      <span style="font-size:10px">📅</span>
+      <span style="flex:1;font-size:11px">${t.desc.slice(0,40)}${t.desc.length>40?'…':''}</span>
+      <span style="font-size:10px;color:var(--amber);margin-left:auto;flex-shrink:0">${fmtDate(t.due)}</span>
+    </div>`).join('');
+
+  // Avance donut chart
+  const total=myTasks.length;
+  const done=myTasks.filter(t=>t.status==='done').length;
+  const prog=myTasks.filter(t=>t.status==='progress').length;
+  const pend2=myTasks.filter(t=>t.status==='pending').length;
+  const block=myTasks.filter(t=>t.status==='blocked').length;
+  const pct=total>0?Math.round(done/total*100):0;
+  drawDonut('wm-donut',done,prog,pend2,block,total);
+  document.getElementById('wm-avance-stats').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div style="font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--green)">${pct}%</div>
+      <div style="font-size:10px;color:var(--text3)">completado</div>
+      <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:10px;color:var(--green)">✓ ${done} completadas</div>
+        <div style="font-size:10px;color:var(--blue)">→ ${prog} en proceso</div>
+        <div style="font-size:10px;color:var(--amber)">⏳ ${pend2} pendientes</div>
+        ${block>0?`<div style="font-size:10px;color:var(--red)">🚫 ${block} bloqueadas</div>`:''}
+      </div>
+    </div>`;
+
+  // Completadas recientes
+  const recientes=myTasks.filter(t=>t.status==='done').slice(-4).reverse();
+  document.getElementById('wm-completadas').innerHTML=recientes.length===0?
+    `<div style="font-size:12px;color:var(--text3);font-style:italic">Sin completadas recientes</div>`:
+    recientes.map(t=>`<div class="ws-item"><span style="font-size:10px">✅</span><span style="font-size:11px;flex:1">${t.desc.slice(0,45)}${t.desc.length>45?'…':''}</span></div>`).join('');
+
+  document.getElementById('welcome-modal').classList.add('open');
+}
+
+function closeWelcome(){document.getElementById('welcome-modal').classList.remove('open');}
+
+function drawDonut(canvasId,done,prog,pend,block,total){
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const cx=50,cy=50,r=38,lw=14;
+  ctx.clearRect(0,0,100,100);
+  if(total===0){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='#1A2D4A';ctx.lineWidth=lw;ctx.stroke();return;}
+  const segments=[
+    {val:done,color:'#22C55E'},
+    {val:prog,color:'#3B82F6'},
+    {val:pend,color:'#F59E0B'},
+    {val:block,color:'#EF4444'},
+  ];
+  let start=-Math.PI/2;
+  segments.forEach(s=>{
+    if(s.val<=0)return;
+    const angle=(s.val/total)*Math.PI*2;
+    ctx.beginPath();ctx.arc(cx,cy,r,start,start+angle);
+    ctx.strokeStyle=s.color;ctx.lineWidth=lw;ctx.lineCap='butt';ctx.stroke();
+    start+=angle;
+  });
+}
+
+// ══ HISTORIAL ════════════════════════════════════════════════
+let historialFilter='all';
+let historialMes='';
+
+function rHistorial(){
+  const el=document.getElementById('view-historial');
+  const isLider=SESSION.rol==='lider';
+  let tareas=isLider?[...DB.tareas]:getMisTareas();
+
+  // Filter by status
+  if(historialFilter!=='all'){tareas=tareas.filter(t=>t.status===historialFilter);}
+  // Filter by month
+  if(historialMes){tareas=tareas.filter(t=>{const d=t.fechaInicio||t.createdAt;return d&&(new Date(d).toISOString().slice(0,7)===historialMes||(t.completedAt&&new Date(t.completedAt).toISOString().slice(0,7)===historialMes));});}
+
+  const filters=[
+    {k:'all',l:'Todas'},
+    {k:'pending',l:'⏳ Pendientes'},
+    {k:'progress',l:'🔄 En proceso'},
+    {k:'done',l:'✅ Completadas'},
+    {k:'blocked',l:'🚫 Bloqueadas'},
+  ];
+
+  el.innerHTML=`
+  <div class="filter-row">
+    ${filters.map(f=>`<button class="filter-btn ${historialFilter===f.k?'active':''}" onclick="setHistFilter('${f.k}')">${f.l}</button>`).join('')}
+    <input type="month" class="input" id="hist-mes" value="${historialMes}" style="width:160px;margin-left:8px" onchange="setHistMes(this.value)"/>
+    <span style="font-size:11px;color:var(--text3);margin-left:4px">${tareas.length} tarea${tareas.length!==1?'s':''}</span>
+    ${isLider?`<button class="btn sm secondary" style="margin-left:auto" onclick="exportPDF()">📄 Exportar PDF</button>`:''}
+  </div>
+  ${tareas.length===0?`<div class="empty"><div class="empty-icon">📋</div><div>Sin tareas con ese filtro.</div></div>`:`
+  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(true)}
+  <tbody>${tareas.sort((a,b)=>b.createdAt-a.createdAt).map(t=>taskRow(t,true)).join('')}</tbody>
+  </table></div>`}`;
+}
+
+function setHistFilter(f){historialFilter=f;rHistorial();}
+function setHistMes(m){historialMes=m;rHistorial();}
+
+loadLocal();
+initLogin();
+</script>
+</body>
+</html>
