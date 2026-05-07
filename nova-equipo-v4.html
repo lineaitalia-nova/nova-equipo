@@ -537,7 +537,7 @@ input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) bri
 
 <script>
 // ══ CONFIG ═══════════════════════════════════════════════════
-const GS_URL='https://script.google.com/macros/s/AKfycbwPlxKJakC48iHwxSZ7ZoKhg9L7QxqIYQ0ipZ1gB9rH9ouuBqS05AuZNWw4jMte3bAu9w/exec';
+const FB_URL='https://nova-lineaitalia-default-rtdb.firebaseio.com';
 const LS_KEY='nova_li_v2';
 
 // ══ USUARIOS ═════════════════════════════════════════════════
@@ -589,49 +589,42 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ══ SYNC POR USUARIO — cada quien tiene su propia fila ═══════
 function gsPush(){
-  if(!GS_URL||!SESSION)return;
+  if(!FB_URL||!SESSION)return;
   setSyncTxt('Guardando...');
-  const payload={userId:SESSION.id,data:JSON.stringify({tareas:DB.tareas,reportes:DB.reportes,prototipos:DB.prototipos||[],eval_progreso:DB.eval_progreso||{},_savedAt:Date.now()})};
-  fetch(GS_URL,{method:'POST',body:JSON.stringify(payload),mode:'no-cors'})
+  const userData={tareas:DB.tareas,reportes:DB.reportes,prototipos:DB.prototipos||[],eval_progreso:DB.eval_progreso||{},_savedAt:Date.now()};
+  fetch(FB_URL+'/usuarios/'+SESSION.id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(userData)})
     .then(()=>setSyncTxt('Guardado'))
     .catch(()=>setSyncTxt('Sin conexion'));
 }
 
-function gsPull(){
-  if(!GS_URL||!SESSION)return;
+async function gsPull(){
+  if(!FB_URL||!SESSION)return;
   setSyncTxt('Sincronizando...');
-  const cbName='_nova_cb_'+Date.now();
-  const script=document.createElement('script');
-  script.src=GS_URL+'?action=load_all&callback='+cbName;
-  window[cbName]=function(allUsers){
-    try{
-      delete window[cbName];
-      try{document.body.removeChild(script);}catch(e){}
-      if(!allUsers||typeof allUsers!=='object'){setSyncTxt('Sin datos');return;}
-      let allTareas=[];let allReportes=[];let allPrototipos=[];let myEval={};let latestSaved=0;
-      Object.entries(allUsers).forEach(([userId,entry])=>{
-        try{
-          const raw=entry.data||'{}';if(!raw||raw==='{}')return;
-          const ud=JSON.parse(raw);
-          if(ud.tareas&&Array.isArray(ud.tareas))allTareas=[...allTareas,...ud.tareas];
-          if(ud.reportes&&Array.isArray(ud.reportes))allReportes=[...allReportes,...ud.reportes];
-          if(ud.prototipos&&Array.isArray(ud.prototipos))allPrototipos=[...allPrototipos,...ud.prototipos];
-          if(userId===SESSION.id&&ud.eval_progreso)myEval=ud.eval_progreso;
-          if(ud._savedAt&&ud._savedAt>latestSaved)latestSaved=ud._savedAt;
-        }catch(e){}
-      });
-      const dedupe=(arr)=>{const seen=new Set();return arr.filter(i=>{if(!i||!i.id||seen.has(i.id))return false;seen.add(i.id);return true;});};
-      DB.tareas=dedupe(allTareas);DB.reportes=dedupe(allReportes);DB.prototipos=dedupe(allPrototipos);
-      if(Object.keys(myEval).length>0)DB.eval_progreso=myEval;
-      if(latestSaved>0)DB._savedAt=latestSaved;
-      saveLocal();setSyncTxt('Sincronizado');renderView(currentView);updateBadges();
-    }catch(e){setSyncTxt('Error sync');}
-  };
-  script.onerror=()=>{delete window[cbName];try{document.body.removeChild(script);}catch(e){}setSyncTxt('Datos locales');};
-  document.body.appendChild(script);
+  try{
+    const r=await fetch(FB_URL+'/usuarios.json');
+    const allUsers=await r.json();
+    if(!allUsers){setSyncTxt('Sin datos');return;}
+    let allTareas=[];let allReportes=[];let allPrototipos=[];let myEval={};let latestSaved=0;
+    Object.entries(allUsers).forEach(([userId,ud])=>{
+      try{
+        if(!ud)return;
+        if(ud.tareas&&Array.isArray(ud.tareas))allTareas=[...allTareas,...ud.tareas];
+        if(ud.reportes&&Array.isArray(ud.reportes))allReportes=[...allReportes,...ud.reportes];
+        if(ud.prototipos&&Array.isArray(ud.prototipos))allPrototipos=[...allPrototipos,...ud.prototipos];
+        if(userId===SESSION.id&&ud.eval_progreso)myEval=ud.eval_progreso;
+        if(ud._savedAt&&ud._savedAt>latestSaved)latestSaved=ud._savedAt;
+      }catch(e){}
+    });
+    const dedupe=(arr)=>{const seen=new Set();return arr.filter(i=>{if(!i||!i.id||seen.has(i.id))return false;seen.add(i.id);return true;});};
+    DB.tareas=dedupe(allTareas);DB.reportes=dedupe(allReportes);DB.prototipos=dedupe(allPrototipos);
+    if(Object.keys(myEval).length>0)DB.eval_progreso=myEval;
+    if(latestSaved>0)DB._savedAt=latestSaved;
+    saveLocal();setSyncTxt('Sincronizado');renderView(currentView);updateBadges();
+  }catch(e){setSyncTxt('Datos locales');}
 }
 
 function setSyncTxt(t){document.getElementById('sync-txt').textContent=t;}
+
 
 
 // ══ AUTH ══════════════════════════════════════════════════════
