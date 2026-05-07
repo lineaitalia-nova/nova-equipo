@@ -260,6 +260,16 @@ input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) bri
 .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 .filter-btn{all:unset;cursor:pointer;padding:5px 14px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid var(--border);color:var(--text3);transition:all .15s}
 .filter-btn.active{background:var(--gold3);border-color:var(--gold);color:var(--gold)}
+/* DROPDOWN FILTERS */
+.filters-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px}
+.filter-select-wrap{display:flex;flex-direction:column;gap:3px}
+.filter-select-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.filter-select{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:6px 28px 6px 10px;font-size:12px;color:var(--text);outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23506480' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .15s;min-width:130px}
+.filter-select:focus{border-color:var(--gold)}
+.filter-select.active-filter{border-color:var(--gold);color:var(--gold);background-color:var(--gold3)}
+.filter-count{margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);white-space:nowrap}
+.filter-reset{all:unset;cursor:pointer;font-size:10px;color:var(--text3);padding:4px 10px;border:1px solid var(--border);border-radius:99px;transition:all .15s}
+.filter-reset:hover{border-color:var(--red);color:var(--red)}
 /* PDF */
 @media print{
   #sidebar,#topbar-actions,.btn,#welcome-modal,.modal-bg,button{display:none!important}
@@ -936,26 +946,47 @@ function rMisTareas(){
   let tareas=getMyTasks();
   if(misTareasFilter.status!=='all') tareas=tareas.filter(t=>t.status===misTareasFilter.status);
   if(misTareasFilter.prioridad!=='all') tareas=tareas.filter(t=>t.prioridad===misTareasFilter.prioridad);
-  if(misTareasFilter.proyecto!=='all') tareas=tareas.filter(t=>(t.proyecto||'').toLowerCase().includes(misTareasFilter.proyecto.toLowerCase()));
+  if(misTareasFilter.proyecto!=='all') tareas=tareas.filter(t=>(t.proyecto||'')=== misTareasFilter.proyecto);
   tareas=tareas.sort((a,b)=>{const p={Alta:0,Media:1,Baja:2};return(p[a.prioridad]||1)-(p[b.prioridad]||1);});
-  const sF=[{k:'all',l:'Todas'},{k:'pending',l:'⏳ Pendientes'},{k:'progress',l:'🔄 En proceso'},{k:'done',l:'✅ Completadas'},{k:'blocked',l:'🚫 Bloqueadas'}];
-  const pF=[{k:'all',l:'Todas'},{k:'Alta',l:'🔴 Alta'},{k:'Media',l:'🟡 Media'},{k:'Baja',l:'🟢 Baja'}];
-  const proyectos=[...new Set(getMyTasks().map(t=>t.proyecto).filter(Boolean))];
+  const proyectos=[...new Set(getMyTasks().map(t=>t.proyecto).filter(Boolean))].sort();
+  const hayFiltros=misTareasFilter.status!=='all'||misTareasFilter.prioridad!=='all'||misTareasFilter.proyecto!=='all';
+
   el.innerHTML=`
-  <div class="filter-row" style="flex-wrap:wrap;gap:6px">
-    <div style="font-size:11px;color:var(--text3);font-weight:600">Estado:</div>
-    ${sF.map(f=>`<button class="filter-btn ${misTareasFilter.status===f.k?'active':''}" onclick="setMisFilter('status','${f.k}')">${f.l}</button>`).join('')}
-    <div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:4px">Prioridad:</div>
-    ${pF.map(f=>`<button class="filter-btn ${misTareasFilter.prioridad===f.k?'active':''}" onclick="setMisFilter('prioridad','${f.k}')">${f.l}</button>`).join('')}
-    ${proyectos.length>0?`<div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:4px">Proyecto:</div>
-    <button class="filter-btn ${misTareasFilter.proyecto==='all'?'active':''}" onclick="setMisFilter('proyecto','all')">Todos</button>
-    ${proyectos.map(p=>`<button class="filter-btn ${misTareasFilter.proyecto===p?'active':''}" onclick="setMisFilter('proyecto','${p}')">${p}</button>`).join('')}`:''}
-    <span style="font-size:11px;color:var(--text3);margin-left:4px">${tareas.length} tarea${tareas.length!==1?'s':''}</span>
+  <div class="filters-bar">
+    <div class="filter-select-wrap">
+      <div class="filter-select-lbl">Estado</div>
+      <select class="filter-select ${misTareasFilter.status!=='all'?'active-filter':''}" onchange="setMisFilter('status',this.value)">
+        <option value="all" ${misTareasFilter.status==='all'?'selected':''}>Todos</option>
+        <option value="pending" ${misTareasFilter.status==='pending'?'selected':''}>⏳ Pendientes</option>
+        <option value="progress" ${misTareasFilter.status==='progress'?'selected':''}>🔄 En proceso</option>
+        <option value="done" ${misTareasFilter.status==='done'?'selected':''}>✅ Completadas</option>
+        <option value="blocked" ${misTareasFilter.status==='blocked'?'selected':''}>🚫 Bloqueadas</option>
+      </select>
+    </div>
+    <div class="filter-select-wrap">
+      <div class="filter-select-lbl">Prioridad</div>
+      <select class="filter-select ${misTareasFilter.prioridad!=='all'?'active-filter':''}" onchange="setMisFilter('prioridad',this.value)">
+        <option value="all" ${misTareasFilter.prioridad==='all'?'selected':''}>Todas</option>
+        <option value="Alta" ${misTareasFilter.prioridad==='Alta'?'selected':''}>🔴 Alta</option>
+        <option value="Media" ${misTareasFilter.prioridad==='Media'?'selected':''}>🟡 Media</option>
+        <option value="Baja" ${misTareasFilter.prioridad==='Baja'?'selected':''}>🟢 Baja</option>
+      </select>
+    </div>
+    ${proyectos.length>0?`<div class="filter-select-wrap">
+      <div class="filter-select-lbl">Proyecto</div>
+      <select class="filter-select ${misTareasFilter.proyecto!=='all'?'active-filter':''}" onchange="setMisFilter('proyecto',this.value)">
+        <option value="all" ${misTareasFilter.proyecto==='all'?'selected':''}>Todos</option>
+        ${proyectos.map(p=>`<option value="${p}" ${misTareasFilter.proyecto===p?'selected':''}>${p}</option>`).join('')}
+      </select>
+    </div>`:''}
+    ${hayFiltros?`<button class="filter-reset" onclick="resetMisFilters()">✕ Limpiar filtros</button>`:''}
+    <div class="filter-count">${tareas.length} tarea${tareas.length!==1?'s':''}</div>
   </div>
   ${tareas.length===0?`<div class="empty"><div class="empty-icon">✓</div><div>Sin tareas con ese filtro.</div></div>`:`
   <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${tareas.map(t=>taskRow(t,false)).join('')}</tbody></table></div>`}`;
 }
 function setMisFilter(tipo,val){misTareasFilter[tipo]=val;rMisTareas();}
+function resetMisFilters(){misTareasFilter={status:'all',prioridad:'all',proyecto:'all'};rMisTareas();}
 
 
 // ══ KANBAN ════════════════════════════════════════════════════
@@ -1087,38 +1118,57 @@ function renderRepCard(r){
 function rEquipo(){
   const el=document.getElementById('view-equipo');
   let tareas=getMisTareas();
-
-  // Apply equipo filters
   if(equipoFilter.status!=='all') tareas=tareas.filter(t=>t.status===equipoFilter.status);
   if(equipoFilter.prioridad!=='all') tareas=tareas.filter(t=>t.prioridad===equipoFilter.prioridad);
   if(equipoFilter.area!=='all') tareas=tareas.filter(t=>t.area===equipoFilter.area);
-  if(equipoFilter.proyecto!=='all') tareas=tareas.filter(t=>(t.proyecto||'').toLowerCase().includes(equipoFilter.proyecto.toLowerCase()));
-
-  const sF=[{k:'all',l:'Todas'},{k:'pending',l:'⏳ Pendientes'},{k:'progress',l:'🔄 En proceso'},{k:'done',l:'✅ Completadas'},{k:'blocked',l:'🚫 Bloqueadas'}];
-  const pF=[{k:'all',l:'Todas'},{k:'Alta',l:'🔴 Alta'},{k:'Media',l:'🟡 Media'},{k:'Baja',l:'🟢 Baja'}];
-  const areas=[...new Set(getMisTareas().map(t=>t.area).filter(Boolean))];
-  const proyectos=[...new Set(getMisTareas().map(t=>t.proyecto).filter(Boolean))];
+  if(equipoFilter.proyecto!=='all') tareas=tareas.filter(t=>(t.proyecto||'')===equipoFilter.proyecto);
+  const areas=[...new Set(getMisTareas().map(t=>t.area).filter(Boolean))].sort();
+  const proyectos=[...new Set(getMisTareas().map(t=>t.proyecto).filter(Boolean))].sort();
+  const hayFiltros=equipoFilter.status!=='all'||equipoFilter.prioridad!=='all'||equipoFilter.area!=='all'||equipoFilter.proyecto!=='all';
 
   el.innerHTML=`
-  <div class="filter-row" style="flex-wrap:wrap;gap:6px;margin-bottom:12px">
-    <div style="font-size:11px;color:var(--text3);font-weight:600">Estado:</div>
-    ${sF.map(f=>`<button class="filter-btn ${equipoFilter.status===f.k?'active':''}" onclick="setEquipoFilter('status','${f.k}')">${f.l}</button>`).join('')}
-    <div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:4px">Prioridad:</div>
-    ${pF.map(f=>`<button class="filter-btn ${equipoFilter.prioridad===f.k?'active':''}" onclick="setEquipoFilter('prioridad','${f.k}')">${f.l}</button>`).join('')}
-  </div>
-  <div class="filter-row" style="flex-wrap:wrap;gap:6px;margin-bottom:12px">
-    ${areas.length>0?`<div style="font-size:11px;color:var(--text3);font-weight:600">Área:</div>
-    <button class="filter-btn ${equipoFilter.area==='all'?'active':''}" onclick="setEquipoFilter('area','all')">Todas</button>
-    ${areas.map(a=>`<button class="filter-btn ${equipoFilter.area===a?'active':''}" onclick="setEquipoFilter('area','${a}')">${a}</button>`).join('')}`:''}
-    ${proyectos.length>0?`<div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:4px">Proyecto:</div>
-    <button class="filter-btn ${equipoFilter.proyecto==='all'?'active':''}" onclick="setEquipoFilter('proyecto','all')">Todos</button>
-    ${proyectos.map(p=>`<button class="filter-btn ${equipoFilter.proyecto===p?'active':''}" onclick="setEquipoFilter('proyecto','${p}')">${p}</button>`).join('')}`:''}
-    <span style="font-size:11px;color:var(--text3);margin-left:4px">${tareas.length} tarea${tareas.length!==1?'s':''}</span>
+  <div class="filters-bar">
+    <div class="filter-select-wrap">
+      <div class="filter-select-lbl">Estado</div>
+      <select class="filter-select ${equipoFilter.status!=='all'?'active-filter':''}" onchange="setEquipoFilter('status',this.value)">
+        <option value="all">Todos</option>
+        <option value="pending" ${equipoFilter.status==='pending'?'selected':''}>⏳ Pendientes</option>
+        <option value="progress" ${equipoFilter.status==='progress'?'selected':''}>🔄 En proceso</option>
+        <option value="done" ${equipoFilter.status==='done'?'selected':''}>✅ Completadas</option>
+        <option value="blocked" ${equipoFilter.status==='blocked'?'selected':''}>🚫 Bloqueadas</option>
+      </select>
+    </div>
+    <div class="filter-select-wrap">
+      <div class="filter-select-lbl">Prioridad</div>
+      <select class="filter-select ${equipoFilter.prioridad!=='all'?'active-filter':''}" onchange="setEquipoFilter('prioridad',this.value)">
+        <option value="all">Todas</option>
+        <option value="Alta" ${equipoFilter.prioridad==='Alta'?'selected':''}>🔴 Alta</option>
+        <option value="Media" ${equipoFilter.prioridad==='Media'?'selected':''}>🟡 Media</option>
+        <option value="Baja" ${equipoFilter.prioridad==='Baja'?'selected':''}>🟢 Baja</option>
+      </select>
+    </div>
+    ${areas.length>0?`<div class="filter-select-wrap">
+      <div class="filter-select-lbl">Área</div>
+      <select class="filter-select ${equipoFilter.area!=='all'?'active-filter':''}" onchange="setEquipoFilter('area',this.value)">
+        <option value="all">Todas</option>
+        ${areas.map(a=>`<option value="${a}" ${equipoFilter.area===a?'selected':''}>${a}</option>`).join('')}
+      </select>
+    </div>`:''}
+    ${proyectos.length>0?`<div class="filter-select-wrap">
+      <div class="filter-select-lbl">Proyecto</div>
+      <select class="filter-select ${equipoFilter.proyecto!=='all'?'active-filter':''}" onchange="setEquipoFilter('proyecto',this.value)">
+        <option value="all">Todos</option>
+        ${proyectos.map(p=>`<option value="${p}" ${equipoFilter.proyecto===p?'selected':''}>${p}</option>`).join('')}
+      </select>
+    </div>`:''}
+    ${hayFiltros?`<button class="filter-reset" onclick="resetEquipoFilters()">✕ Limpiar filtros</button>`:''}
+    <div class="filter-count">${tareas.length} tarea${tareas.length!==1?'s':''}</div>
   </div>
   ${tareas.length===0?`<div class="empty"><div class="empty-icon">◈</div><div>Sin tareas con ese filtro.</div></div>`:`
   <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(true)}<tbody>${tareas.map(t=>taskRow(t,true)).join('')}</tbody></table></div>`}`;
 }
 function setEquipoFilter(tipo,val){equipoFilter[tipo]=val;rEquipo();}
+function resetEquipoFilters(){equipoFilter={status:'all',prioridad:'all',proyecto:'all',area:'all'};rEquipo();}
 
 
 // ══ DELEGAR ══════════════════════════════════════════════════
@@ -2031,31 +2081,35 @@ function rHistorial(){
   const el=document.getElementById('view-historial');
   const isLider=SESSION.rol==='lider';
   let tareas=isLider?[...DB.tareas]:getMisTareas();
-
-  // Filter by status
   if(historialFilter!=='all'){tareas=tareas.filter(t=>t.status===historialFilter);}
-  // Filter by month
   if(historialMes){tareas=tareas.filter(t=>{const d=t.fechaInicio||t.createdAt;return d&&(new Date(d).toISOString().slice(0,7)===historialMes||(t.completedAt&&new Date(t.completedAt).toISOString().slice(0,7)===historialMes));});}
-
-  const filters=[
-    {k:'all',l:'Todas'},
-    {k:'pending',l:'⏳ Pendientes'},
-    {k:'progress',l:'🔄 En proceso'},
-    {k:'done',l:'✅ Completadas'},
-    {k:'blocked',l:'🚫 Bloqueadas'},
-  ];
+  const hayFiltros=historialFilter!=='all'||historialMes;
 
   el.innerHTML=`
-  <div class="filter-row">
-    ${filters.map(f=>`<button class="filter-btn ${historialFilter===f.k?'active':''}" onclick="setHistFilter('${f.k}')">${f.l}</button>`).join('')}
-    <input type="month" class="input" id="hist-mes" value="${historialMes}" style="width:160px;margin-left:8px" onchange="setHistMes(this.value)"/>
-    <span style="font-size:11px;color:var(--text3);margin-left:4px">${tareas.length} tarea${tareas.length!==1?'s':''}</span>
+  <div class="filters-bar">
+    <div class="filter-select-wrap">
+      <div class="filter-select-lbl">Estado</div>
+      <select class="filter-select ${historialFilter!=='all'?'active-filter':''}" onchange="setHistFilter(this.value)">
+        <option value="all" ${historialFilter==='all'?'selected':''}>Todos</option>
+        <option value="pending" ${historialFilter==='pending'?'selected':''}>⏳ Pendientes</option>
+        <option value="progress" ${historialFilter==='progress'?'selected':''}>🔄 En proceso</option>
+        <option value="done" ${historialFilter==='done'?'selected':''}>✅ Completadas</option>
+        <option value="blocked" ${historialFilter==='blocked'?'selected':''}>🚫 Bloqueadas</option>
+      </select>
+    </div>
+    <div class="filter-select-wrap">
+      <div class="filter-select-lbl">Mes</div>
+      <input type="month" class="filter-select" id="hist-mes" value="${historialMes}" style="min-width:160px" onchange="setHistMes(this.value)"/>
+    </div>
+    ${hayFiltros?`<button class="filter-reset" onclick="historialFilter='all';historialMes='';rHistorial()">✕ Limpiar</button>`:''}
+    <div class="filter-count">${tareas.length} tarea${tareas.length!==1?'s':''}</div>
     ${isLider?`<button class="btn sm secondary" style="margin-left:auto" onclick="exportPDF()">📄 Exportar PDF</button>`:''}
   </div>
   ${tareas.length===0?`<div class="empty"><div class="empty-icon">📋</div><div>Sin tareas con ese filtro.</div></div>`:`
   <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(true)}
   <tbody>${tareas.sort((a,b)=>b.createdAt-a.createdAt).map(t=>taskRow(t,true)).join('')}</tbody>
   </table></div>`}`;
+
 }
 
 function setHistFilter(f){historialFilter=f;rHistorial();}
