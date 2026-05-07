@@ -588,74 +588,47 @@ function showToast(msg,dur=2800){const t=document.getElementById('toast');t.text
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ══ SYNC POR USUARIO — cada quien tiene su propia fila ═══════
-async function gsPush(){
-  if(!GS_URL||!SESSION||_syncing)return;
-  _syncing=true;setSyncTxt('Guardando…');
-  try{
-    // Solo guardamos los datos de este usuario
-    const payload={
-      userId:SESSION.id,
-      data:JSON.stringify({
-        tareas:DB.tareas,
-        reportes:DB.reportes,
-        prototipos:DB.prototipos||[],
-        eval_progreso:DB.eval_progreso||{},
-        _savedAt:Date.now()
-      })
-    };
-    await fetch(GS_URL,{method:'POST',body:JSON.stringify(payload),mode:'no-cors'});
-    setSyncTxt('Guardado ✓');
-  }catch(e){setSyncTxt('Sin conexión');}
-  _syncing=false;
+function gsPush(){
+  if(!GS_URL||!SESSION)return;
+  setSyncTxt('Guardando...');
+  const payload={userId:SESSION.id,data:JSON.stringify({tareas:DB.tareas,reportes:DB.reportes,prototipos:DB.prototipos||[],eval_progreso:DB.eval_progreso||{},_savedAt:Date.now()})};
+  fetch(GS_URL,{method:'POST',body:JSON.stringify(payload),mode:'no-cors'})
+    .then(()=>setSyncTxt('Guardado'))
+    .catch(()=>setSyncTxt('Sin conexion'));
 }
 
-async function gsPull(){
+function gsPull(){
   if(!GS_URL||!SESSION)return;
-  setSyncTxt('Sincronizando…');
-  try{
-    const r=await fetch(GS_URL+'?action=load_all');
-    const txt=await r.text();
-    if(!txt||txt==='{}'){setSyncTxt('Sin datos remotos');return;}
-    const allUsers=JSON.parse(txt);
-
-    // Merge: combinamos tareas, reportes y prototipos de todos los usuarios
-    let allTareas=[];let allReportes=[];let allPrototipos=[];let myEval={};
-    let latestSaved=0;
-
-    Object.entries(allUsers).forEach(([userId,entry])=>{
-      try{
-        const raw=entry.data||'{}';
-        if(!raw||raw==='{}')return;
-        const userData=JSON.parse(raw);
-        if(userData.tareas&&Array.isArray(userData.tareas))
-          allTareas=[...allTareas,...userData.tareas];
-        if(userData.reportes&&Array.isArray(userData.reportes))
-          allReportes=[...allReportes,...userData.reportes];
-        if(userData.prototipos&&Array.isArray(userData.prototipos))
-          allPrototipos=[...allPrototipos,...userData.prototipos];
-        if(userId===SESSION.id&&userData.eval_progreso)
-          myEval=userData.eval_progreso;
-        if(userData._savedAt&&userData._savedAt>latestSaved)
-          latestSaved=userData._savedAt;
-      }catch(e){}
-    });
-
-    const dedupe=(arr)=>{
-      const seen=new Set();
-      return arr.filter(i=>{if(!i||!i.id||seen.has(i.id))return false;seen.add(i.id);return true;});
-    };
-
-    // Siempre actualizamos — no comparamos _savedAt para garantizar sincronización
-    DB.tareas=dedupe(allTareas);
-    DB.reportes=dedupe(allReportes);
-    DB.prototipos=dedupe(allPrototipos);
-    if(Object.keys(myEval).length>0)DB.eval_progreso=myEval;
-    if(latestSaved>0)DB._savedAt=latestSaved;
-    saveLocal();
-    setSyncTxt('Sincronizado ✓');
-    renderView(currentView);
-    updateBadges();
-  }catch(e){setSyncTxt('Usando datos locales');}
+  setSyncTxt('Sincronizando...');
+  const cbName='_nova_cb_'+Date.now();
+  const script=document.createElement('script');
+  script.src=GS_URL+'?action=load_all&callback='+cbName;
+  window[cbName]=function(allUsers){
+    try{
+      delete window[cbName];
+      try{document.body.removeChild(script);}catch(e){}
+      if(!allUsers||typeof allUsers!=='object'){setSyncTxt('Sin datos');return;}
+      let allTareas=[];let allReportes=[];let allPrototipos=[];let myEval={};let latestSaved=0;
+      Object.entries(allUsers).forEach(([userId,entry])=>{
+        try{
+          const raw=entry.data||'{}';if(!raw||raw==='{}')return;
+          const ud=JSON.parse(raw);
+          if(ud.tareas&&Array.isArray(ud.tareas))allTareas=[...allTareas,...ud.tareas];
+          if(ud.reportes&&Array.isArray(ud.reportes))allReportes=[...allReportes,...ud.reportes];
+          if(ud.prototipos&&Array.isArray(ud.prototipos))allPrototipos=[...allPrototipos,...ud.prototipos];
+          if(userId===SESSION.id&&ud.eval_progreso)myEval=ud.eval_progreso;
+          if(ud._savedAt&&ud._savedAt>latestSaved)latestSaved=ud._savedAt;
+        }catch(e){}
+      });
+      const dedupe=(arr)=>{const seen=new Set();return arr.filter(i=>{if(!i||!i.id||seen.has(i.id))return false;seen.add(i.id);return true;});};
+      DB.tareas=dedupe(allTareas);DB.reportes=dedupe(allReportes);DB.prototipos=dedupe(allPrototipos);
+      if(Object.keys(myEval).length>0)DB.eval_progreso=myEval;
+      if(latestSaved>0)DB._savedAt=latestSaved;
+      saveLocal();setSyncTxt('Sincronizado');renderView(currentView);updateBadges();
+    }catch(e){setSyncTxt('Error sync');}
+  };
+  script.onerror=()=>{delete window[cbName];try{document.body.removeChild(script);}catch(e){}setSyncTxt('Datos locales');};
+  document.body.appendChild(script);
 }
 
 function setSyncTxt(t){document.getElementById('sync-txt').textContent=t;}
