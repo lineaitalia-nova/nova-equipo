@@ -475,6 +475,9 @@ input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) bri
           <input class="input" type="date" id="av-due"/>
         </div>
       </div>
+      <div id="av-assign-wrap"><label class="lbl">Reasignar responsable</label>
+        <select class="input" id="av-assign"><option value="">-- Sin cambio --</option></select>
+      </div>
       <div><label class="lbl">Nota de avance</label>
         <textarea class="input" id="av-nota" placeholder="¿Qué avanzaste?"></textarea>
       </div>
@@ -615,8 +618,18 @@ async function gsPull(){
         if(ud._savedAt&&ud._savedAt>latestSaved)latestSaved=ud._savedAt;
       }catch(e){}
     });
-    const dedupe=(arr)=>{const seen=new Set();return arr.filter(i=>{if(!i||!i.id||seen.has(i.id))return false;seen.add(i.id);return true;});};
-    DB.tareas=dedupe(allTareas);DB.reportes=dedupe(allReportes);DB.prototipos=dedupe(allPrototipos);
+    // Dedupe keeping most recent version by updatedAt
+    const dedupeLatest=(arr)=>{
+      const map={};
+      arr.forEach(i=>{
+        if(!i||!i.id)return;
+        if(!map[i.id]||((i.updatedAt||0)>(map[i.id].updatedAt||0)))map[i.id]=i;
+      });
+      return Object.values(map);
+    };
+    DB.tareas=dedupeLatest(allTareas);
+    DB.reportes=dedupeLatest(allReportes);
+    DB.prototipos=dedupeLatest(allPrototipos);
     if(Object.keys(myEval).length>0)DB.eval_progreso=myEval;
     if(latestSaved>0)DB._savedAt=latestSaved;
     saveLocal();setSyncTxt('Sincronizado');renderView(currentView);updateBadges();
@@ -923,21 +936,27 @@ function rMisTareas(){
   let tareas=getMyTasks();
   if(misTareasFilter.status!=='all') tareas=tareas.filter(t=>t.status===misTareasFilter.status);
   if(misTareasFilter.prioridad!=='all') tareas=tareas.filter(t=>t.prioridad===misTareasFilter.prioridad);
+  if(misTareasFilter.proyecto!=='all') tareas=tareas.filter(t=>(t.proyecto||'').toLowerCase().includes(misTareasFilter.proyecto.toLowerCase()));
   tareas=tareas.sort((a,b)=>{const p={Alta:0,Media:1,Baja:2};return(p[a.prioridad]||1)-(p[b.prioridad]||1);});
   const sF=[{k:'all',l:'Todas'},{k:'pending',l:'⏳ Pendientes'},{k:'progress',l:'🔄 En proceso'},{k:'done',l:'✅ Completadas'},{k:'blocked',l:'🚫 Bloqueadas'}];
   const pF=[{k:'all',l:'Todas'},{k:'Alta',l:'🔴 Alta'},{k:'Media',l:'🟡 Media'},{k:'Baja',l:'🟢 Baja'}];
+  const proyectos=[...new Set(getMyTasks().map(t=>t.proyecto).filter(Boolean))];
   el.innerHTML=`
-  <div class="filter-row">
+  <div class="filter-row" style="flex-wrap:wrap;gap:6px">
     <div style="font-size:11px;color:var(--text3);font-weight:600">Estado:</div>
     ${sF.map(f=>`<button class="filter-btn ${misTareasFilter.status===f.k?'active':''}" onclick="setMisFilter('status','${f.k}')">${f.l}</button>`).join('')}
-    <div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:8px">Prioridad:</div>
+    <div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:4px">Prioridad:</div>
     ${pF.map(f=>`<button class="filter-btn ${misTareasFilter.prioridad===f.k?'active':''}" onclick="setMisFilter('prioridad','${f.k}')">${f.l}</button>`).join('')}
+    ${proyectos.length>0?`<div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:4px">Proyecto:</div>
+    <button class="filter-btn ${misTareasFilter.proyecto==='all'?'active':''}" onclick="setMisFilter('proyecto','all')">Todos</button>
+    ${proyectos.map(p=>`<button class="filter-btn ${misTareasFilter.proyecto===p?'active':''}" onclick="setMisFilter('proyecto','${p}')">${p}</button>`).join('')}`:''}
     <span style="font-size:11px;color:var(--text3);margin-left:4px">${tareas.length} tarea${tareas.length!==1?'s':''}</span>
   </div>
   ${tareas.length===0?`<div class="empty"><div class="empty-icon">✓</div><div>Sin tareas con ese filtro.</div></div>`:`
   <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${tareas.map(t=>taskRow(t,false)).join('')}</tbody></table></div>`}`;
 }
 function setMisFilter(tipo,val){misTareasFilter[tipo]=val;rMisTareas();}
+
 
 // ══ KANBAN ════════════════════════════════════════════════════
 function rKanban(){
@@ -1067,11 +1086,40 @@ function renderRepCard(r){
 // ══ EQUIPO ═══════════════════════════════════════════════════
 function rEquipo(){
   const el=document.getElementById('view-equipo');
-  const equipo=getMiEquipo();
-  const areas=[...new Set(equipo.map(u=>u.area))];
+  let tareas=getMisTareas();
+
+  // Apply equipo filters
+  if(equipoFilter.status!=='all') tareas=tareas.filter(t=>t.status===equipoFilter.status);
+  if(equipoFilter.prioridad!=='all') tareas=tareas.filter(t=>t.prioridad===equipoFilter.prioridad);
+  if(equipoFilter.area!=='all') tareas=tareas.filter(t=>t.area===equipoFilter.area);
+  if(equipoFilter.proyecto!=='all') tareas=tareas.filter(t=>(t.proyecto||'').toLowerCase().includes(equipoFilter.proyecto.toLowerCase()));
+
+  const sF=[{k:'all',l:'Todas'},{k:'pending',l:'⏳ Pendientes'},{k:'progress',l:'🔄 En proceso'},{k:'done',l:'✅ Completadas'},{k:'blocked',l:'🚫 Bloqueadas'}];
+  const pF=[{k:'all',l:'Todas'},{k:'Alta',l:'🔴 Alta'},{k:'Media',l:'🟡 Media'},{k:'Baja',l:'🟢 Baja'}];
+  const areas=[...new Set(getMisTareas().map(t=>t.area).filter(Boolean))];
+  const proyectos=[...new Set(getMisTareas().map(t=>t.proyecto).filter(Boolean))];
+
   el.innerHTML=`
-  <div style="margin-bottom:14px"><div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(true)}<tbody>${getMisTareas().filter(t=>t.status!=='done').map(t=>taskRow(t,true)).join('')}</tbody></table></div></div>`;
+  <div class="filter-row" style="flex-wrap:wrap;gap:6px;margin-bottom:12px">
+    <div style="font-size:11px;color:var(--text3);font-weight:600">Estado:</div>
+    ${sF.map(f=>`<button class="filter-btn ${equipoFilter.status===f.k?'active':''}" onclick="setEquipoFilter('status','${f.k}')">${f.l}</button>`).join('')}
+    <div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:4px">Prioridad:</div>
+    ${pF.map(f=>`<button class="filter-btn ${equipoFilter.prioridad===f.k?'active':''}" onclick="setEquipoFilter('prioridad','${f.k}')">${f.l}</button>`).join('')}
+  </div>
+  <div class="filter-row" style="flex-wrap:wrap;gap:6px;margin-bottom:12px">
+    ${areas.length>0?`<div style="font-size:11px;color:var(--text3);font-weight:600">Área:</div>
+    <button class="filter-btn ${equipoFilter.area==='all'?'active':''}" onclick="setEquipoFilter('area','all')">Todas</button>
+    ${areas.map(a=>`<button class="filter-btn ${equipoFilter.area===a?'active':''}" onclick="setEquipoFilter('area','${a}')">${a}</button>`).join('')}`:''}
+    ${proyectos.length>0?`<div style="font-size:11px;color:var(--text3);font-weight:600;margin-left:4px">Proyecto:</div>
+    <button class="filter-btn ${equipoFilter.proyecto==='all'?'active':''}" onclick="setEquipoFilter('proyecto','all')">Todos</button>
+    ${proyectos.map(p=>`<button class="filter-btn ${equipoFilter.proyecto===p?'active':''}" onclick="setEquipoFilter('proyecto','${p}')">${p}</button>`).join('')}`:''}
+    <span style="font-size:11px;color:var(--text3);margin-left:4px">${tareas.length} tarea${tareas.length!==1?'s':''}</span>
+  </div>
+  ${tareas.length===0?`<div class="empty"><div class="empty-icon">◈</div><div>Sin tareas con ese filtro.</div></div>`:`
+  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(true)}<tbody>${tareas.map(t=>taskRow(t,true)).join('')}</tbody></table></div>`}`;
 }
+function setEquipoFilter(tipo,val){equipoFilter[tipo]=val;rEquipo();}
+
 
 // ══ DELEGAR ══════════════════════════════════════════════════
 function rDelegar(){
@@ -1746,13 +1794,29 @@ document.getElementById('btn-save-tarea').onclick=()=>{
 function openAvanceModal(id){
   const t=DB.tareas.find(t=>t.id===id);if(!t)return;
   avanceTargetId=id;
-  document.getElementById('av-modal-title').textContent='📋 Editar tarea — '+t.desc.slice(0,40);
+  document.getElementById('av-modal-title').textContent='Editar tarea — '+t.desc.slice(0,40);
   document.getElementById('av-desc').value=t.desc||'';
   document.getElementById('av-pct').value=t.avance||0;
   document.getElementById('av-status').value=t.status||'pending';
   document.getElementById('av-prior').value=t.prioridad||'Media';
   document.getElementById('av-due').value=t.due||'';
   document.getElementById('av-nota').value='';
+  // Populate reassign dropdown
+  const canReassign=SESSION.rol==='lider'||SESSION.rol==='coordinador';
+  const wrap=document.getElementById('av-assign-wrap');
+  wrap.style.display=canReassign?'block':'none';
+  if(canReassign){
+    const sel=document.getElementById('av-assign');
+    let opts=SESSION.rol==='lider'?USERS:USERS.filter(u=>REPORTS_TO[u.id]===SESSION.id);
+    const tallerOpts=[
+      {id:'taller-jorge',nombre:'Jorge Javier',apellido:'Macias',area:'Taller'},
+      {id:'taller-omar',nombre:'Omar',apellido:'Alejandro',area:'Taller'},
+      {id:'taller-acero',nombre:'Jorge',apellido:'Acero',area:'Taller'}
+    ];
+    if(PUEDE_ASIGNAR_TALLER.includes(SESSION.id))opts=[...opts,...tallerOpts];
+    sel.innerHTML=`<option value="">-- Sin cambio --</option>`+
+      opts.map(u=>`<option value="${u.id}" ${t.assignedTo===u.id?'selected':''}>${u.nombre} ${u.apellido} (${u.area||'Taller'})</option>`).join('');
+  }
   document.getElementById('modal-avance').classList.add('open');
 }
 
@@ -1763,14 +1827,17 @@ document.getElementById('btn-save-av').onclick=()=>{
   t.avance=Math.min(100,Math.max(0,parseInt(document.getElementById('av-pct').value)||0));
   t.status=document.getElementById('av-status').value;
   t.prioridad=document.getElementById('av-prior').value;
-  t.due=document.getElementById('av-due').value||t.due;
+  const dueVal=document.getElementById('av-due').value;
+  if(dueVal)t.due=dueVal;
   t.updatedAt=Date.now();
   if(t.status==='done'){t.avance=100;t.completedAt=Date.now();}
+  const newAssign=document.getElementById('av-assign')?.value;
+  if(newAssign&&newAssign!=='')t.assignedTo=newAssign;
   const nota=document.getElementById('av-nota').value.trim();
   if(nota){if(!t.historial)t.historial=[];t.historial.push({fecha:todayStr(),nota,avance:t.avance});}
   saveLocal();gsPush();closeModal('modal-avance');
   renderView(currentView);updateBadges();
-  showToast('✓ Tarea actualizada');
+  showToast('Tarea actualizada');
 };
 
 function deleteTask(id){
@@ -1956,7 +2023,8 @@ function drawDonut(canvasId,done,prog,pend,block,total){
 
 // ══ HISTORIAL ════════════════════════════════════════════════
 let historialFilter='all';
-let misTareasFilter={status:'all',prioridad:'all'};
+let misTareasFilter={status:'all',prioridad:'all',proyecto:'all'};
+let equipoFilter={status:'all',prioridad:'all',proyecto:'all',area:'all'};
 let historialMes='';
 
 function rHistorial(){
