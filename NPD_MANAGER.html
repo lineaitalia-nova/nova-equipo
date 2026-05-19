@@ -566,33 +566,68 @@ function getFaseDates(p, f){
 function toISO(d){if(!d)return'';const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${dd}`;}
 
 // ─── PERSISTENCIA ───────────────────────────────────────────────────
-function saveProj(p){try{p.lu=new Date().toISOString();localStorage.setItem(VER+p.id,JSON.stringify(p));autoBackup();}catch(e){}}
-function autoBackup(){try{const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));const data={ts:new Date().toISOString(),v:VER,items:{}};keys.forEach(k=>{try{data.items[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});localStorage.setItem('li_autobackup',JSON.stringify(data));}catch(e){}}
-function saveUsers(){try{localStorage.setItem(VER+'users',JSON.stringify(USERS));}catch(e){}}
+// ─── FIREBASE SYNC ──────────────────────────────────────────────────
+const FB_NPD='https://nova-lineaitalia-2-default-rtdb.firebaseio.com/npd';
+
+function saveProj(p){
+  try{p.lu=new Date().toISOString();localStorage.setItem(VER+p.id,JSON.stringify(p));autoBackup();fbPush();}catch(e){}
+}
+function autoBackup(){
+  try{const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
+    const data={ts:new Date().toISOString(),v:VER,items:{}};
+    keys.forEach(k=>{try{data.items[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
+    localStorage.setItem('li_autobackup',JSON.stringify(data));
+  }catch(e){}
+}
+function saveUsers(){try{localStorage.setItem(VER+'users',JSON.stringify(USERS));fbPush();}catch(e){}}
+
+function fbPush(){
+  if(!FB_NPD)return;
+  const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
+  const data={};
+  keys.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
+  data['__deleted']=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
+  fetch(FB_NPD+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .catch(e=>{});
+}
+
+async function fbPull(){
+  try{
+    const r=await fetch(FB_NPD+'.json');
+    const data=await r.json();
+    if(!data)return false;
+    Object.entries(data).forEach(([k,v])=>{
+      if(k==='__deleted'){localStorage.setItem(VER+'__deleted',JSON.stringify(v));}
+      else{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+    });
+    return true;
+  }catch(e){return false;}
+}
+
 function loadAll(){
+  fbPull().then(()=>{_loadFromStorage();}).catch(()=>{_loadFromStorage();});
+}
+
+function _loadFromStorage(){
   try{
     const usaved = localStorage.getItem(VER+'users');
     if(usaved){
       const saved = JSON.parse(usaved);
-      // Merge: keep saved users but always ensure DEFAULT_USERS entries exist
-      // (adds new area profiles if they weren't in the saved list)
       const merged = JSON.parse(JSON.stringify(DEFAULT_USERS));
       saved.forEach(su=>{
         const idx=merged.findIndex(m=>m.uid===su.uid);
-        if(idx>=0) merged[idx]={...merged[idx],...su}; // update existing
-        else merged.push(su); // add custom users not in defaults
+        if(idx>=0) merged[idx]={...merged[idx],...su};
+        else merged.push(su);
       });
       USERS = merged;
     } else {
       USERS = JSON.parse(JSON.stringify(DEFAULT_USERS));
     }
-    saveUsers(); // persist the merged list
-    // Load deleted list
+    saveUsers();
     const deleted = JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
     PROJ = RAW
       .filter(r=>!deleted.includes(r.id))
       .map(r=>{const s=localStorage.getItem(VER+r.id);if(s){try{const p=JSON.parse(s);if(!p.aprob||!p.aprob.g)p.aprob={g:{s:'pendiente',f:''}};return p;}catch(e){}}return mkProj(r);});
-    // Also load any extra projects not in RAW (created dynamically)
     Object.keys(localStorage).forEach(k=>{
       if(k.startsWith(VER)&&k!==VER+'users'&&k!==VER+'__deleted'){
         const id=k.replace(VER,'');
@@ -602,7 +637,7 @@ function loadAll(){
       }
     });
   }catch(e){PROJ=RAW.map(mkProj);USERS=JSON.parse(JSON.stringify(DEFAULT_USERS));}
-  // ── Auto-corregir fase y avance en todos los proyectos al cargar ──
+
   PROJ.forEach(p=>{
     if(!p.tp) return;
 
@@ -4256,6 +4291,10 @@ function guardarComentarioDesv(pid, f, i, val){
 // ─── INIT ────────────────────────────────────────────────────────────
 loadAll();
 rLogin();
+// Auto-sync cada 30 segundos
+setInterval(()=>{
+  if(cu){fbPull().then(()=>{_loadFromStorage();render();});}
+},30000);
 </script>
 </body>
 </html>
