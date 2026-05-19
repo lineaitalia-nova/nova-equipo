@@ -850,50 +850,131 @@ function taskTableHeaders(showAssign=true){
 // ══ DASHBOARD ════════════════════════════════════════════════
 function rDash(){
   const el=document.getElementById('view-dashboard');
-  const myTasks=getMyTasks();
-  const all=DB.tareas;
-  const pending=myTasks.filter(t=>t.status!=='done');
-  const overdue=myTasks.filter(isOverdue);
-  const done=myTasks.filter(t=>t.status==='done');
-  const hoy=myTasks.filter(t=>t.due===todayStr()&&t.status!=='done');
-
-  // Streak calc
-  const streak=calcStreak();
-  const hora=new Date().getHours();
-  const saludoFinal=hora<12?'Buenos días':hora<18?'Buenas tardes':'Buenas noches';
-
   const isLider=SESSION.rol==='lider';
   const isCoord=SESSION.rol==='coordinador';
+  const myTasks=getMyTasks();
+  const allTareas=isLider?DB.tareas:getMisTareas();
+  const done=myTasks.filter(t=>t.status==='done');
+  const pend=myTasks.filter(t=>t.status==='pending');
+  const prog=myTasks.filter(t=>t.status==='progress');
+  const block=myTasks.filter(t=>t.status==='blocked');
+  const venc=myTasks.filter(isOverdue);
+  const hoy=myTasks.filter(t=>t.due===todayStr()&&t.status!=='done');
+  const hora=new Date().getHours();
+  const saludo=hora<12?'Buenos dias':hora<18?'Buenas tardes':'Buenas noches';
+
+  // Weekly trend — last 6 weeks
+  const weeks=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i*7);
+    const wStr=d.toISOString().split('T')[0];
+    const wLabel=`${d.getDate()}/${d.getMonth()+1}`;
+    const completedInWeek=allTareas.filter(t=>{
+      if(!t.completedAt)return false;
+      const cd=new Date(t.completedAt);
+      const wStart=new Date(d);wStart.setDate(d.getDate()-d.getDay());
+      const wEnd=new Date(wStart);wEnd.setDate(wStart.getDate()+6);
+      return cd>=wStart&&cd<=wEnd;
+    }).length;
+    weeks.push({label:wLabel,val:completedInWeek});
+  }
+  const maxW=Math.max(...weeks.map(w=>w.val),1);
+
+  // Por proyecto
+  const proyMap={};
+  allTareas.filter(t=>t.proyecto).forEach(t=>{
+    if(!proyMap[t.proyecto])proyMap[t.proyecto]={total:0,done:0,pend:0,venc:0};
+    proyMap[t.proyecto].total++;
+    if(t.status==='done')proyMap[t.proyecto].done++;
+    else proyMap[t.proyecto].pend++;
+    if(isOverdue(t))proyMap[t.proyecto].venc++;
+  });
+  const proyects=Object.entries(proyMap).sort((a,b)=>b[1].total-a[1].total).slice(0,6);
 
   el.innerHTML=`
-  <div class="greeting">
-    <div class="greeting-name">${saludoFinal}, ${SESSION.nombre} 👋</div>
-    <div class="greeting-sub">${hoy.length>0?`Tienes <strong style="color:var(--gold)">${hoy.length}</strong> tarea${hoy.length>1?'s':''} para hoy.`:'Sin tareas para hoy — ¡excelente!'} Semana del ${weekStr()}.</div>
-    ${streak>0?`<div class="streak-badge">🔥 ${streak} semana${streak>1?'s':''} consecutivas completando tareas a tiempo</div>`:''}
+  <div class="greeting" style="margin-bottom:16px">
+    <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text)">${saludo}, ${SESSION.nombre} 👋</div>
+    <div style="font-size:12px;color:var(--text3);margin-top:2px">${hoy.length>0?`<span style="color:var(--amber);font-weight:600">${hoy.length} tarea${hoy.length>1?'s':''} para hoy</span> ·`:''} Semana del ${weekStr()}</div>
   </div>
 
-  <div class="kpi-grid">
-    <div class="kpi ${overdue.length>0?'bad':'ok'}"><div class="kpi-val">${overdue.length}</div><div class="kpi-lbl">Vencidas</div></div>
-    <div class="kpi ${pending.length>5?'warn':'ok'}"><div class="kpi-val">${pending.length}</div><div class="kpi-lbl">Pendientes</div></div>
+  <div class="kpi-grid" style="margin-bottom:16px">
+    <div class="kpi ${venc.length>0?'bad':'ok'}"><div class="kpi-val">${venc.length}</div><div class="kpi-lbl">Vencidas</div></div>
+    <div class="kpi ${block.length>0?'bad':'ok'}"><div class="kpi-val">${block.length}</div><div class="kpi-lbl">Bloqueadas</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--blue)">${prog.length}</div><div class="kpi-lbl">En proceso</div></div>
     <div class="kpi ok"><div class="kpi-val">${done.length}</div><div class="kpi-lbl">Completadas</div></div>
-    <div class="kpi gold"><div class="kpi-val">${myTasks.length}</div><div class="kpi-lbl">Total</div></div>
   </div>
 
-  ${isLider||isCoord?`
-  <div class="sh" style="margin-bottom:10px"><div class="sl">Equipo — semáforo rápido</div><button class="btn sm secondary" onclick="goView('equipo')">Ver equipo →</button></div>
-  <div class="person-grid">${getMiEquipo().map(u=>miniPersonCard(u)).join('')}</div>
-  <hr class="div">`:''}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <!-- Grafica semanal -->
+    <div class="card">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Tareas completadas por semana</span>
+        <span style="font-size:10px;color:var(--text3)">Ultimas 6 semanas</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px;height:90px;padding-bottom:20px;position:relative">
+        ${weeks.map(w=>`
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${w.val}</div>
+          <div style="width:100%;border-radius:4px 4px 0 0;background:${w.val>0?'var(--blue)':'var(--surface3)'};height:${Math.max(4,Math.round(w.val/maxW*60))}px;transition:height .3s"></div>
+          <div style="font-size:9px;color:var(--text3)">${w.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>
 
-  ${hoy.length>0?`
-  <div class="sh"><div class="sl">Para hoy</div></div>
-  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${hoy.slice(0,5).map(t=>taskRow(t,false)).join('')}</tbody></table></div>
-  <hr class="div">`:''}
+    <!-- Donut estado -->
+    <div class="card">
+      <div class="card-title">Distribucion por estado</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <canvas id="dash-donut" width="100" height="100"></canvas>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:var(--amber)"></div><span style="font-size:11px;color:var(--text2)">Pendientes <strong>${pend.length}</strong></span></div>
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:var(--blue)"></div><span style="font-size:11px;color:var(--text2)">En proceso <strong>${prog.length}</strong></span></div>
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:var(--green)"></div><span style="font-size:11px;color:var(--text2)">Completadas <strong>${done.length}</strong></span></div>
+          <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:var(--red)"></div><span style="font-size:11px;color:var(--text2)">Bloqueadas <strong>${block.length}</strong></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  ${overdue.length>0?`
-  <div class="sh"><div class="sl" style="color:var(--red)">⚠ Vencidas</div></div>
-  <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${overdue.map(t=>taskRow(t,false)).join('')}</tbody></table></div>`:''}
+  <!-- Por proyecto -->
+  ${proyects.length>0?`<div class="card" style="margin-bottom:14px">
+    <div class="card-title">Avance por proyecto</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${proyects.map(([nombre,d])=>{
+        const pct=d.total>0?Math.round(d.done/d.total*100):0;
+        const color=d.venc>0?'var(--red)':pct>=80?'var(--green)':pct>=50?'var(--blue)':'var(--amber)';
+        return`<div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:500;color:var(--text)">${nombre}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${d.venc>0?`<span class="tag bad" style="font-size:9px">${d.venc} venc.</span>`:''}
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:${color}">${pct}%</span>
+              <span style="font-size:10px;color:var(--text3)">${d.done}/${d.total}</span>
+            </div>
+          </div>
+          <div class="progress-bar" style="width:100%;height:6px">
+            <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`:''}
 
-  ${pending.length===0&&overdue.length===0?`<div class="empty"><div class="empty-icon">🎉</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">¡Sin pendientes!</div><div>Estás al día esta semana.</div></div>`:''}`;
+  <!-- Criticas y vencidas -->
+  ${venc.length>0?`<div class="card" style="border-left:3px solid var(--red);margin-bottom:14px">
+    <div class="card-title" style="color:var(--red)">Tareas vencidas — accion inmediata</div>
+    <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${venc.slice(0,5).map(t=>taskRow(t,false)).join('')}</tbody></table></div>
+  </div>`:''}
+
+  <!-- Equipo semaforo -->
+  ${isLider||isCoord?`<div>
+    <div class="sh"><div class="sl">Semaforo del equipo</div><button class="btn sm secondary" onclick="goView('equipo')">Ver equipo completo</button></div>
+    <div class="person-grid">${getMiEquipo().map(u=>miniPersonCard(u)).join('')}</div>
+  </div>`:''}`;
+
+  setTimeout(()=>{
+    drawDonut('dash-donut',done.length,prog.length,pend.length,block.length,myTasks.length||1);
+  },50);
 }
 
 function getMiEquipo(){
@@ -944,49 +1025,49 @@ function calcStreak(){
 function rMisTareas(){
   const el=document.getElementById('view-mis-tareas');
   let tareas=getMyTasks();
-  if(misTareasFilter.status!=='all') tareas=tareas.filter(t=>t.status===misTareasFilter.status);
+  if(misTareasFilter.status==='all') tareas=tareas.filter(t=>t.status!=='done');
+  else tareas=tareas.filter(t=>t.status===misTareasFilter.status);
   if(misTareasFilter.prioridad!=='all') tareas=tareas.filter(t=>t.prioridad===misTareasFilter.prioridad);
-  if(misTareasFilter.proyecto!=='all') tareas=tareas.filter(t=>(t.proyecto||'')=== misTareasFilter.proyecto);
+  if(misTareasFilter.proyecto!=='all') tareas=tareas.filter(t=>(t.proyecto||'')===misTareasFilter.proyecto);
+  if(misTareasFilter.fechaDesde) tareas=tareas.filter(t=>t.due&&t.due>=misTareasFilter.fechaDesde);
+  if(misTareasFilter.fechaHasta) tareas=tareas.filter(t=>t.due&&t.due<=misTareasFilter.fechaHasta);
   tareas=tareas.sort((a,b)=>{const p={Alta:0,Media:1,Baja:2};return(p[a.prioridad]||1)-(p[b.prioridad]||1);});
   const proyectos=[...new Set(getMyTasks().map(t=>t.proyecto).filter(Boolean))].sort();
-  const hayFiltros=misTareasFilter.status!=='all'||misTareasFilter.prioridad!=='all'||misTareasFilter.proyecto!=='all';
-
+  const hayFiltros=misTareasFilter.status!=='all'||misTareasFilter.prioridad!=='all'||misTareasFilter.proyecto!=='all'||misTareasFilter.fechaDesde||misTareasFilter.fechaHasta;
   el.innerHTML=`
   <div class="filters-bar">
-    <div class="filter-select-wrap">
-      <div class="filter-select-lbl">Estado</div>
+    <div class="filter-select-wrap"><div class="filter-select-lbl">Estado</div>
       <select class="filter-select ${misTareasFilter.status!=='all'?'active-filter':''}" onchange="setMisFilter('status',this.value)">
-        <option value="all" ${misTareasFilter.status==='all'?'selected':''}>Todos</option>
-        <option value="pending" ${misTareasFilter.status==='pending'?'selected':''}>⏳ Pendientes</option>
-        <option value="progress" ${misTareasFilter.status==='progress'?'selected':''}>🔄 En proceso</option>
-        <option value="done" ${misTareasFilter.status==='done'?'selected':''}>✅ Completadas</option>
-        <option value="blocked" ${misTareasFilter.status==='blocked'?'selected':''}>🚫 Bloqueadas</option>
-      </select>
-    </div>
-    <div class="filter-select-wrap">
-      <div class="filter-select-lbl">Prioridad</div>
+        <option value="all">Activas</option>
+        <option value="pending" ${misTareasFilter.status==='pending'?'selected':''}>Pendientes</option>
+        <option value="progress" ${misTareasFilter.status==='progress'?'selected':''}>En proceso</option>
+        <option value="done" ${misTareasFilter.status==='done'?'selected':''}>Completadas</option>
+        <option value="blocked" ${misTareasFilter.status==='blocked'?'selected':''}>Bloqueadas</option>
+      </select></div>
+    <div class="filter-select-wrap"><div class="filter-select-lbl">Prioridad</div>
       <select class="filter-select ${misTareasFilter.prioridad!=='all'?'active-filter':''}" onchange="setMisFilter('prioridad',this.value)">
-        <option value="all" ${misTareasFilter.prioridad==='all'?'selected':''}>Todas</option>
-        <option value="Alta" ${misTareasFilter.prioridad==='Alta'?'selected':''}>🔴 Alta</option>
-        <option value="Media" ${misTareasFilter.prioridad==='Media'?'selected':''}>🟡 Media</option>
-        <option value="Baja" ${misTareasFilter.prioridad==='Baja'?'selected':''}>🟢 Baja</option>
-      </select>
-    </div>
-    ${proyectos.length>0?`<div class="filter-select-wrap">
-      <div class="filter-select-lbl">Proyecto</div>
+        <option value="all">Todas</option>
+        <option value="Alta" ${misTareasFilter.prioridad==='Alta'?'selected':''}>Alta</option>
+        <option value="Media" ${misTareasFilter.prioridad==='Media'?'selected':''}>Media</option>
+        <option value="Baja" ${misTareasFilter.prioridad==='Baja'?'selected':''}>Baja</option>
+      </select></div>
+    ${proyectos.length>0?`<div class="filter-select-wrap"><div class="filter-select-lbl">Proyecto</div>
       <select class="filter-select ${misTareasFilter.proyecto!=='all'?'active-filter':''}" onchange="setMisFilter('proyecto',this.value)">
-        <option value="all" ${misTareasFilter.proyecto==='all'?'selected':''}>Todos</option>
+        <option value="all">Todos</option>
         ${proyectos.map(p=>`<option value="${p}" ${misTareasFilter.proyecto===p?'selected':''}>${p}</option>`).join('')}
-      </select>
-    </div>`:''}
-    ${hayFiltros?`<button class="filter-reset" onclick="resetMisFilters()">✕ Limpiar filtros</button>`:''}
+      </select></div>`:''}
+    <div class="filter-select-wrap"><div class="filter-select-lbl">Fecha desde</div>
+      <input type="date" class="filter-select ${misTareasFilter.fechaDesde?'active-filter':''}" value="${misTareasFilter.fechaDesde}" onchange="setMisFilter('fechaDesde',this.value)" style="min-width:140px"/></div>
+    <div class="filter-select-wrap"><div class="filter-select-lbl">Fecha hasta</div>
+      <input type="date" class="filter-select ${misTareasFilter.fechaHasta?'active-filter':''}" value="${misTareasFilter.fechaHasta}" onchange="setMisFilter('fechaHasta',this.value)" style="min-width:140px"/></div>
+    ${hayFiltros?`<button class="filter-reset" onclick="resetMisFilters()">x Limpiar</button>`:''}
     <div class="filter-count">${tareas.length} tarea${tareas.length!==1?'s':''}</div>
   </div>
-  ${tareas.length===0?`<div class="empty"><div class="empty-icon">✓</div><div>Sin tareas con ese filtro.</div></div>`:`
+  ${tareas.length===0?`<div class="empty"><div class="empty-icon">check</div><div>Sin tareas activas.</div></div>`:`
   <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(false)}<tbody>${tareas.map(t=>taskRow(t,false)).join('')}</tbody></table></div>`}`;
 }
 function setMisFilter(tipo,val){misTareasFilter[tipo]=val;rMisTareas();}
-function resetMisFilters(){misTareasFilter={status:'all',prioridad:'all',proyecto:'all'};rMisTareas();}
+function resetMisFilters(){misTareasFilter={status:'all',prioridad:'all',proyecto:'all',fechaDesde:'',fechaHasta:''};rMisTareas();}
 
 
 // ══ KANBAN ════════════════════════════════════════════════════
@@ -1118,57 +1199,63 @@ function renderRepCard(r){
 function rEquipo(){
   const el=document.getElementById('view-equipo');
   let tareas=getMisTareas();
-  if(equipoFilter.status!=='all') tareas=tareas.filter(t=>t.status===equipoFilter.status);
+  if(equipoFilter.status==='all') tareas=tareas.filter(t=>t.status!=='done');
+  else tareas=tareas.filter(t=>t.status===equipoFilter.status);
   if(equipoFilter.prioridad!=='all') tareas=tareas.filter(t=>t.prioridad===equipoFilter.prioridad);
   if(equipoFilter.area!=='all') tareas=tareas.filter(t=>t.area===equipoFilter.area);
   if(equipoFilter.proyecto!=='all') tareas=tareas.filter(t=>(t.proyecto||'')===equipoFilter.proyecto);
-  const areas=[...new Set(getMisTareas().map(t=>t.area).filter(Boolean))].sort();
-  const proyectos=[...new Set(getMisTareas().map(t=>t.proyecto).filter(Boolean))].sort();
-  const hayFiltros=equipoFilter.status!=='all'||equipoFilter.prioridad!=='all'||equipoFilter.area!=='all'||equipoFilter.proyecto!=='all';
-
+  if(equipoFilter.responsable!=='all') tareas=tareas.filter(t=>t.assignedTo===equipoFilter.responsable);
+  if(equipoFilter.fechaDesde) tareas=tareas.filter(t=>t.due&&t.due>=equipoFilter.fechaDesde);
+  if(equipoFilter.fechaHasta) tareas=tareas.filter(t=>t.due&&t.due<=equipoFilter.fechaHasta);
+  const allTareas=getMisTareas();
+  const areas=[...new Set(allTareas.map(t=>t.area).filter(Boolean))].sort();
+  const proyectos=[...new Set(allTareas.map(t=>t.proyecto).filter(Boolean))].sort();
+  const equipo=getMiEquipo();
+  const hayFiltros=equipoFilter.status!=='all'||equipoFilter.prioridad!=='all'||equipoFilter.area!=='all'||equipoFilter.proyecto!=='all'||equipoFilter.responsable!=='all'||equipoFilter.fechaDesde||equipoFilter.fechaHasta;
   el.innerHTML=`
-  <div class="filters-bar">
-    <div class="filter-select-wrap">
-      <div class="filter-select-lbl">Estado</div>
+  <div class="filters-bar" style="flex-wrap:wrap">
+    <div class="filter-select-wrap"><div class="filter-select-lbl">Estado</div>
       <select class="filter-select ${equipoFilter.status!=='all'?'active-filter':''}" onchange="setEquipoFilter('status',this.value)">
-        <option value="all">Todos</option>
-        <option value="pending" ${equipoFilter.status==='pending'?'selected':''}>⏳ Pendientes</option>
-        <option value="progress" ${equipoFilter.status==='progress'?'selected':''}>🔄 En proceso</option>
-        <option value="done" ${equipoFilter.status==='done'?'selected':''}>✅ Completadas</option>
-        <option value="blocked" ${equipoFilter.status==='blocked'?'selected':''}>🚫 Bloqueadas</option>
-      </select>
-    </div>
-    <div class="filter-select-wrap">
-      <div class="filter-select-lbl">Prioridad</div>
+        <option value="all">Activas</option>
+        <option value="pending" ${equipoFilter.status==='pending'?'selected':''}>Pendientes</option>
+        <option value="progress" ${equipoFilter.status==='progress'?'selected':''}>En proceso</option>
+        <option value="done" ${equipoFilter.status==='done'?'selected':''}>Completadas</option>
+        <option value="blocked" ${equipoFilter.status==='blocked'?'selected':''}>Bloqueadas</option>
+      </select></div>
+    <div class="filter-select-wrap"><div class="filter-select-lbl">Prioridad</div>
       <select class="filter-select ${equipoFilter.prioridad!=='all'?'active-filter':''}" onchange="setEquipoFilter('prioridad',this.value)">
         <option value="all">Todas</option>
-        <option value="Alta" ${equipoFilter.prioridad==='Alta'?'selected':''}>🔴 Alta</option>
-        <option value="Media" ${equipoFilter.prioridad==='Media'?'selected':''}>🟡 Media</option>
-        <option value="Baja" ${equipoFilter.prioridad==='Baja'?'selected':''}>🟢 Baja</option>
-      </select>
-    </div>
-    ${areas.length>0?`<div class="filter-select-wrap">
-      <div class="filter-select-lbl">Área</div>
+        <option value="Alta" ${equipoFilter.prioridad==='Alta'?'selected':''}>Alta</option>
+        <option value="Media" ${equipoFilter.prioridad==='Media'?'selected':''}>Media</option>
+        <option value="Baja" ${equipoFilter.prioridad==='Baja'?'selected':''}>Baja</option>
+      </select></div>
+    <div class="filter-select-wrap"><div class="filter-select-lbl">Responsable</div>
+      <select class="filter-select ${equipoFilter.responsable!=='all'?'active-filter':''}" onchange="setEquipoFilter('responsable',this.value)">
+        <option value="all">Todos</option>
+        ${equipo.map(u=>`<option value="${u.id}" ${equipoFilter.responsable===u.id?'selected':''}>${u.nombre} ${u.apellido}</option>`).join('')}
+      </select></div>
+    ${areas.length>0?`<div class="filter-select-wrap"><div class="filter-select-lbl">Area</div>
       <select class="filter-select ${equipoFilter.area!=='all'?'active-filter':''}" onchange="setEquipoFilter('area',this.value)">
         <option value="all">Todas</option>
         ${areas.map(a=>`<option value="${a}" ${equipoFilter.area===a?'selected':''}>${a}</option>`).join('')}
-      </select>
-    </div>`:''}
-    ${proyectos.length>0?`<div class="filter-select-wrap">
-      <div class="filter-select-lbl">Proyecto</div>
+      </select></div>`:''}
+    ${proyectos.length>0?`<div class="filter-select-wrap"><div class="filter-select-lbl">Proyecto</div>
       <select class="filter-select ${equipoFilter.proyecto!=='all'?'active-filter':''}" onchange="setEquipoFilter('proyecto',this.value)">
         <option value="all">Todos</option>
         ${proyectos.map(p=>`<option value="${p}" ${equipoFilter.proyecto===p?'selected':''}>${p}</option>`).join('')}
-      </select>
-    </div>`:''}
-    ${hayFiltros?`<button class="filter-reset" onclick="resetEquipoFilters()">✕ Limpiar filtros</button>`:''}
+      </select></div>`:''}
+    <div class="filter-select-wrap"><div class="filter-select-lbl">Fecha desde</div>
+      <input type="date" class="filter-select ${equipoFilter.fechaDesde?'active-filter':''}" value="${equipoFilter.fechaDesde}" onchange="setEquipoFilter('fechaDesde',this.value)" style="min-width:140px"/></div>
+    <div class="filter-select-wrap"><div class="filter-select-lbl">Fecha hasta</div>
+      <input type="date" class="filter-select ${equipoFilter.fechaHasta?'active-filter':''}" value="${equipoFilter.fechaHasta}" onchange="setEquipoFilter('fechaHasta',this.value)" style="min-width:140px"/></div>
+    ${hayFiltros?`<button class="filter-reset" onclick="resetEquipoFilters()">x Limpiar</button>`:''}
     <div class="filter-count">${tareas.length} tarea${tareas.length!==1?'s':''}</div>
   </div>
-  ${tareas.length===0?`<div class="empty"><div class="empty-icon">◈</div><div>Sin tareas con ese filtro.</div></div>`:`
+  ${tareas.length===0?`<div class="empty"><div class="empty-icon">check</div><div>Sin tareas con ese filtro.</div></div>`:`
   <div style="overflow-x:auto"><table class="task-table">${taskTableHeaders(true)}<tbody>${tareas.map(t=>taskRow(t,true)).join('')}</tbody></table></div>`}`;
 }
 function setEquipoFilter(tipo,val){equipoFilter[tipo]=val;rEquipo();}
-function resetEquipoFilters(){equipoFilter={status:'all',prioridad:'all',proyecto:'all',area:'all'};rEquipo();}
+function resetEquipoFilters(){equipoFilter={status:'all',prioridad:'all',proyecto:'all',area:'all',responsable:'all',fechaDesde:'',fechaHasta:''};rEquipo();}
 
 
 // ══ DELEGAR ══════════════════════════════════════════════════
@@ -2073,8 +2160,8 @@ function drawDonut(canvasId,done,prog,pend,block,total){
 
 // ══ HISTORIAL ════════════════════════════════════════════════
 let historialFilter='all';
-let misTareasFilter={status:'all',prioridad:'all',proyecto:'all'};
-let equipoFilter={status:'all',prioridad:'all',proyecto:'all',area:'all'};
+let misTareasFilter={status:'all',prioridad:'all',proyecto:'all',fechaDesde:'',fechaHasta:''};
+let equipoFilter={status:'all',prioridad:'all',proyecto:'all',area:'all',responsable:'all',fechaDesde:'',fechaHasta:''};
 let historialMes='';
 
 function rHistorial(){
