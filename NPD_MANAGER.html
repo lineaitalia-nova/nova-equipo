@@ -874,65 +874,72 @@ function rInicio(c){
   </div>`;
 
   // ── FILA PRINCIPAL: Donut + Barras por ingeniero + Gauge ──
-  h+=`<div style="display:grid;grid-template-columns:200px 1fr 220px;gap:12px;margin-bottom:12px">
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
 
-    <!-- DONUT: Estatus de proyectos -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px">Estatus</div>
-      <canvas id="donutChart" width="168" height="168"></canvas>
-      <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
-        ${[
-          {l:'En línea',      v:filtEnL.length,   c:'#1e9e5e'},
-          {l:'En pausa',      v:filtEnP.length,   c:'#c47d0a'},
-          {l:'Fuera de línea',v:filtFuera.length, c:'#d93535'},
-          {l:'Terminados',    v:filtTerm.length,  c:'#185FA5'},
-        ].map(x=>`<div style="display:flex;align-items:center;gap:7px;font-size:11px">
-          <div style="width:10px;height:10px;border-radius:2px;background:${x.c};flex-shrink:0"></div>
-          <span style="flex:1;color:var(--muted)">${x.l}</span>
-          <span style="font-weight:700;color:var(--text)">${x.v}</span>
-        </div>`).join('')}
+    <!-- ARRIBA IZQUIERDA: Estatus -->
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Estatus de proyectos</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <canvas id="donutChart" width="160" height="160" style="flex-shrink:0"></canvas>
+        <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+          ${[
+            {l:'En línea',      v:filtEnL.length,   c:'#1e9e5e'},
+            {l:'En pausa',      v:filtEnP.length,   c:'#c47d0a'},
+            {l:'Fuera de línea',v:filtFuera.length, c:'#d93535'},
+            {l:'Terminados',    v:filtTerm.length,  c:'#185FA5'},
+          ].map(x=>`<div style="display:flex;align-items:center;gap:7px;font-size:11px">
+            <div style="width:8px;height:8px;border-radius:2px;background:${x.c};flex-shrink:0"></div>
+            <span style="flex:1;color:var(--muted)">${x.l}</span>
+            <span style="font-weight:700;color:var(--text)">${x.v}</span>
+          </div>`).join('')}
+        </div>
       </div>
     </div>
 
-    <!-- BARRAS: Avance por ingeniero -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;grid-column:span 2">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:14px">Avance por ingeniero</div>
-      <canvas id="engChart" height="260"></canvas>
+    <!-- ARRIBA DERECHA: Avance por ingeniero -->
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Avance por ingeniero</div>
+      <canvas id="engChart" style="width:100%;display:block"></canvas>
     </div>
 
-    <!-- GAUGE + KPIs rápidos -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;display:flex;flex-direction:column;gap:8px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Efectividad NPD</div>
-      <canvas id="gaugeChart" width="188" height="110"></canvas>
-      <div style="text-align:center;margin-top:-4px">
-        <div style="font-family:var(--font-d);font-size:32px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'}">${filtEf}%</div>
-        <div style="font-size:10px;color:var(--muted)">${filtTerm.length} de ${filtProj.length} terminados</div>
+    <!-- ABAJO IZQUIERDA: Efectividad NPD -->
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px">Efectividad NPD</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="text-align:center;flex-shrink:0">
+          <canvas id="gaugeChart" width="130" height="80" style="display:block"></canvas>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:-4px">${filtEf}%</div>
+          <div style="font-size:10px;color:var(--muted)">${filtTerm.length} de ${filtProj.length} terminados</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          ${[
+            {l:'Vencidos',   v:filtRisk.length,  col:filtRisk.length>0?'var(--bad)':'var(--ok)'},
+            {l:'Por vencer', v:filtSoon.length,  col:filtSoon.length>0?'var(--warn)':'var(--ok)'},
+            {l:'Aprobaciones',v:filtPAp,         col:filtPAp>0?'var(--bad)':'var(--ok)'},
+          ].map(k=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px">
+            <span style="color:var(--muted)">${k.l}</span>
+            <span style="font-weight:800;color:${k.col}">${k.v}</span>
+          </div>`).join('')}
+          <button onclick="sv2('aprobaciones')" style="margin-top:4px;padding:5px;background:${filtPAp>0?'var(--bad-bg)':'var(--ok-bg)'};border:1px solid ${filtPAp>0?'rgba(217,53,53,.2)':'rgba(30,158,94,.2)'};border-radius:var(--r);font-size:10px;font-weight:700;color:${filtPAp>0?'var(--bad)':'var(--ok)'};cursor:pointer;font-family:var(--font-b);text-align:center">
+            ${filtPAp>0?filtPAp+' aprobaciones pendientes':'✓ Aprobaciones al día'} →
+          </button>
+        </div>
       </div>
-      <div style="border-top:1px solid var(--border2);padding-top:8px;display:flex;flex-direction:column;gap:6px">
-        ${[
-          {l:'Vencidos',   v:filtRisk.length,  col:filtRisk.length>0?'var(--bad)':'var(--ok)'},
-          {l:'Por vencer', v:filtSoon.length,  col:filtSoon.length>0?'var(--warn)':'var(--ok)'},
-          {l:'Aprobaciones',v:filtPAp,         col:filtPAp>0?'var(--bad)':'var(--ok)'},
-        ].map(k=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px">
-          <span style="color:var(--muted)">${k.l}</span>
-          <span style="font-weight:800;color:${k.col}">${k.v}</span>
-        </div>`).join('')}
-      </div>
-      <button onclick="sv2('aprobaciones')" style="margin-top:auto;padding:6px;background:${filtPAp>0?'var(--bad-bg)':'var(--ok-bg)'};border:1px solid ${filtPAp>0?'rgba(217,53,53,.2)':'rgba(30,158,94,.2)'};border-radius:var(--r);font-size:11px;font-weight:700;color:${filtPAp>0?'var(--bad)':'var(--ok)'};cursor:pointer;font-family:var(--font-b)">
-        ${filtPAp>0?filtPAp+' aprobaciones pendientes':'✓ Aprobaciones al día'} →
-      </button>
     </div>
+
+    <!-- ABAJO DERECHA: Proyectos por fase -->
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Proyectos por fase</div>
+      <canvas id="faseChart" style="width:100%;display:block"></canvas>
+    </div>
+
   </div>`;
 
 
-  // ── FILA 2: Distribución por fase + Proyectos críticos + Accesos rápidos ──
-  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+  // ── FILA 2: Proyectos criticos ──
+  h+=`<div style="margin-bottom:12px">
 
-    <!-- Distribución por fase -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:14px">Proyectos por fase</div>
-      <canvas id="faseChart" height="140"></canvas>
-    </div>
+    <!-- Proyectos criticos -->
 
     <!-- Proyectos críticos -->
     <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
@@ -989,8 +996,8 @@ function rInicio(c){
         {v:filtTerm.length, c:'#185FA5'},
       ].filter(s=>s.v>0);
       let start=-Math.PI/2;
-      const cx=84,cy=84,ro=70,ri=46;
-      ctx.clearRect(0,0,168,168);
+      const cx=80,cy=80,ro=70,ri=44;
+      ctx.clearRect(0,0,160,160);
       segs.forEach(s=>{
         const ang=2*Math.PI*(s.v/total);
         ctx.beginPath();ctx.moveTo(cx,cy);
@@ -1013,10 +1020,11 @@ function rInicio(c){
     const ec2=document.getElementById('engChart');
     if(ec2){
       const ctx=ec2.getContext('2d');
-      const W=ec2.offsetWidth||ec2.width||400;
+      const W=ec2.offsetWidth||ec2.parentElement?.offsetWidth-32||400;
       ec2.width=W;
-      const barH=22,gap=10,padL=100,padR=50,padT=8;
       const engsF=fEng2==='todos'?USERS.filter(u=>u.perfil!=='GI'):[USERS.find(u=>u.perfil===fEng2)].filter(Boolean);
+      const barH=30,gap=12,padL=110,padR=70,padT=8;
+      // Auto height based on number of engineers
       ec2.height=engsF.length*(barH+gap)+padT*2;
       ctx.clearRect(0,0,ec2.width,ec2.height);
       const maxW=W-padL-padR;
@@ -1024,29 +1032,36 @@ function rInicio(c){
         const pp=filtProj.filter(p=>p.eng===u.perfil);
         const avg=pp.length?Math.round(pp.reduce((s,p)=>s+p.avance,0)/pp.length):0;
         const y=padT+i*(barH+gap);
-        const ec=ecOf(u.perfil);
+        // Nombre
         ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#4a5568';
-        ctx.font='600 11px DM Sans,sans-serif';
+        ctx.font='600 12px DM Sans,sans-serif';
         ctx.textAlign='right';ctx.textBaseline='middle';
         ctx.fillText(u.nombre.split(' ')[0],padL-8,y+barH/2);
-        ctx.beginPath();ctx.roundRect(padL,y,maxW,barH,4);
+        // Fondo barra
+        ctx.beginPath();ctx.roundRect(padL,y,maxW,barH,5);
         ctx.fillStyle='rgba(0,0,0,.06)';ctx.fill();
-        const fw=Math.max((avg/100)*maxW,avg>0?4:0);
+        // Barra relleno
+        const fw=Math.max((avg/100)*maxW,avg>0?6:0);
         const barCol=avg>=80?'#1e9e5e':avg>=50?'#534AB7':avg>=30?'#c47d0a':'#d93535';
         if(fw>0){
-          ctx.beginPath();ctx.roundRect(padL,y,fw,barH,4);
+          ctx.beginPath();ctx.roundRect(padL,y,fw,barH,5);
           ctx.fillStyle=barCol;ctx.fill();
         }
-        ctx.fillStyle=avg>45?'#fff':getComputedStyle(document.documentElement).getPropertyValue('--text').trim()||'#1a2233';
-        ctx.font='700 11px DM Sans,sans-serif';
-        ctx.textAlign=fw>35?'right':'left';
+        // Porcentaje
+        ctx.font='700 12px DM Sans,sans-serif';
         ctx.textBaseline='middle';
-        if(fw>35) ctx.fillText(avg+'%',padL+fw-7,y+barH/2);
-        else{ctx.fillStyle=barCol;ctx.fillText(avg+'%',padL+fw+6,y+barH/2);}
+        if(fw>50){
+          ctx.fillStyle='#fff';ctx.textAlign='right';
+          ctx.fillText(avg+'%',padL+fw-8,y+barH/2);
+        } else {
+          ctx.fillStyle=barCol;ctx.textAlign='left';
+          ctx.fillText(avg+'%',padL+fw+6,y+barH/2);
+        }
+        // Proyectos
         ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#4a5568';
         ctx.font='500 10px DM Sans,sans-serif';
         ctx.textAlign='right';ctx.textBaseline='middle';
-        ctx.fillText(pp.length+'p',W-padR+40,y+barH/2);
+        ctx.fillText(pp.length+' proy',W-2,y+barH/2);
       });
     }
 
@@ -2087,7 +2102,7 @@ function rModal(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:${ed?'12':'0'}px">
       <div>
         <div style="font-size:11px;font-weight:700;color:${GOLD};text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Estándar Línea Italia · Brief → Lanzamiento</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.7)">76 días hábiles · ~3.6 meses · D:15d · De:24d · Im:22d · La:15d · Seg:variable</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.7)">Estandar Linea Italia · Brief → Lanzamiento</div>
       </div>
       ${ed?`<div style="display:flex;gap:6px">
       </div>`:''}
