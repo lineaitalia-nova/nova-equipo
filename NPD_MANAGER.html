@@ -3571,7 +3571,7 @@ function cancelarProyecto(pid){
   addAct(p,'cancelacion',`Proyecto cancelado por ${cu?.nombre||'?'}`);
   saveProj(p);
   cM();
-  loadAll();
+  render();
   sv2(av);
   toast(`"${p.name}" cancelado`);
 }
@@ -3583,7 +3583,7 @@ function reactivarProyecto(pid){
   addAct(p,'reactivacion','Proyecto reactivado por gerencia');
   saveProj(p);
   cM();
-  loadAll();
+  render();
   sv2(av);
   toast(`"${p.name}" reactivado ✓`);
 }
@@ -3658,7 +3658,7 @@ function confirmarReasignacion(pid){
   const motivo=(document.getElementById('reasign-motivo')?.value||'').trim();
   p.eng=nuevo;
   addAct(p,'reasignacion',`Reasignado: ${NOMBRES[anterior]||anterior} → ${NOMBRES[nuevo]||nuevo}${motivo?' · '+motivo:''}`);
-  saveProj(p);cM2();rModal();loadAll();
+  saveProj(p);cM2();rModal();render();
   toast(`Reasignado a ${NOMBRES[nuevo]||nuevo} ✓`);
 }
 function restaurarAutoBackup(){
@@ -3797,8 +3797,8 @@ function guardarRenombre(pid){
   const titleEl=document.getElementById(`modal-proj-name-${pid}`);
   if(titleEl) titleEl.textContent=nuevoNombre;
   toast(`Renombrado a "${nuevoNombre}" ✓`);
-  // Refresh background list
-  loadAll();
+  // Render sin recargar desde Firebase para no perder el cambio
+  render();
 }
 
 // ─── UTILIDADES DE FECHAS HÁBILES ────────────────────────────────────
