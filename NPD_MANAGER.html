@@ -739,7 +739,7 @@ function rSB(){
   let nav=[];
   if(isG()){
     nav=[
-      {id:'inicio',i:'⊞',l:'Inicio',b:risk,bc:risk>0?'':'ok'},
+      {id:'inicio',i:'⊞',l:isG()?'Dashboard':'Inicio',b:risk,bc:risk>0?'':'ok'},
       {id:'proyectos',i:'▤',l:'Todos los proyectos',b:0},
       {id:'reporte',i:'↗',l:'Reporte ejecutivo',b:0},
       {id:'indicadores',i:'📊',l:'Indicadores NPD',b:0},
@@ -799,7 +799,7 @@ function sv2(v){
     <div><div class="ph-h2">${titles[v]}</div><p class="ph-sub">${subs[v]||''}</p></div>
     <div class="ph-acts">
       <div id="global-clock" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--navy);background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px;letter-spacing:.04em;min-width:88px;text-align:center"></div>
-      <button class="btn sm" onclick="loadAll();sv2(av)">↺ Actualizar</button>
+      <button class="btn sm" onclick="fbPull().then(()=>{_loadFromStorage();render();toast('Actualizado ✓');})">↺ Actualizar</button>
     </div>
   </div></div><div class="pad" id="vc"></div>`;
   const c=document.getElementById('vc');
@@ -895,9 +895,9 @@ function rInicio(c){
     </div>
 
     <!-- BARRAS: Avance por ingeniero -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;grid-column:span 2">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:14px">Avance por ingeniero</div>
-      <canvas id="engChart" height="180"></canvas>
+      <canvas id="engChart" height="260"></canvas>
     </div>
 
     <!-- GAUGE + KPIs rápidos -->
@@ -2074,7 +2074,11 @@ function rModal(){
   // ── PROJECT PLAN con colores ──
   // ── BANNER DE FECHAS ESTÁNDAR si no hay brief definido ──
   const hasBrief = p.tp['Diseño']?.[0]?.fi;
-  const totalEstDias = 76; // Fase1:15 + Fase2:24 + Fase3:22 + Fase4:15
+  // Calculate real total dias from actual task durations
+  const totalEstDias = p.tp ? Object.values(p.tp).flat().reduce((s,t)=>{
+    if(t.fi&&t.ff) return s+workdaysBetween(t.fi,t.ff)+1;
+    return s+(t._diasEst||t.d||1);
+  },0) : 76;
   const diasRestSeg = ''; // Seguimiento es variable
 
   h+=`<div class="mpg" id="mp-tareas">
@@ -2086,14 +2090,6 @@ function rModal(){
         <div style="font-size:12px;color:rgba(255,255,255,.7)">76 días hábiles · ~3.6 meses · D:15d · De:24d · Im:22d · La:15d · Seg:variable</div>
       </div>
       ${ed?`<div style="display:flex;gap:6px">
-        <button id="btn-fwd-${p.id}" onclick="setModoFecha('${p.id}','adelante')"
-          style="padding:5px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-b);border:2px solid ${GOLD};background:${GOLD};color:#1a1f3c;transition:all .15s">
-          ▶ Hacia adelante
-        </button>
-        <button id="btn-bwd-${p.id}" onclick="setModoFecha('${p.id}','atras')"
-          style="padding:5px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-b);border:2px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.7);transition:all .15s">
-          ◀ Hacia atrás (histórico)
-        </button>
       </div>`:''}
     </div>
     ${ed?`
@@ -3581,17 +3577,20 @@ function reactivarProyecto(pid){
 }
 function eliminarProyecto(pid){
   const p=PROJ.find(x=>x.id===pid);if(!p||!isG())return;
-  if(!confirm(`⚠ ELIMINAR DEFINITIVAMENTE\n\n"${p.name}"\n\nEsta acción borrará el proyecto permanentemente. NO se puede deshacer.\n\n¿Estás seguro?`))return;
-  if(!confirm(`Segunda confirmación: ¿eliminar "${p.name}" de forma permanente?`))return;
+  if(!confirm(`ELIMINAR DEFINITIVAMENTE\n\n"${p.name}"\n\nEsta accion borrara el proyecto permanentemente. NO se puede deshacer.\n\nEstas seguro?`))return;
+  if(!confirm(`Segunda confirmacion: eliminar "${p.name}" de forma permanente?`))return;
   // Remove from localStorage
   localStorage.removeItem(VER+pid);
-  // Add to deleted list so loadAll doesn't restore it from RAW
+  // Add to deleted list
   const deleted=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
   if(!deleted.includes(pid)){deleted.push(pid);localStorage.setItem(VER+'__deleted',JSON.stringify(deleted));}
+  // Remove from PROJ array immediately
+  PROJ=PROJ.filter(x=>x.id!==pid);
+  // Push deletion to Firebase
+  fbPush();
   const nombre=p.name;
   cM();
-  loadAll();
-  sv2(av);
+  sv2('inicio');
   toast(`"${nombre}" eliminado definitivamente`);
 }
 
