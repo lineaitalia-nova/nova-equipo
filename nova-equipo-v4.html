@@ -1973,8 +1973,9 @@ document.getElementById('btn-save-av').onclick=()=>{
   if(newAssign&&newAssign!=='')t.assignedTo=newAssign;
   const nota=document.getElementById('av-nota').value.trim();
   if(nota){if(!t.historial)t.historial=[];t.historial.push({fecha:todayStr(),nota,avance:t.avance});}
-  const _avT=DB.tareas.find(t=>t.id===avanceTargetId);if(_avT)pushAvanceDelegada(_avT);
+  const _avT=DB.tareas.find(t=>t.id===avanceTargetId);
   saveLocal();gsPush();closeModal('modal-avance');
+  if(_avT) pushAvanceDelegada(_avT);
   renderView(currentView);updateBadges();
   showToast('Tarea actualizada');
 };

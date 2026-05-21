@@ -3021,7 +3021,7 @@ async function fbPullDelegadas(){
       const localId = fb.id.replace('g_','');
       const idx = tasks.findIndex(t=>t.id===localId);
       if(idx<0) return;
-      const newAvance = (fb.avance||0)/100;
+      const newAvance = (fb.avance||0); // avance stored as 0-100 in equipo
       const newEstado = {done:'Completada',progress:'En proceso',pending:'Pendiente',blocked:'Bloqueada'}[fb.status]||tasks[idx].estado;
       if(tasks[idx].avance!==newAvance || tasks[idx].estado!==newEstado){
         tasks[idx].avance = newAvance;
