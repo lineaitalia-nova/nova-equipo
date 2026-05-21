@@ -419,7 +419,7 @@ const CK = ['Modelo 3D','Planos','DXF','IGS','Instructivo','Ficha técnica','Pre
 
 // USUARIOS DEFAULT
 const DEFAULT_USERS = [
-  {uid:'admin',    nombre:'Gerente (Innovación)', pass:'gerente2026', perfil:'GI', role:'Gerente de Innovación y Diseño'},
+  {uid:'admin',    nombre:'René Esparza Martínez', pass:'gerente2026', perfil:'GI', role:'Gerente de Innovación y Diseño'},
   {uid:'rbarraza', nombre:'Ramon Barraza',         pass:'rb2026',      perfil:'RB', role:'Ingeniero de Producto'},
   {uid:'fdelarosa',nombre:'Francisco de la Rosa',  pass:'fr2026',      perfil:'FR', role:'Ingeniero de Producto'},
   {uid:'aesparza', nombre:'Alexis Esparza',         pass:'ae2026',      perfil:'AE', role:'Ingeniero de Producto'},
@@ -727,6 +727,7 @@ function doLogin(){
   document.getElementById('shell').style.display='flex';
   rSB();
   sv2(isG()?'inicio':isArea()?'mis-tareas-area':'mi-dashboard');
+  setTimeout(()=>showWelcomePopup(),400);
 }
 function logout(){cu=null;av='inicio';rLogin();}
 
@@ -4662,6 +4663,233 @@ function rCalendario(c){
   };
 
   refreshCal();
+}
+// ─── WELCOME POPUP ──────────────────────────────────────────────────
+const FRASES_DISENO = [
+  "Diseñar no es hacer algo bonito; es hacer que algo funcione mejor.",
+  "Cada línea que trazamos debe resolver algo, no solo ocupar espacio.",
+  "El buen diseño nace cuando escuchamos al usuario antes de imponer una idea.",
+  "Un producto bien diseñado habla antes de que alguien lo explique.",
+  "La creatividad no es improvisar; es encontrar soluciones donde otros ven límites.",
+  "Diseñar es convertir una necesidad en una experiencia clara, útil y memorable.",
+  "No buscamos hacer más piezas; buscamos crear mejores soluciones.",
+  "El detalle que hoy cuidamos es la diferencia que mañana reconoce el cliente.",
+  "Un gran diseño no se nota por lo complicado que es, sino por lo fácil que hace la vida.",
+  "La innovación empieza cuando dejamos de aceptar 'así siempre se ha hecho'.",
+  "Diseñar también es tener criterio para simplificar.",
+  "Cada mejora pequeña en el diseño puede evitar grandes problemas en producción.",
+  "El diseño no termina en el render; termina cuando el producto funciona en la vida real.",
+  "Un buen diseñador piensa en quien fabrica, quien vende, quien instala y quien usa.",
+  "La estética atrae, pero la funcionalidad convence.",
+  "El diseño responsable no solo crea productos: crea confianza.",
+  "Las mejores ideas no siempre nacen perfectas; se pulen con disciplina.",
+  "El error también diseña, cuando tenemos la humildad de aprender de él.",
+  "Diseñar es adelantarse al problema antes de que llegue al cliente.",
+  "Un equipo que diseña con propósito transforma materiales en soluciones.",
+  "No diseñamos muebles; diseñamos formas de trabajar mejor.",
+  "Cada producto es una oportunidad para demostrar quiénes somos como equipo.",
+  "La creatividad sin ejecución se queda en idea; la ejecución con criterio se vuelve innovación.",
+  "Un diseño fuerte no depende de adornos, depende de decisiones inteligentes.",
+  "La excelencia se construye en los detalles que nadie ve, pero todos sienten."
+];
+
+function getFraseDelDia(){
+  const start = new Date(2026,0,1);
+  const today = new Date();
+  const diff = Math.floor((today - start)/(1000*60*60*24));
+  return FRASES_DISENO[diff % FRASES_DISENO.length];
+}
+
+function getSaludo(){
+  const h = new Date().getHours();
+  if(h<12) return 'Buenos días';
+  if(h<19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function getWelcomeTasks(){
+  const myProjs = isG() ? PROJ : PROJ.filter(p=>p.eng===cu?.perfil);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const endWeek = new Date(today); endWeek.setDate(today.getDate()+(6-today.getDay()));
+
+  const criticas=[], semana=[], recientes=[];
+  let total=0, completadas=0, enProceso=0, pendientes=0;
+
+  myProjs.forEach(p=>{
+    if(!p.tp) return;
+    Object.values(p.tp).forEach(fase=>{
+      (fase||[]).forEach(t=>{
+        total++;
+        const ff = t.ff||t.fin||'';
+        const fi = t.fi||t.ini||'';
+        const est = t.e||'No iniciado';
+        let fechaFin = null;
+        if(ff){
+          const pts=ff.split('/');
+          if(pts.length===3) fechaFin=new Date(+pts[2],+pts[1]-1,+pts[0]);
+          else fechaFin=new Date(ff);
+          if(isNaN(fechaFin)) fechaFin=null;
+        }
+
+        if(est==='Completado'){
+          completadas++;
+          // Recently completed (last 7 days)
+          if(fechaFin){
+            const diff=(today-fechaFin)/(1000*60*60*24);
+            if(diff<=7 && diff>=-1) recientes.push({tarea:t.n,proyecto:p.nombre||p.id,color:getProjColor(p.id)});
+          }
+        } else if(est==='En progreso'){
+          enProceso++;
+        } else {
+          pendientes++;
+        }
+
+        // Criticas: vencidas o bloqueadas
+        if(est!=='Completado' && fechaFin && fechaFin < today){
+          criticas.push({tarea:t.n,proyecto:p.nombre||p.id,ff,color:getProjColor(p.id),est});
+        } else if(est==='Bloqueado'){
+          criticas.push({tarea:t.n,proyecto:p.nombre||p.id,ff,color:getProjColor(p.id),est});
+        }
+
+        // Vencen esta semana
+        if(est!=='Completado' && fechaFin && fechaFin>=today && fechaFin<=endWeek){
+          semana.push({tarea:t.n,proyecto:p.nombre||p.id,ff,color:getProjColor(p.id)});
+        }
+      });
+    });
+  });
+
+  const pct = total>0 ? Math.round((completadas/total)*100) : 0;
+  const circ = 2*Math.PI*28;
+  const offset = circ - (pct/100)*circ;
+
+  return {criticas,semana,recientes,total,completadas,enProceso,pendientes,pct,circ,offset};
+}
+
+function showWelcomePopup(){
+  if(document.getElementById('welcome-overlay')) return;
+  const saludo=getSaludo();
+  const nombre=cu?.nombre?.split(' ')[0]||cu?.uid||'';
+  const frase=getFraseDelDia();
+  const {criticas,semana,recientes,total,completadas,enProceso,pendientes,pct,circ,offset}=getWelcomeTasks();
+  const today=new Date();
+  const fechaStr=today.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+  const semStr=`Semana del ${new Date(today.getFullYear(),today.getMonth(),today.getDate()-(today.getDay()-1)).toLocaleDateString('es-MX')}`;
+
+  const overlay=document.createElement('div');
+  overlay.id='welcome-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(26,31,60,.6);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);animation:fadeInW .3s ease';
+
+  overlay.innerHTML=`
+  <style>
+    @keyframes fadeInW{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+    @keyframes slideUpW{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .wcard{background:#fff;border:1px solid #dde3f0;border-radius:16px;padding:28px 32px;max-width:760px;width:92%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(26,31,60,.18);animation:slideUpW .35s .05s both}
+    .wcard::-webkit-scrollbar{width:4px}.wcard::-webkit-scrollbar-track{background:transparent}.wcard::-webkit-scrollbar-thumb{background:#c5cce0;border-radius:2px}
+    .wgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+    .wbox{background:#f5f7fc;border:1px solid #dde3f0;border-radius:10px;padding:14px 16px}
+    .wbox-label{font-size:10px;font-weight:800;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px;font-family:var(--font-d)}
+    .wbtn{padding:10px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:opacity .15s}
+    .wbtn:hover{opacity:.85}
+    @media(max-width:600px){.wgrid{grid-template-columns:1fr}}
+  </style>
+  <div class="wcard">
+    <!-- Header -->
+    <div style="margin-bottom:3px;font-size:10px;font-weight:700;color:#8a96b3;letter-spacing:.08em;font-family:var(--font-d)">${fechaStr}</div>
+    <div style="font-size:26px;font-weight:900;color:#1a1f3c;letter-spacing:-.02em;margin-bottom:2px;font-family:var(--font-d)">${saludo}, ${nombre} 👋</div>
+    <div style="font-size:12px;color:#8a96b3;margin-bottom:14px;font-family:var(--font-b)">${total} tareas totales · ${semStr}</div>
+
+    <!-- Frase del día -->
+    <div style="background:#1a1f3c;border-radius:10px;padding:14px 18px;margin-bottom:4px">
+      <div style="font-size:9px;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.1em;margin-bottom:6px;font-family:var(--font-d)">💡 FRASE DEL DÍA</div>
+      <div style="font-size:16px;font-style:italic;color:rgba(255,255,255,.95);line-height:1.6;font-family:var(--font-b);font-weight:600">"${frase}"</div>
+    </div>
+
+    <!-- Grid cards -->
+    <div class="wgrid">
+
+      <!-- Críticas -->
+      <div class="wbox" style="${criticas.length?'border-color:#fca5a5;background:#fff5f5':''}">
+        <div class="wbox-label" style="color:${criticas.length?'#dc2626':'#059669'}">
+          <span style="width:8px;height:8px;border-radius:50%;background:${criticas.length?'#dc2626':'#059669'};display:inline-block;flex-shrink:0"></span>
+          CRÍTICAS — VENCIDAS O URGENTES
+        </div>
+        ${criticas.length===0
+          ?`<div style="font-size:12px;color:#059669;font-weight:600">✓ Sin tareas críticas</div>`
+          :criticas.slice(0,3).map(t=>`<div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:6px">
+              <div style="width:3px;min-height:28px;border-radius:2px;background:${t.color};flex-shrink:0;margin-top:2px"></div>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:#1a1f3c;line-height:1.3">${t.tarea}</div>
+                <div style="font-size:9px;color:#8a96b3">${t.proyecto}${t.ff?' · '+t.ff:''}</div>
+              </div>
+            </div>`).join('')+
+            (criticas.length>3?`<div style="font-size:10px;color:#8a96b3;margin-top:2px">+${criticas.length-3} más</div>`:'')}
+      </div>
+
+      <!-- Vencen esta semana -->
+      <div class="wbox" style="${semana.length?'border-color:#fde68a;background:#fffdf0':''}">
+        <div class="wbox-label" style="color:#b45309">
+          <span>📅</span> VENCEN ESTA SEMANA
+        </div>
+        ${semana.length===0
+          ?`<div style="font-size:12px;color:#8a96b3">Sin vencimientos esta semana</div>`
+          :semana.slice(0,3).map(t=>`<div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:6px">
+              <div style="width:3px;min-height:28px;border-radius:2px;background:${t.color};flex-shrink:0;margin-top:2px"></div>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:#1a1f3c;line-height:1.3">${t.tarea}</div>
+                <div style="font-size:9px;color:#8a96b3">${t.proyecto} · ${t.ff}</div>
+              </div>
+            </div>`).join('')+
+            (semana.length>3?`<div style="font-size:10px;color:#8a96b3;margin-top:2px">+${semana.length-3} más</div>`:'')}
+      </div>
+
+      <!-- Avance general -->
+      <div class="wbox">
+        <div class="wbox-label" style="color:#1a1f3c"><span>▣</span> AVANCE GENERAL</div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle cx="34" cy="34" r="28" fill="none" stroke="#dde3f0" stroke-width="7"/>
+            <circle cx="34" cy="34" r="28" fill="none" stroke="${pct===100?'#059669':pct>60?'#1a1f3c':'#d97706'}" stroke-width="7"
+              stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
+              stroke-linecap="round" transform="rotate(-90 34 34)"/>
+            <text x="34" y="39" text-anchor="middle" font-size="13" font-weight="800" fill="#1a1f3c">${pct}%</text>
+          </svg>
+          <div>
+            <div style="font-size:22px;font-weight:900;color:#1a1f3c;font-family:var(--font-d)">${pct}%</div>
+            <div style="font-size:10px;color:#8a96b3;margin-bottom:6px">completado</div>
+            <div style="font-size:11px;color:#059669;font-weight:700">✓ ${completadas} completadas</div>
+            <div style="font-size:11px;color:#2563eb;font-weight:700">→ ${enProceso} en proceso</div>
+            <div style="font-size:11px;color:#d97706;font-weight:700">⏳ ${pendientes} pendientes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Completadas recientes -->
+      <div class="wbox">
+        <div class="wbox-label" style="color:#059669"><span>✅</span> COMPLETADAS RECIENTES</div>
+        ${recientes.length===0
+          ?`<div style="font-size:12px;color:#8a96b3">Sin completadas recientes</div>`
+          :recientes.slice(0,4).map(t=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="font-size:11px">✅</span>
+              <div style="font-size:11px;color:#1a1f3c;font-weight:600;line-height:1.3">${t.tarea}</div>
+            </div>`).join('')+
+            (recientes.length>4?`<div style="font-size:10px;color:#8a96b3;margin-top:2px">+${recientes.length-4} más</div>`:'')}
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+      <button class="wbtn" style="background:#f0f2f8;color:#1a1f3c;border:1px solid #dde3f0"
+        onclick="document.getElementById('welcome-overlay').remove()">Cerrar</button>
+      <button class="wbtn" style="background:#1a1f3c;color:#fff"
+        onclick="document.getElementById('welcome-overlay').remove();sv2(isG()?'inicio':'mi-dashboard')">
+        Ver mi dashboard →
+      </button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
 }
 </script>
 </body>
