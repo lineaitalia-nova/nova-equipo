@@ -682,6 +682,8 @@ function applySession(){
   av.textContent=SESSION.nombre.charAt(0);
   av.style.background=SESSION.color;
   av.style.color=SESSION.id==='rene'?'#0D1B3E':'#fff';
+  // Pull delegated tasks from René on login
+  setTimeout(()=>pullDelegadas(), 1000);
 
   const isRene=SESSION.id==='rene';
   const isLider=SESSION.rol==='lider';

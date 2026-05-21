@@ -301,6 +301,7 @@ nav{flex:1;overflow-y:auto;padding:6px 8px}
   <div class="tb-right">
     <div class="tb-clock" id="clock"></div>
     <button class="tb-btn" onclick="syncNPD();renderView(currentView)">↻ Actualizar</button>
+    <button class="tb-btn" onclick="fbPullDelegadas()" style="background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3)" title="Sincronizar avances del equipo">↻ Sync Equipo</button>
   </div>
 </div>
 
@@ -1866,7 +1867,9 @@ function quickCapture(){
   const id=String(Math.max(...tasks.map(t=>parseInt(t.id)||0),0)+1);
   const tipo=document.getElementById('qc-t1').checked?'Tipo 1':'Tipo 2';
   const cuad=tipo==='Tipo 2'?'Q3-Delegar':document.getElementById('qc-q').value;
-  tasks.push({id,tarea,area:document.getElementById('qc-a').value,proyecto:'',responsable:document.getElementById('qc-r').value,prioridad:document.getElementById('qc-p').value,cuadrante:cuad,estado:'Pendiente',riesgo:'🟡 Medio',fecha_limite:'',fecha_deleg:'',avance:0,notas:'',tipo});
+  const _qct={id,tarea,area:document.getElementById('qc-a').value,proyecto:'',responsable:document.getElementById('qc-r').value,prioridad:document.getElementById('qc-p').value,cuadrante:cuad,estado:'Pendiente',riesgo:'🟡 Medio',fecha_limite:'',fecha_deleg:'',avance:0,notas:'',tipo};
+  tasks.push(_qct);
+  fbPushDelegada(_qct);
   save();closeM('modal-quick');document.getElementById('qc-t').value='';document.getElementById('qc-t1').checked=true;styleTipo('qc');
   renderView(currentView);updateBadges();showToast(`✅ ${tipo==='Tipo 2'?'T2 → Q3 Delegado':'T1'} capturada en Central`);
 }
@@ -3010,10 +3013,13 @@ async function fbPushDelegada(task){
 
 // Pull updates from Firebase - sync avance/status back from team
 async function fbPullDelegadas(){
+  console.log('fbPullDelegadas - iniciando pull de:', FB_BRIDGE+'/delegadas.json');
   try{
     const r = await fetch(FB_BRIDGE+'/delegadas.json');
+    console.log('Firebase response status:', r.status);
     if(!r.ok) return;
     const data = await r.json();
+    console.log('Delegadas data:', data);
     if(!data) return;
     let updated = 0;
     Object.values(data).forEach(fb=>{
