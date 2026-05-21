@@ -3023,16 +3023,20 @@ async function fbPullDelegadas(){
     if(!data) return;
     let updated = 0;
     Object.values(data).forEach(fb=>{
-      if(!fb || !fb.fromGerencial) return;
-      const localId = fb.id.replace('g_','');
-      const idx = tasks.findIndex(t=>t.id===localId);
+      if(!fb) return;
+      // Try both with and without g_ prefix
+      const localId = fb.id ? fb.id.replace('g_','') : null;
+      if(!localId) return;
+      const idx = tasks.findIndex(t=>String(t.id)===String(localId));
       if(idx<0) return;
-      const newAvance = (fb.avance||0); // avance stored as 0-100 in equipo
+      const newAvance = fb.avance||0; // avance stored as 0-100 in equipo
       const newEstado = {done:'Completada',progress:'En proceso',pending:'Pendiente',blocked:'Bloqueada'}[fb.status]||tasks[idx].estado;
-      if(tasks[idx].avance!==newAvance || tasks[idx].estado!==newEstado){
-        tasks[idx].avance = newAvance;
+      // Always update if different
+      if(String(tasks[idx].avance*100)!==String(newAvance) || tasks[idx].estado!==newEstado){
+        tasks[idx].avance = newAvance/100;
         tasks[idx].estado = newEstado;
         updated++;
+        console.log(`Updated task ${localId}: avance=${newAvance}, estado=${newEstado}`);
       }
     });
     if(updated>0){
@@ -3040,10 +3044,11 @@ async function fbPullDelegadas(){
       renderView(currentView);
       updateBadges();
       showToast(`↻ ${updated} tarea${updated!==1?'s':''} sincronizada${updated!==1?'s':''}`);
+    } else {
+      showToast('↻ Sin cambios nuevos');
     }
   }catch(e){console.warn('Pull delegadas error:',e);}
 }
-
 // Delete from Firebase when task is deleted locally
 async function fbDeleteDelegada(id){
   try{
