@@ -643,6 +643,7 @@ async function gsPull(){
     if(Object.keys(myEval).length>0)DB.eval_progreso=myEval;
     if(latestSaved>0)DB._savedAt=latestSaved;
     saveLocal();setSyncTxt('Sincronizado');renderView(currentView);updateBadges();
+    pullDelegadas();
   }catch(e){setSyncTxt('Datos locales');}
 }
 
@@ -821,7 +822,7 @@ function taskRow(t,showAssign=true){
   const isOver=isOverdue(t);
   return`<tr onclick="openAvanceModal('${t.id}')">
     <td class="td-num">#${t.num||'—'}</td>
-    <td style="max-width:200px"><div style="font-size:12px;font-weight:500;color:var(--text);line-height:1.3">${t.desc}</div>${t.notas?`<div style="font-size:10px;color:var(--text3);margin-top:2px">${t.notas.slice(0,60)}</div>`:''}</td>
+    <td style="max-width:200px"><div style="font-size:12px;font-weight:500;color:var(--text);line-height:1.3">${t.fromRene?'<span style="font-size:9px;background:#FEF3C7;color:#92400E;padding:1px 6px;border-radius:99px;font-weight:700;margin-right:4px">📌 René</span>':''}${t.desc}</div>${t.notas?`<div style="font-size:10px;color:var(--text3);margin-top:2px">${t.notas.slice(0,60)}</div>`:''}</td>
     <td><span class="tag muted">${t.area||'—'}</span></td>
     <td style="font-size:11px;color:var(--text2)">${t.proyecto||'—'}</td>
     <td><span class="tag muted">${t.tipo||'—'}</span></td>
@@ -1972,6 +1973,7 @@ document.getElementById('btn-save-av').onclick=()=>{
   if(newAssign&&newAssign!=='')t.assignedTo=newAssign;
   const nota=document.getElementById('av-nota').value.trim();
   if(nota){if(!t.historial)t.historial=[];t.historial.push({fecha:todayStr(),nota,avance:t.avance});}
+  const _avT=DB.tareas.find(t=>t.id===avanceTargetId);if(_avT)pushAvanceDelegada(_avT);
   saveLocal();gsPush();closeModal('modal-avance');
   renderView(currentView);updateBadges();
   showToast('Tarea actualizada');
@@ -2204,6 +2206,57 @@ function setHistMes(m){historialMes=m;rHistorial();}
 
 loadLocal();
 initLogin();
+// ══ DELEGADAS BRIDGE (René → Equipo) ══════════════════════════
+async function pullDelegadas(){
+  if(!FB_URL||!SESSION) return;
+  try{
+    const r = await fetch(FB_URL+'/delegadas.json');
+    if(!r.ok) return;
+    const data = await r.json();
+    if(!data) return;
+    // Filter tasks assigned to current user
+    const misDelgadas = Object.values(data).filter(t=>t && t.assignedTo===SESSION.id && t.fromGerencial);
+    // Merge into DB.tareas - update existing or add new
+    let changes = 0;
+    misDelgadas.forEach(fd=>{
+      const idx = DB.tareas.findIndex(t=>t.id===fd.id);
+      if(idx>=0){
+        // Update only if firebase has newer data
+        if((fd.updatedAt||0) > (DB.tareas[idx].updatedAt||0)){
+          DB.tareas[idx] = {...DB.tareas[idx], ...fd, fromRene:true};
+          changes++;
+        }
+      } else {
+        // New delegated task from René
+        DB.tareas.push({...fd, fromRene:true, num: DB.tareas.length+1});
+        changes++;
+      }
+    });
+    if(changes>0){
+      saveLocal();
+      if(typeof renderView==='function') renderView(currentView);
+      if(typeof updateBadges==='function') updateBadges();
+    }
+  }catch(e){console.warn('pullDelegadas error:',e);}
+}
+
+// Push avance/status updates back to Firebase so René can see them
+async function pushAvanceDelegada(task){
+  if(!task.fromRene || !FB_URL) return;
+  try{
+    await fetch(FB_URL+'/delegadas/'+task.id+'.json',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        avance: task.avance||0,
+        status: task.status,
+        updatedAt: Date.now(),
+        updatedBy: SESSION.id
+      })
+    });
+  }catch(e){console.warn('pushAvanceDelegada error:',e);}
+}
+
 </script>
 </body>
 </html>
