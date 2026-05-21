@@ -3029,11 +3029,11 @@ async function fbPullDelegadas(){
       if(!localId) return;
       const idx = tasks.findIndex(t=>String(t.id)===String(localId));
       if(idx<0) return;
-      const newAvance = fb.avance||0; // avance stored as 0-100 in equipo
+      const newAvance = (fb.avance||0)/100; // Firebase stores 0-100, gerencial uses 0-1
       const newEstado = {done:'Completada',progress:'En proceso',pending:'Pendiente',blocked:'Bloqueada'}[fb.status]||tasks[idx].estado;
       // Always update if different
-      if(String(tasks[idx].avance*100)!==String(newAvance) || tasks[idx].estado!==newEstado){
-        tasks[idx].avance = newAvance/100;
+      if(Math.abs(tasks[idx].avance - newAvance) > 0.001 || tasks[idx].estado!==newEstado){
+        tasks[idx].avance = newAvance;
         tasks[idx].estado = newEstado;
         updated++;
         console.log(`Updated task ${localId}: avance=${newAvance}, estado=${newEstado}`);
