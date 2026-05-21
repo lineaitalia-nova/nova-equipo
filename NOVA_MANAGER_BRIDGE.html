@@ -1044,6 +1044,17 @@ function save(){
 }
 
 function load(){
+  // Migrate avance from 0-1 to 0-100 format (one-time)
+  try{
+    const raw = localStorage.getItem(KEY+'_t');
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(arr && arr.length && arr[0].avance <= 1.0 && arr[0].avance > 0){
+        const migrated = arr.map(t=>({...t, avance: Math.round(t.avance*100)}));
+        localStorage.setItem(KEY+'_t', JSON.stringify(migrated));
+      }
+    }
+  }catch(e){}
   try{tasks=JSON.parse(localStorage.getItem(KEY+'_t'))||JSON.parse(JSON.stringify(DT));}catch{tasks=JSON.parse(JSON.stringify(DT));}
   try{projects=JSON.parse(localStorage.getItem(KEY+'_p'))||JSON.parse(JSON.stringify(DP));}catch{projects=JSON.parse(JSON.stringify(DP));}
   try{reviewDone=JSON.parse(localStorage.getItem(KEY+'_rv'))||[];}catch{reviewDone=[];}
@@ -1236,7 +1247,7 @@ function rDash(){
   // Riesgo fecha
   document.getElementById('riesgo-list').innerHTML=tasks.filter(t=>{const v=vel(t.avance,t.fecha_limite);return(v.cls==='vcrit'||v.cls==='vwarn')&&t.estado!=='Completada';}).slice(0,5).map(t=>{
     const v=vel(t.avance,t.fecha_limite),dl=dL(t.fecha_limite);
-    return`<div style="padding:5px 0;border-bottom:1px solid var(--bg)"><div style="font-size:11px;color:var(--text);margin-bottom:2px;line-height:1.3">${t.tarea}</div><div style="display:flex;gap:5px;align-items:center"><span class="vel ${v.cls}">${v.l}</span><span style="font-size:9px;color:var(--text3)">${dl!==null?dl+'d':''} · ${Math.round(t.avance*100)}%</span></div></div>`;
+    return`<div style="padding:5px 0;border-bottom:1px solid var(--bg)"><div style="font-size:11px;color:var(--text);margin-bottom:2px;line-height:1.3">${t.tarea}</div><div style="display:flex;gap:5px;align-items:center"><span class="vel ${v.cls}">${v.l}</span><span style="font-size:9px;color:var(--text3)">${dl!==null?dl+'d':''} · ${Math.round(t.avance)}%</span></div></div>`;
   }).join('')||'<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">✅ Todos al ritmo</div>';
 }
 setInterval(()=>{if(currentView==='dashboard')rDash();},30000);
@@ -1286,7 +1297,7 @@ function rT(){
       <td style="font-size:10px;color:var(--text2);white-space:nowrap">${t.responsable||'—'}</td>
       <td style="font-size:10px;color:var(--text2)">${fD(t.fecha_limite)}${dlStr}</td>
       <td style="font-size:10px;color:var(--text2)">${fD(t.fecha_deleg)}</td>
-      <td style="min-width:85px"><div style="display:flex;align-items:center;gap:4px"><div style="flex:1;height:6px;background:var(--bg);border-radius:99px;overflow:hidden;cursor:pointer" onclick="inlineAv('${t.id}',${Math.round(t.avance*100)})"><div style="height:100%;width:${Math.round(t.avance*100)}%;background:${EC[t.estado]||'#2563EB'};border-radius:99px"></div></div><span style="font-size:9px;font-weight:700;color:var(--text2);cursor:pointer;min-width:22px" onclick="inlineAv('${t.id}',${Math.round(t.avance*100)})">${Math.round(t.avance*100)}%</span></div></td>
+      <td style="min-width:85px"><div style="display:flex;align-items:center;gap:4px"><div style="flex:1;height:6px;background:var(--bg);border-radius:99px;overflow:hidden;cursor:pointer" onclick="inlineAv('${t.id}',${Math.round(t.avance)})"><div style="height:100%;width:${Math.round(t.avance)}%;background:${EC[t.estado]||'#2563EB'};border-radius:99px"></div></div><span style="font-size:9px;font-weight:700;color:var(--text2);cursor:pointer;min-width:22px" onclick="inlineAv('${t.id}',${Math.round(t.avance)})">${Math.round(t.avance)}%</span></div></td>
       <td style="font-size:11px">${t.riesgo||'—'}</td>
       <td><span class="vel ${v.cls}">${v.l}</span></td>
       <td style="font-size:9px;color:var(--text3);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.notas||''}">${t.notas||''}</td>
@@ -1513,7 +1524,7 @@ function openPersona(nameEnc){
     html+=`<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:${QC[q]};margin-bottom:7px">${q.replace('-',' — ')} (${qt.length})</div>`;
     html+=qt.map(t=>{
       const v=vel(t.avance,t.fecha_limite),dl=dL(t.fecha_limite);
-      return`<div style="background:var(--bg);border-radius:6px;padding:8px 10px;margin-bottom:5px"><div style="font-size:11px;color:var(--text);margin-bottom:4px;line-height:1.3">${t.tarea}</div><div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">${estB(t.estado)} ${tipoB(t.tipo)} <span class="vel ${v.cls}">${v.l}</span>${dl!==null?`<span style="font-size:9px;color:${dl<0?'#DC2626':'var(--text3)'}">${dl<0?'⚠ Vencida':dl+'d'}</span>`:''}<span style="font-size:9px;color:var(--text3);margin-left:auto">${Math.round(t.avance*100)}%</span></div></div>`;
+      return`<div style="background:var(--bg);border-radius:6px;padding:8px 10px;margin-bottom:5px"><div style="font-size:11px;color:var(--text);margin-bottom:4px;line-height:1.3">${t.tarea}</div><div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">${estB(t.estado)} ${tipoB(t.tipo)} <span class="vel ${v.cls}">${v.l}</span>${dl!==null?`<span style="font-size:9px;color:${dl<0?'#DC2626':'var(--text3)'}">${dl<0?'⚠ Vencida':dl+'d'}</span>`:''}<span style="font-size:9px;color:var(--text3);margin-left:auto">${Math.round(t.avance)}%</span></div></div>`;
     }).join('')+'</div>';
   });
   if(p.bloq>0)html+=`<div class="alert a-red"><span>🚨</span><div><strong>${p.bloq} tarea${p.bloq>1?'s':''} bloqueada${p.bloq>1?'s':''}</strong> — requieren atención inmediata</div></div>`;
@@ -1613,7 +1624,7 @@ function rHz(){
     return`<div class="hband" style="border-color:${b.bd}">
       <div style="font-size:12px;font-weight:700;color:${b.c};margin-bottom:8px">${b.l} · ${bt.length} tareas</div>
       ${bt.length?bt.map(t=>{const dl=dL(t.fecha_limite),v=vel(t.avance,t.fecha_limite);
-        return`<div class="hitem"><span class="vel ${v.cls}" style="flex-shrink:0">${dl}d</span><div style="flex:1;min-width:0"><div style="font-size:11px;color:var(--text);line-height:1.3">${t.tarea}</div><div style="font-size:10px;color:var(--text3)">${t.responsable||''} · ${Math.round(t.avance*100)}%</div></div>${areaB(t.area)}</div>`;
+        return`<div class="hitem"><span class="vel ${v.cls}" style="flex-shrink:0">${dl}d</span><div style="flex:1;min-width:0"><div style="font-size:11px;color:var(--text);line-height:1.3">${t.tarea}</div><div style="font-size:10px;color:var(--text3)">${t.responsable||''} · ${Math.round(t.avance)}%</div></div>${areaB(t.area)}</div>`;
       }).join(''):`<div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">✅ Sin vencimientos</div>`}
     </div>`;
   }).join('');
@@ -1694,7 +1705,7 @@ function rRocas(){
       ${pl.length?`<div style="margin-bottom:8px">
         <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Proyectos vinculados</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${pl.map(p=>{const pc=Math.round(p.avance*100);return`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:10px"><span style="font-weight:700;color:var(--text)">${p.id}</span> · ${p.descripcion} · <span style="font-weight:800;color:${pc>=70?'#16A34A':pc>=30?'#D97706':'#DC2626'}">${pc}%</span></div>`;}).join('')}
+          ${pl.map(p=>{const pc=Math.round(p.avance);return`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:10px"><span style="font-weight:700;color:var(--text)">${p.id}</span> · ${p.descripcion} · <span style="font-weight:800;color:${pc>=70?'#16A34A':pc>=30?'#D97706':'#DC2626'}">${pc}%</span></div>`;}).join('')}
         </div>
       </div>`:''}
       ${vinc.length?`<div style="border-top:1px solid var(--border);padding-top:8px">
@@ -1777,7 +1788,7 @@ function renderProyectos(){
   el.innerHTML=Object.entries(grouped).map(([resp,projs])=>{
     const init=resp.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const rows=projs.map(p=>{
-      const pct=Math.round(p.avance*100),dl=dL(p.fecha_limite);
+      const pct=Math.round(p.avance),dl=dL(p.fecha_limite);
       const pc=p.estado==='Bloqueada'?'#EF4444':pct>=70?'#22C55E':pct>=30?'#7C3AED':'#F59E0B';
       const fase=p.fase||'Diseño';const fc=FASE_C[fase]||'#2563EB';
       const ec={'En progreso':'#DBEAFE',Completada:'#DCFCE7',Bloqueada:'#FEE2E2',Terminado:'#DCFCE7','Fuera de linea':'#FEE2E2'};
@@ -1827,7 +1838,7 @@ function editTaskM(id){
   document.getElementById('et-t').value=t.tarea;
   setV('et-a',t.area);setV('et-e',t.estado);setV('et-p',t.prioridad);setV('et-q',t.cuadrante);setV('et-ri',t.riesgo);
   document.getElementById('et-pr').value=t.proyecto||'';document.getElementById('et-f').value=t.fecha_limite||'';
-  document.getElementById('et-fd').value=t.fecha_deleg||'';document.getElementById('et-av').value=Math.round(t.avance*100);
+  document.getElementById('et-fd').value=t.fecha_deleg||'';document.getElementById('et-av').value=Math.round(t.avance);
   document.getElementById('et-n').value=t.notas||'';setV('et-r',t.responsable||'');
   document.getElementById('et-t1').checked=t.tipo!=='Tipo 2';document.getElementById('et-t2').checked=t.tipo==='Tipo 2';
   styleTipo('et');
@@ -1838,7 +1849,7 @@ function editTaskM(id){
 function saveTask(){
   const id=document.getElementById('et-id').value,idx=tasks.findIndex(t=>t.id===id);if(idx<0)return;
   const tipo=document.getElementById('et-t1').checked?'Tipo 1':'Tipo 2';
-  tasks[idx]={...tasks[idx],tarea:document.getElementById('et-t').value,area:document.getElementById('et-a').value,proyecto:document.getElementById('et-pr').value,responsable:document.getElementById('et-r').value,prioridad:document.getElementById('et-p').value,cuadrante:document.getElementById('et-q').value,estado:document.getElementById('et-e').value,riesgo:document.getElementById('et-ri').value,fecha_limite:document.getElementById('et-f').value,fecha_deleg:document.getElementById('et-fd').value,avance:Number(document.getElementById('et-av').value)/100,notas:document.getElementById('et-n').value,tipo,meta:document.getElementById('et-meta').value};
+  tasks[idx]={...tasks[idx],tarea:document.getElementById('et-t').value,area:document.getElementById('et-a').value,proyecto:document.getElementById('et-pr').value,responsable:document.getElementById('et-r').value,prioridad:document.getElementById('et-p').value,cuadrante:document.getElementById('et-q').value,estado:document.getElementById('et-e').value,riesgo:document.getElementById('et-ri').value,fecha_limite:document.getElementById('et-f').value,fecha_deleg:document.getElementById('et-fd').value,avance:Number(document.getElementById('et-av').value),notas:document.getElementById('et-n').value,tipo,meta:document.getElementById('et-meta').value};
   save();closeM('modal-edit');renderView(currentView);updateBadges();
   fbPullDelegadas();
   setInterval(fbPullDelegadas, 30000);
@@ -1848,7 +1859,7 @@ function addTask(){
   const id=String(Math.max(...tasks.map(t=>parseInt(t.id)||0),0)+1);
   const tipo=document.getElementById('nt-t1').checked?'Tipo 1':'Tipo 2';
   const cuad=tipo==='Tipo 2'?'Q3-Delegar':document.getElementById('nt-q').value;
-  const _nt={id,tarea:document.getElementById('nt-t').value,area:document.getElementById('nt-a').value,proyecto:document.getElementById('nt-pr').value,responsable:document.getElementById('nt-r').value,prioridad:document.getElementById('nt-p').value,cuadrante:cuad,estado:document.getElementById('nt-e').value,riesgo:document.getElementById('nt-ri').value,fecha_limite:document.getElementById('nt-f').value,fecha_deleg:document.getElementById('nt-fd').value,avance:Number(document.getElementById('nt-av').value)/100,notas:document.getElementById('nt-n').value,tipo,meta:document.getElementById('nt-meta').value};
+  const _nt={id,tarea:document.getElementById('nt-t').value,area:document.getElementById('nt-a').value,proyecto:document.getElementById('nt-pr').value,responsable:document.getElementById('nt-r').value,prioridad:document.getElementById('nt-p').value,cuadrante:cuad,estado:document.getElementById('nt-e').value,riesgo:document.getElementById('nt-ri').value,fecha_limite:document.getElementById('nt-f').value,fecha_deleg:document.getElementById('nt-fd').value,avance:Number(document.getElementById('nt-av').value),notas:document.getElementById('nt-n').value,tipo,meta:document.getElementById('nt-meta').value};
   tasks.push(_nt);
   fbPushDelegada(_nt);
   save();closeM('modal-add');['nt-t','nt-pr','nt-n','nt-f','nt-fd'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});document.getElementById('nt-av').value='0';document.getElementById('nt-t1').checked=true;styleTipo('nt');
@@ -1881,17 +1892,17 @@ function editProjM(id){
   const p=projects.find(x=>x.id===id);if(!p)return;
   document.getElementById('ep-id').value=p.id;document.getElementById('ep-d').value=p.descripcion;
   setV('ep-r',p.responsable||'');setV('ep-e',p.estado);
-  document.getElementById('ep-av').value=Math.round(p.avance*100);
+  document.getElementById('ep-av').value=Math.round(p.avance);
   document.getElementById('ep-f').value=p.fecha_limite||'';document.getElementById('ep-n').value=p.notas||'';
   openM('modal-edit-proj');
 }
 function saveProject(){
   const id=document.getElementById('ep-id').value,idx=projects.findIndex(p=>p.id===id);if(idx<0)return;
-  projects[idx]={...projects[idx],descripcion:document.getElementById('ep-d').value,responsable:document.getElementById('ep-r').value,estado:document.getElementById('ep-e').value,avance:Number(document.getElementById('ep-av').value)/100,fecha_limite:document.getElementById('ep-f').value,notas:document.getElementById('ep-n').value};
+  projects[idx]={...projects[idx],descripcion:document.getElementById('ep-d').value,responsable:document.getElementById('ep-r').value,estado:document.getElementById('ep-e').value,avance:Number(document.getElementById('ep-av').value),fecha_limite:document.getElementById('ep-f').value,notas:document.getElementById('ep-n').value};
   save();closeM('modal-edit-proj');renderProyectos();
 }
 function addProject(){
-  projects.push({id:document.getElementById('np-id').value,descripcion:document.getElementById('np-d').value,responsable:document.getElementById('np-r').value,area:document.getElementById('np-a').value,estado:document.getElementById('np-e').value,avance:Number(document.getElementById('np-av').value)/100,fecha_limite:document.getElementById('np-f').value,fase:'Diseño',notas:document.getElementById('np-n').value});
+  projects.push({id:document.getElementById('np-id').value,descripcion:document.getElementById('np-d').value,responsable:document.getElementById('np-r').value,area:document.getElementById('np-a').value,estado:document.getElementById('np-e').value,avance:Number(document.getElementById('np-av').value),fecha_limite:document.getElementById('np-f').value,fase:'Diseño',notas:document.getElementById('np-n').value});
   save();closeM('modal-add-proj');renderProyectos();
 }
 
@@ -3029,10 +3040,10 @@ async function fbPullDelegadas(){
       if(!localId) return;
       const idx = tasks.findIndex(t=>String(t.id)===String(localId));
       if(idx<0) return;
-      const newAvance = (fb.avance||0)/100; // Firebase stores 0-100, gerencial uses 0-1
+      const newAvance = fb.avance||0; // standardized 0-100
       const newEstado = {done:'Completada',progress:'En proceso',pending:'Pendiente',blocked:'Bloqueada'}[fb.status]||tasks[idx].estado;
       // Always update if different
-      if(Math.abs(tasks[idx].avance - newAvance) > 0.001 || tasks[idx].estado!==newEstado){
+      if(tasks[idx].avance !== newAvance || tasks[idx].estado!==newEstado){
         tasks[idx].avance = newAvance;
         tasks[idx].estado = newEstado;
         updated++;
