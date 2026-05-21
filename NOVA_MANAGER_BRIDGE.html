@@ -3024,31 +3024,28 @@ async function fbPushDelegada(task){
 
 // Pull updates from Firebase - sync avance/status back from team
 async function fbPullDelegadas(){
-  console.log('fbPullDelegadas - iniciando pull de:', FB_BRIDGE+'/delegadas.json');
+  console.log('fbPullDelegadas iniciando...');
   try{
     const r = await fetch(FB_BRIDGE+'/delegadas.json');
-    console.log('Firebase response status:', r.status);
-    if(!r.ok) return;
+    if(!r.ok){console.warn('Firebase error:',r.status);return;}
     const data = await r.json();
-    console.log('Delegadas data:', data);
+    console.log('Firebase delegadas:', JSON.stringify(data));
     if(!data) return;
     let updated = 0;
     Object.values(data).forEach(fb=>{
       if(!fb) return;
-      // Try both with and without g_ prefix
-      const localId = fb.id ? fb.id.replace('g_','') : null;
+      const localId = String(fb.id||'').replace('g_','');
       if(!localId) return;
-      const idx = tasks.findIndex(t=>String(t.id)===String(localId));
+      const idx = tasks.findIndex(t=>String(t.id)===localId);
+      console.log(`Buscando tarea ${localId}: idx=${idx}`);
       if(idx<0) return;
-      const newAvance = fb.avance||0; // standardized 0-100
-      const newEstado = {done:'Completada',progress:'En proceso',pending:'Pendiente',blocked:'Bloqueada'}[fb.status]||tasks[idx].estado;
-      // Always update if different
-      if(tasks[idx].avance !== newAvance || tasks[idx].estado!==newEstado){
-        tasks[idx].avance = newAvance;
-        tasks[idx].estado = newEstado;
-        updated++;
-        console.log(`Updated task ${localId}: avance=${newAvance}, estado=${newEstado}`);
-      }
+      const newAvance = Number(fb.avance)||0;
+      const statusMap={done:'Completada',progress:'En proceso',pending:'Pendiente',blocked:'Bloqueada'};
+      const newEstado = statusMap[fb.status] || fb.estado || tasks[idx].estado;
+      console.log(`Tarea ${localId}: avance local=${tasks[idx].avance} fb=${newAvance}, estado local=${tasks[idx].estado} fb=${newEstado}`);
+      tasks[idx].avance = newAvance;
+      tasks[idx].estado = newEstado;
+      updated++;
     });
     if(updated>0){
       save();
@@ -3056,7 +3053,7 @@ async function fbPullDelegadas(){
       updateBadges();
       showToast(`↻ ${updated} tarea${updated!==1?'s':''} sincronizada${updated!==1?'s':''}`);
     } else {
-      showToast('↻ Sin cambios nuevos');
+      showToast('↻ Sin cambios');
     }
   }catch(e){console.warn('Pull delegadas error:',e);}
 }
