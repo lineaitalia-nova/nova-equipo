@@ -1164,8 +1164,9 @@ function tipoB(t){return t==='Tipo 1'?`<span style="background:#DBEAFE;color:#1D
 
 function getIvy(){
   // Solo Q1 y Q2, Q1 primero - al terminar Q1 avanza a Q2
-  const q1Done = tasks.filter(t=>t.cuadrante==='Q1-Hacer'&&t.estado!=='Completada'&&t.estado!=='Cancelada'&&!isProj(t)&&t.tipo!=='Tipo 2').length===0;
-  return [...tasks.filter(t=>t.estado!=='Completada'&&t.estado!=='Cancelada'&&!isProj(t)&&t.tipo!=='Tipo 2'&&(t.cuadrante==='Q1-Hacer'||t.cuadrante==='Q2-Planificar'))]
+  // No excluimos por isProj porque las tareas reales también tienen proyecto PROJ
+  const q1Done = tasks.filter(t=>t.cuadrante==='Q1-Hacer'&&t.estado!=='Completada'&&t.estado!=='Cancelada'&&t.tipo!=='Tipo 2').length===0;
+  return [...tasks.filter(t=>t.estado!=='Completada'&&t.estado!=='Cancelada'&&t.tipo!=='Tipo 2'&&(t.cuadrante==='Q1-Hacer'||t.cuadrante==='Q2-Planificar'))]
     .sort((a,b)=>(QUAD_O[a.cuadrante]??9)-(QUAD_O[b.cuadrante]??9)||(dL(a.fecha_limite)??999)-(dL(b.fecha_limite)??999)||(PRIO_O[a.prioridad]??9)-(PRIO_O[b.prioridad]??9))
     .slice(0,6);
 }
@@ -1206,7 +1207,7 @@ function tick(){
 }
 setInterval(tick,1000);tick();
 
-var VIEW_TITLES={dashboard:"Dashboard Ejecutivo",tareas:"Central de Tareas",eisenhower:"Matriz de Eisenhower",ivy:"Método Ivy Lee",bloques:"Bloques de Tiempo",carga:"Carga por Persona",semana:"Mi Semana",horizonte:"Horizonte 30/60/90",rocas:"Rocas Trimestrales — Q2 2026",proyectos:"Proyectos NPD",organigrama:"Organigrama — Gerencia de Innovación y Diseño",adn:"Mi ADN Gerencial",biblioteca:"Biblioteca Gerencial",evaluacion:"Mi Evaluación"};
+var VIEW_TITLES={dashboard:"Dashboard Ejecutivo",tareas:"Central de Tareas",eisenhower:"Matriz de Eisenhower",ivy:"Método Ivy Lee",bloques:"Bloques de Tiempo",carga:"Carga por Persona",semana:"Mi Semana",horizonte:"Horizonte 30/60/90",rocas:"Rocas Trimestrales — Q2 2026",organigrama:"Organigrama — Gerencia de Innovación y Diseño",adn:"Mi ADN Gerencial",biblioteca:"Biblioteca Gerencial",evaluacion:"Mi Evaluación"};
 
 function goView(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
@@ -1215,13 +1216,13 @@ function goView(v){
   document.querySelectorAll('.nb').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+v+"'"))b.classList.add('active');});
   document.getElementById('tb-title').textContent=VIEW_TITLES[v]||v;
   currentView=v;
-  const fns={dashboard:rDash,tareas:rT,eisenhower:rEisen,ivy:rIvy,bloques:rBloques,carga:rCarga,semana:rSemana,horizonte:rHz,rocas:rRocas,proyectos:renderProyectos,organigrama:rOrg,adn:rAdn,biblioteca:rBiblioteca,evaluacion:rEval};
+  const fns={dashboard:rDash,tareas:rT,eisenhower:rEisen,ivy:rIvy,bloques:rBloques,carga:rCarga,semana:rSemana,horizonte:rHz,rocas:rRocas,organigrama:rOrg,adn:rAdn,biblioteca:rBiblioteca,evaluacion:rEval};
   if(fns[v])fns[v]();
   updateBadges();
 }
 
 function renderView(v){
-  const fns={dashboard:rDash,tareas:rT,eisenhower:rEisen,ivy:rIvy,bloques:rBloques,carga:rCarga,semana:rSemana,horizonte:rHz,rocas:rRocas,proyectos:renderProyectos,organigrama:rOrg,adn:rAdn,biblioteca:rBiblioteca};
+  const fns={dashboard:rDash,tareas:rT,eisenhower:rEisen,ivy:rIvy,bloques:rBloques,carga:rCarga,semana:rSemana,horizonte:rHz,rocas:rRocas,organigrama:rOrg,adn:rAdn,biblioteca:rBiblioteca};
   if(fns[v])fns[v]();
 }
 
@@ -3148,7 +3149,10 @@ function rEval(){
   const [selY,selM]=selMes.split('-').map(Number);
 
   // Filter tasks for selected month
+  const projNumRx=/^PROJ\d+$/i;
   const misTareas=tasks.filter(t=>{
+    // Exclude long-term NPD project tasks (proyecto = PROJ + number)
+    if(projNumRx.test((t.proyecto||'').trim())) return false;
     const fl=t.fecha_limite||t.fecha_deleg||'';
     if(!fl) return false;
     let fd;
@@ -3268,7 +3272,9 @@ function generarPDFEval(){
   const mesLabel=months[selM-1]+' de '+selY;
 
   const now=new Date();
+  const projNumRx2=/^PROJ\d+$/i;
   const misTareas=tasks.filter(t=>{
+    if(projNumRx2.test((t.proyecto||'').trim())) return false;
     const fl=t.fecha_limite||t.fecha_deleg||'';if(!fl)return false;
     let fd;if(fl.includes('/')){const p=fl.split('/');fd=new Date(+p[2],+p[1]-1,+p[0]);}else fd=new Date(fl);
     return !isNaN(fd)&&fd.getFullYear()===selY&&fd.getMonth()+1===selM;
