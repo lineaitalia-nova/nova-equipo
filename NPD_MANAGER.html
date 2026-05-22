@@ -507,6 +507,14 @@ const cE = p => isG() || p.eng === cu?.perfil || isArea();
 const fmtD = s => {if(!s)return'—';const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})};
 const pd   = s => {if(!s)return null;const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d)};
 const dN   = (s,e) => {if(e==='Terminado')return null;const d=pd(s);return d?Math.round((d-TODAY)/86400000):null};
+// dNF: calcula días usando fechaFinal del proyecto (no fechaFase)
+// Retorna null si terminado/pausado/cancelado
+const dNF  = (p) => {
+  if(!p||['Terminado','Cancelado','En pausa','Fuera de línea'].includes(p.estatus)) return null;
+  const fe=p.fechaFinal||p.fe||'';
+  const d=pd(fe);
+  return d?Math.round((d-TODAY)/86400000):null;
+};
 const bC   = p => p===100?'#1e9e5e':p>=60?'#534AB7':p>=30?'#c47d0a':'#d93535';
 const sC   = e => e==='Terminado'?'ok':e==='En linea'?'purple':e==='En pausa'?'gray':e==='Cancelado'?'gray':'bad';
 const sL   = e => e==='Terminado'?'Terminado':e==='En linea'?'En línea':e==='En pausa'?'En pausa':e==='Cancelado'?'Cancelado':'Fuera de línea';
@@ -735,7 +743,7 @@ function logout(){cu=null;av='inicio';rLogin();}
 function rSB(){
   const ec=ecOf(cu?.perfil);
   const act=PROJ.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
-  const risk=act.filter(p=>dN(p.fechaFase,p.estatus)!==null&&dN(p.fechaFase,p.estatus)<=7).length;
+  const risk=act.filter(p=>dNF(p)!==null&&dNF(p)<=7).length;
   const pAp=PROJ.filter(p=>p.avance>=80&&p.aprob?.g?.s==='pendiente').length;
   let nav=[];
   if(isG()){
@@ -842,8 +850,8 @@ function rInicio(c){
   const filtEnL=filtAct.filter(p=>p.estatus==='En linea');
   const filtEnP=filtAct.filter(p=>p.estatus==='En pausa');
   const filtFuera=filtAct.filter(p=>p.estatus==='Fuera de linea');
-  const filtRisk=filtAct.filter(p=>{const d=dN(p.fechaFase,p.estatus);return d!==null&&d<0;});
-  const filtSoon=filtAct.filter(p=>{const d=dN(p.fechaFase,p.estatus);return d!==null&&d>=0&&d<=14;});
+  const filtRisk=filtAct.filter(p=>{const d=dNF(p);return d!==null&&d<0;});
+  const filtSoon=filtAct.filter(p=>{const d=dNF(p);return d!==null&&d>=0&&d<=14;});
   const filtAvg=filtProj.length?Math.round(filtProj.reduce((s,p)=>s+p.avance,0)/filtProj.length):0;
   const filtEf=filtProj.length?Math.round(filtTerm.length/filtProj.length*100):0;
   const filtPAp=filtProj.filter(p=>p.avance>=80&&p.aprob?.g?.s==='pendiente').length;
@@ -952,7 +960,7 @@ function rInicio(c){
         ${filtRisk.length+filtSoon.length>0?`<span style="font-size:10px;font-weight:700;color:#fff;background:var(--bad);padding:1px 7px;border-radius:99px;margin-left:6px">${filtRisk.length+filtSoon.length}</span>`:''}
       </div>
       ${[...filtRisk.map(p=>({p,tipo:'vencido'})),...filtSoon.map(p=>({p,tipo:'pronto'}))].slice(0,6).map(({p,tipo})=>{
-        const d=dN(p.fechaFase,p.estatus);
+        const d=dNF(p);
         const ec=ecOf(p.eng);
         return`<div onclick="oP('${p.id}')" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--r);cursor:pointer;margin-bottom:4px;background:${tipo==='vencido'?'var(--bad-bg)':'var(--warn-bg)'}">
           <div style="width:6px;height:6px;border-radius:50%;background:${tipo==='vencido'?'var(--bad)':'var(--warn)'};flex-shrink:0"></div>
@@ -1137,7 +1145,7 @@ function renderRepFiltro(){
     const eng=USERS.find(u=>u.perfil===sel);
     const pp=lista;
     const avg=pp.length?Math.round(pp.reduce((s,p)=>s+p.avance,0)/pp.length):0;
-    const rk=pp.filter(p=>dN(p.fechaFase,p.estatus)!==null&&dN(p.fechaFase,p.estatus)<=7).length;
+    const rk=pp.filter(p=>dNF(p)!==null&&dNF(p)<=7).length;
     h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2) var(--r2) 0 0;border-bottom:1px solid var(--border2)">
       <div style="width:26px;height:26px;border-radius:50%;background:${ec.bg};color:${ec.tc};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">${ec.init}</div>
       <div style="font-size:13px;font-weight:700">${eng?.nombre||sel}</div>
@@ -1150,7 +1158,7 @@ function renderRepFiltro(){
   }
   h+=`<div class="${sel!=='todos'?'':''}">`;
   lista.forEach(p=>{
-    const d=dN(p.fechaFase,p.estatus);
+    const d=dNF(p);
     h+=`<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border2);border-top:none;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'" onclick="oP('${p.id}')">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px">${p.name}</div>
@@ -1178,8 +1186,8 @@ function rMiDashboard(c){
   const mis=PROJ.filter(p=>p.eng===cu?.perfil&&p.estatus!=='Cancelado');
   const act=mis.filter(p=>p.estatus!=='Terminado');
   const term=mis.filter(p=>p.estatus==='Terminado');
-  const venc=act.filter(p=>{const d=dN(p.fechaFase,p.estatus);return d!==null&&d<0;});
-  const riesgo=act.filter(p=>{const d=dN(p.fechaFase,p.estatus);return d!==null&&d>=0&&d<=14;});
+  const venc=act.filter(p=>{const d=dNF(p);return d!==null&&d<0;});
+  const riesgo=act.filter(p=>{const d=dNF(p);return d!==null&&d>=0&&d<=14;});
   const enL=act.filter(p=>p.estatus==='En linea');
   const avg=mis.length?Math.round(mis.reduce((s,p)=>s+p.avance,0)/mis.length):0;
   const ec=ecOf(cu?.perfil||'GI');
@@ -1266,7 +1274,7 @@ function rMiDashboard(c){
       ${act.length===0
         ?`<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Sin proyectos activos asignados</div>`
         :act.map(p=>{
-          const d=dN(p.fechaFase,p.estatus);
+          const d=dNF(p);
           const ms=getSigMS(p);
           const msDias=ms?dN(ms.fecha,'activo'):null;
           const msCol=msDias===null?'var(--muted)':msDias<0?'var(--bad)':msDias<=7?'var(--warn)':'var(--muted)';
@@ -1411,7 +1419,7 @@ function rMisProyectos(c, filtro){
   const enc   = mis.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
   const term  = mis.filter(p=>p.estatus==='Terminado');
   const canc  = mis.filter(p=>p.estatus==='Cancelado');
-  const rk    = enc.filter(p=>{const d=dN(p.fechaFase,p.estatus);return d!==null&&d<=7;});
+  const rk    = enc.filter(p=>{const d=dNF(p);return d!==null&&d<=7;});
   const avg   = mis.length?Math.round(mis.reduce((s,p)=>s+p.avance,0)/mis.length):0;
 
   // Lista a mostrar según filtro
@@ -1464,7 +1472,7 @@ function rMisProyectos(c, filtro){
     </div>`;
   } else {
     lista.forEach(p=>{
-      const d=dN(p.fechaFase,p.estatus);
+      const d=dNF(p);
       const isRisk=d!==null&&d<=7;
       const isTerm=p.estatus==='Terminado';
       const cardCls=isTerm?'proj-card term':isRisk?'proj-card risk':'proj-card enc';
@@ -1604,7 +1612,14 @@ function rReporte(c){
   const enL=actScope.filter(p=>p.estatus==='En linea').length;
   const fueraL=actScope.filter(p=>p.estatus==='Fuera de linea').length;
   const enP=actScope.filter(p=>p.estatus==='En pausa').length;
-  const rk=actScope.filter(p=>dN(p.fechaFase,p.estatus)!==null&&dN(p.fechaFase,p.estatus)<=14).length;
+  const rk=actScope.filter(p=>{
+    const fe=p.fechaFinal||p.fe||'';
+    if(!fe) return false;
+    const fechaFin=pd(fe);
+    if(!fechaFin) return false;
+    const d=Math.round((fechaFin-TODAY)/86400000);
+    return d<=14;
+  }).length;
   const ef=projScope.length?Math.round(term/projScope.length*100):0;
   const avgAv=actScope.length?Math.round(actScope.reduce((s,p)=>s+p.avance,0)/actScope.length):0;
 
@@ -1639,13 +1654,22 @@ function rReporte(c){
   const engsToShow = selEng ? [USERS.find(u=>u.perfil===selEng)].filter(Boolean) : engU;
 
   function salud(p){
+    // Proyectos pausados, cancelados o terminados no muestran semáforo de vencimiento
     if(p.estatus==='Terminado') return{ico:'✅',col:'#16a34a',lbl:'Terminado'};
-    const d=dN(p.fechaFase,p.estatus);
-    if(d===null) return{ico:'⚪',col:'#9ca3af',lbl:'Sin fecha'};
-    if(d<0) return{ico:'🔴',col:'#dc2626',lbl:Math.abs(d)+'d venc.'};
-    if(d<=7) return{ico:'🟠',col:'#ea580c',lbl:d+'d'};
-    if(d<=21) return{ico:'🟡',col:'#d97706',lbl:d+'d'};
-    return{ico:'🟢',col:'#16a34a',lbl:d+'d'};
+    if(p.estatus==='Cancelado') return{ico:'⚫',col:'#6b7280',lbl:'Cancelado'};
+    if(p.estatus==='En pausa') return{ico:'⏸',col:'#6b7280',lbl:'En pausa'};
+    if(p.estatus==='Fuera de línea') return{ico:'⚫',col:'#6b7280',lbl:'Fuera de línea'};
+    // Usar fechaFinal del proyecto, no fechaFase
+    const fe=p.fechaFinal||p.fe||'';
+    if(!fe) return{ico:'⚪',col:'#9ca3af',lbl:'Sin fecha'};
+    const fechaFin=pd(fe);
+    if(!fechaFin) return{ico:'⚪',col:'#9ca3af',lbl:'Sin fecha'};
+    const d=Math.round((fechaFin-TODAY)/86400000);
+    if(d<0) return{ico:'🔴',col:'#dc2626',lbl:Math.abs(d)+'d vencido'};
+    if(d<=3) return{ico:'🔴',col:'#dc2626',lbl:`⚠ ${d}d restantes`};
+    if(d<=7) return{ico:'🟠',col:'#ea580c',lbl:`⚠ ${d}d restantes`};
+    if(d<=21) return{ico:'🟡',col:'#d97706',lbl:`${d}d restantes`};
+    return{ico:'🟢',col:'#16a34a',lbl:`${d}d restantes`};
   }
   function getSigMS(p){
     for(const fk of FK){
@@ -1670,7 +1694,7 @@ function rReporte(c){
     if(!pp.length) return;
     const actEng=pp.filter(p=>p.estatus!=='Terminado');
     const avgEng=actEng.length?Math.round(actEng.reduce((s,p)=>s+p.avance,0)/actEng.length):0;
-    const vencEng=actEng.filter(p=>{const d=dN(p.fechaFase,p.estatus);return d!==null&&d<0;}).length;
+    const vencEng=actEng.filter(p=>{const d=dNF(p);return d!==null&&d<0;}).length;
 
     h+=`<div style="margin-bottom:14px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border2)">
 
@@ -2560,12 +2584,13 @@ function imprimirReporteEjecutivo(){
 
   function pSalud(p){
     if(p.estatus==='Terminado') return{ico:'✅',col:'#16a34a',lbl:'Terminado'};
-    const d=dN(p.fechaFase,p.estatus);
+    const d=dNF(p);
     if(d===null) return{ico:'⚪',col:'#9ca3af',lbl:'Sin fecha'};
-    if(d<0) return{ico:'🔴',col:'#dc2626',lbl:Math.abs(d)+'d venc.'};
-    if(d<=7) return{ico:'🟠',col:'#ea580c',lbl:d+'d'};
-    if(d<=21) return{ico:'🟡',col:'#d97706',lbl:d+'d'};
-    return{ico:'🟢',col:'#16a34a',lbl:d+'d'};
+    if(d<0) return{ico:'🔴',col:'#dc2626',lbl:Math.abs(d)+'d vencido'};
+    if(d<=3) return{ico:'🔴',col:'#dc2626',lbl:`⚠ ${d}d restantes`};
+    if(d<=7) return{ico:'🟠',col:'#ea580c',lbl:`⚠ ${d}d restantes`};
+    if(d<=21) return{ico:'🟡',col:'#d97706',lbl:`${d}d restantes`};
+    return{ico:'🟢',col:'#16a34a',lbl:`${d}d restantes`};
   }
   function pMS(p){
     for(const fk of FK){
@@ -2582,7 +2607,7 @@ function imprimirReporteEjecutivo(){
 
   const act=scope.filter(p=>p.estatus!=='Terminado');
   const term=scope.filter(p=>p.estatus==='Terminado').length;
-  const venc=act.filter(p=>{const d=dN(p.fechaFase,p.estatus);return d!==null&&d<0;}).length;
+  const venc=act.filter(p=>{const d=dNF(p);return d!==null&&d<0;}).length;
   const avg=act.length?Math.round(act.reduce((s,p)=>s+p.avance,0)/act.length):0;
   const engs=selEng?[USERS.find(u=>u.perfil===selEng)].filter(Boolean):engU;
 
@@ -2650,7 +2675,7 @@ ${engs.map(u=>{
   if(!pp.length) return'';
   const actE=pp.filter(p=>p.estatus!=='Terminado');
   const avgE=actE.length?Math.round(actE.reduce((s,p)=>s+p.avance,0)/actE.length):0;
-  const vencE=actE.filter(p=>{const d=dN(p.fechaFase,p.estatus);return d!==null&&d<0;}).length;
+  const vencE=actE.filter(p=>{const d=dNF(p);return d!==null&&d<0;}).length;
 
   return`<div class="eng-block">
     <div class="eng-hdr">
