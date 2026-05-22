@@ -507,13 +507,31 @@ const cE = p => isG() || p.eng === cu?.perfil || isArea();
 const fmtD = s => {if(!s)return'—';const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})};
 const pd   = s => {if(!s)return null;const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d)};
 const dN   = (s,e) => {if(e==='Terminado')return null;const d=pd(s);return d?Math.round((d-TODAY)/86400000):null};
-// dNF: calcula días usando fechaFinal del proyecto (no fechaFase)
+// diasHabiles: cuenta días hábiles (lunes-viernes) entre dos fechas
+const diasHabiles = (desde, hasta) => {
+  let count = 0;
+  const d = new Date(desde);
+  d.setHours(0,0,0,0);
+  const h = new Date(hasta);
+  h.setHours(0,0,0,0);
+  const sign = h >= d ? 1 : -1;
+  const end = sign === 1 ? h : d;
+  const start = sign === 1 ? d : h;
+  const cur = new Date(start);
+  while(cur <= end){
+    const dow = cur.getDay();
+    if(dow !== 0 && dow !== 6) count++;
+    cur.setDate(cur.getDate()+1);
+  }
+  return sign * (count - 1); // -1 porque no contamos el día actual
+};
+// dNF: calcula días hábiles usando fechaFinal del proyecto (no fechaFase)
 // Retorna null si terminado/pausado/cancelado
 const dNF  = (p) => {
   if(!p||['Terminado','Cancelado','En pausa','Fuera de línea'].includes(p.estatus)) return null;
   const fe=p.fechaFinal||p.fe||'';
   const d=pd(fe);
-  return d?Math.round((d-TODAY)/86400000):null;
+  return d?diasHabiles(TODAY, d):null;
 };
 const bC   = p => p===100?'#1e9e5e':p>=60?'#534AB7':p>=30?'#c47d0a':'#d93535';
 const sC   = e => e==='Terminado'?'ok':e==='En linea'?'purple':e==='En pausa'?'gray':e==='Cancelado'?'gray':'bad';
