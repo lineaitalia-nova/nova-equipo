@@ -1137,9 +1137,6 @@ function syncNPD(){
       if(synced>0){save();showToast(`🔗 ${synced} proyectos (local)`);}
     });
 }
-      p.fecha_limite=npd.fechaFinal||p.fecha_limite;
-      p.responsable=NPD_ENG[npd.eng]||p.responsable;
-      
 
 // ══════════════════════════════════════════════════════════════
 //  HELPERS
@@ -1208,7 +1205,7 @@ function tick(){
 }
 setInterval(tick,1000);tick();
 
-const VIEW_TITLES={dashboard:"Dashboard Ejecutivo",tareas:"Central de Tareas",eisenhower:"Matriz de Eisenhower",ivy:"Método Ivy Lee",bloques:"Bloques de Tiempo",carga:"Carga por Persona",semana:"Mi Semana",horizonte:"Horizonte 30/60/90",rocas:"Rocas Trimestrales — Q2 2026",proyectos:"Proyectos NPD",organigrama:"Organigrama — Gerencia de Innovación y Diseño",adn:"Mi ADN Gerencial",biblioteca:"Biblioteca Gerencial"};
+var VIEW_TITLES={dashboard:"Dashboard Ejecutivo",tareas:"Central de Tareas",eisenhower:"Matriz de Eisenhower",ivy:"Método Ivy Lee",bloques:"Bloques de Tiempo",carga:"Carga por Persona",semana:"Mi Semana",horizonte:"Horizonte 30/60/90",rocas:"Rocas Trimestrales — Q2 2026",proyectos:"Proyectos NPD",organigrama:"Organigrama — Gerencia de Innovación y Diseño",adn:"Mi ADN Gerencial",biblioteca:"Biblioteca Gerencial"};
 
 function goView(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
@@ -2840,7 +2837,7 @@ function openPersonaByName(nameEnc){
   }
 }
 
-const DIA_TEMA={0:{n:'Domingo',tema:'Descanso',emoji:'🌿',color:'#16A34A'},1:{n:'Lunes',tema:'Innovación · NPD',emoji:'🎯',color:'#2563EB'},2:{n:'Martes',tema:'Ingeniería',emoji:'⚙️',color:'#C2410C'},3:{n:'Miércoles',tema:'Folios · Costos',emoji:'📋',color:'#7C3AED'},4:{n:'Jueves',tema:'Innovación Profunda',emoji:'💡',color:'#DC2626'},5:{n:'Viernes',tema:'Cierre · Operaciones',emoji:'🔄',color:'#16A34A'},6:{n:'Sábado',tema:'Reflexión',emoji:'✨',color:'#D97706'}};
+var DIA_TEMA={0:{n:'Domingo',tema:'Descanso',emoji:'🌿',color:'#16A34A'},1:{n:'Lunes',tema:'Innovación · NPD',emoji:'🎯',color:'#2563EB'},2:{n:'Martes',tema:'Ingeniería',emoji:'⚙️',color:'#C2410C'},3:{n:'Miércoles',tema:'Folios · Costos',emoji:'📋',color:'#7C3AED'},4:{n:'Jueves',tema:'Innovación Profunda',emoji:'💡',color:'#DC2626'},5:{n:'Viernes',tema:'Cierre · Operaciones',emoji:'🔄',color:'#16A34A'},6:{n:'Sábado',tema:'Reflexión',emoji:'✨',color:'#D97706'}};
 
 // Juntas fijas por día
 const JUNTAS_FIJAS={
