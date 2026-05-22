@@ -564,6 +564,7 @@ nav{flex:1;overflow-y:auto;padding:6px 8px}
 
 <div id="view-adn" class="view"></div>
 <div id="view-biblioteca" class="view"></div>
+<div id="view-evaluacion" class="view"></div>
 
 </div><!-- /main -->
 
@@ -1205,7 +1206,7 @@ function tick(){
 }
 setInterval(tick,1000);tick();
 
-var VIEW_TITLES={dashboard:"Dashboard Ejecutivo",tareas:"Central de Tareas",eisenhower:"Matriz de Eisenhower",ivy:"Método Ivy Lee",bloques:"Bloques de Tiempo",carga:"Carga por Persona",semana:"Mi Semana",horizonte:"Horizonte 30/60/90",rocas:"Rocas Trimestrales — Q2 2026",proyectos:"Proyectos NPD",organigrama:"Organigrama — Gerencia de Innovación y Diseño",adn:"Mi ADN Gerencial",biblioteca:"Biblioteca Gerencial"};
+var VIEW_TITLES={dashboard:"Dashboard Ejecutivo",tareas:"Central de Tareas",eisenhower:"Matriz de Eisenhower",ivy:"Método Ivy Lee",bloques:"Bloques de Tiempo",carga:"Carga por Persona",semana:"Mi Semana",horizonte:"Horizonte 30/60/90",rocas:"Rocas Trimestrales — Q2 2026",proyectos:"Proyectos NPD",organigrama:"Organigrama — Gerencia de Innovación y Diseño",adn:"Mi ADN Gerencial",biblioteca:"Biblioteca Gerencial",evaluacion:"Mi Evaluación"};
 
 function goView(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
@@ -3134,7 +3135,7 @@ async function fbDeleteDelegada(id){
 
 // ══ MI EVALUACIÓN ══════════════════════════════════════════════
 function rEval(){
-  const main=document.getElementById('main');
+  const main=document.getElementById('view-evaluacion');
   if(!main)return;
 
   const now=new Date();
