@@ -489,6 +489,7 @@ const RAW = [
 
 // ─── STATE ──────────────────────────────────────────────────────────
 let PROJ=[], USERS=[], cu=null, av='inicio', stm=null;
+function render(){sv2(av);}
 let fEng='todos', srch='', fFase='todos', fEst='todos';
 let cpid=null, amt='resumen';
 
@@ -1752,10 +1753,6 @@ function rReporte(c){
 
           <!-- ID -->
           <div>
-            <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
-              <span style="font-size:13px;line-height:1">${sl.ico}</span>
-              <span style="font-size:8px;font-weight:700;color:${sl.col}">${sl.lbl}</span>
-            </div>
             <span style="font-family:var(--font-m);font-size:10px;color:var(--muted);background:rgba(0,0,0,.05);padding:1px 5px;border-radius:3px">${p.id}</span>
           </div>
 
