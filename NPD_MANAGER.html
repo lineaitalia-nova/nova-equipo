@@ -1600,20 +1600,22 @@ function rProyectos(c){
 }
 
 // ─── REPORTE EJECUTIVO (DASHBOARD STYLE) ────────────────────────────
+var _repFiltEng='todos', _repFiltEst='activos'; // persist filter across navigation
 function rReporte(c){
   const engU=USERS.filter(u=>u.perfil!=='GI');
   const d=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const filterVal=document.getElementById('rep-eng-sel')?.value||'todos';
-  const filterEst=document.getElementById('rep-est-sel')?.value||'activos';
+  const filterVal=document.getElementById('rep-eng-sel')?.value||_repFiltEng;
+  const filterEst=document.getElementById('rep-est-sel')?.value||_repFiltEst;
+  _repFiltEng=filterVal; _repFiltEst=filterEst;
 
   let h=`<div style="background:var(--navy);border-radius:var(--r2);padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
     <div><div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:#fff">Reporte ejecutivo · Gerencia de Innovación y Diseño</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:1px">Linea Italia · NPD Manager</div></div>
     <div style="display:flex;align-items:center;gap:8px">
-      <select id="rep-eng-sel" style="font-size:12px;padding:5px 9px;border:none;border-radius:var(--r);background:rgba(255,255,255,.15);color:#fff;font-family:var(--font-b);outline:none;cursor:pointer" onchange="rReporte(document.getElementById('vc'))">
+      <select id="rep-eng-sel" style="font-size:12px;padding:5px 9px;border:none;border-radius:var(--r);background:rgba(255,255,255,.15);color:#fff;font-family:var(--font-b);outline:none;cursor:pointer" onchange="_repFiltEng=this.value;rReporte(document.getElementById('vc'))">
         <option value="todos" style="color:#1a2233;background:#fff" ${filterVal==='todos'?'selected':''}>Todos los ingenieros</option>
         ${engU.map(u=>`<option value="${u.perfil}" style="color:#1a2233;background:#fff" ${filterVal===u.perfil?'selected':''}>${u.nombre}</option>`).join('')}
       </select>
-      <select id="rep-est-sel" style="font-size:12px;padding:5px 9px;border:none;border-radius:var(--r);background:rgba(255,255,255,.15);color:#fff;font-family:var(--font-b);outline:none;cursor:pointer" onchange="rReporte(document.getElementById('vc'))">
+      <select id="rep-est-sel" style="font-size:12px;padding:5px 9px;border:none;border-radius:var(--r);background:rgba(255,255,255,.15);color:#fff;font-family:var(--font-b);outline:none;cursor:pointer" onchange="_repFiltEst=this.value;rReporte(document.getElementById('vc'))">
         <option value="activos" style="color:#1a2233;background:#fff" ${filterEst==='activos'?'selected':''}>Solo activos</option>
         <option value="todos" style="color:#1a2233;background:#fff" ${filterEst==='todos'?'selected':''}>Todos los proyectos</option>
       </select>
@@ -2547,7 +2549,7 @@ function buildTimeline(p){
 // ─── REPORTE EJECUTIVO IMPRIMIBLE ──────────────────────────────────────
 function imprimirReporteEjecutivo(){
   const engU=USERS.filter(u=>u.perfil!=='GI');
-  const fv=document.getElementById('rep-eng-sel')?.value||'todos';
+  const fv=_repFiltEng||'todos';
   const fe=document.getElementById('rep-est-sel')?.value||'activos';
   const selEng=fv==='todos'?null:fv;
   const base=selEng?PROJ.filter(p=>p.eng===selEng):PROJ;
