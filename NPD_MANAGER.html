@@ -1266,7 +1266,7 @@ function rMiDashboard(c){
   h+=`<div style="background:linear-gradient(135deg,${ec.bg} 0%,var(--surface) 100%);border:1px solid var(--border2);border-radius:var(--r2);padding:18px 22px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
     <div style="width:48px;height:48px;border-radius:50%;background:${ec.bg};border:3px solid var(--surface);box-shadow:0 2px 12px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:${ec.tc};flex-shrink:0">${ec.init}</div>
     <div style="flex:1">
-      <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--text)">${saludo}, ${cu?.nombre?.split(' ')[0]||'Ingeniero'}</div>
+      <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--text)">${saludo}, ${cu?.nombre?.split(' ')[0]||cu?.uid||'René'}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:2px">${TODAY.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
     </div>
     ${venc.length>0
@@ -3598,6 +3598,14 @@ function uTFecha(pid,f,i,campo,val){
   const p=PROJ.find(x=>x.id===pid);if(!p||(!cE(p)&&!isG()))return;
   const t=(p.tp[f]||[])[i];if(!t)return;
 
+  // Auto-move weekend dates to nearest workday
+  if(val){
+    const d=new Date(val+'T12:00:00');
+    const dow=d.getDay();
+    if(dow===6){d.setDate(d.getDate()+2);val=d.toISOString().slice(0,10);toast('Fecha movida al lunes (no hay trabajo en fin de semana)');}
+    else if(dow===0){d.setDate(d.getDate()+1);val=d.toISOString().slice(0,10);toast('Fecha movida al lunes (no hay trabajo en fin de semana)');}
+  }
+
   // Punto 2: fecha final del proyecto solo la puede mover el gerente
   const isLastTask=(f==='Lanzamiento'&&i===(p.tp['Lanzamiento']||[]).length-1&&campo==='ff');
   if(isLastTask&&!isG()){
@@ -4460,6 +4468,8 @@ function buildDayMap(evs,year,month){
     if(!ini) return;
     for(let d=new Date(ini);d<=fin;d.setDate(d.getDate()+1)){
       if(d.getFullYear()===year&&d.getMonth()===month){
+        const dow=d.getDay();
+        if(dow===0||dow===6) continue; // Skip weekends - only workdays
         const k=d.getDate();
         if(!map[k]) map[k]=[];
         map[k].push(ev);
