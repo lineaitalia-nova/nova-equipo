@@ -776,6 +776,7 @@ function rSB(){
       {id:'diagrama',i:'◈',l:'Diagrama de proceso',b:0},
       {id:'usuarios',i:'⊙',l:'Gestión de usuarios',b:0},
       {id:'backup',i:'↓',l:'Respaldo de datos',b:0},
+      {id:'glosario',i:'📖',l:'Glosario SMART',b:0},
       {id:'mis-tareas-area',i:'🔑',l:'Override de área',b:0},
     ];
   } else if(isArea()){
@@ -842,6 +843,7 @@ function sv2(v){
   else if(v==='usuarios') rUsuarios(c);
   else if(v==='diagrama') rDiagrama(c);
   else if(v==='backup') rBackup(c);
+  else if(v==='glosario') rGlosario(c);
   else if(v==='indicadores') rIndicadores(c);
   else if(v==='mis-tareas-area') rMisTareasArea(c);
   else if(v==='calendario') rCalendario(c);
@@ -1821,7 +1823,7 @@ function rReporte(c){
   if(todasTareasSem.length){
     const sorted=todasTareasSem.sort((a,b)=>{const po={Alta:0,Media:1,Baja:2};return(po[a.prioridad]||1)-(po[b.prioridad]||1);});
     h+=`<div style="margin-bottom:16px">
-      <div style="background:var(--navy);color:#fff;padding:8px 12px;border-radius:var(--r2) var(--r2) 0 0;font-size:12px;font-weight:700">Objetivos de la semana</div>
+      <div style="background:var(--navy);color:#fff;padding:8px 12px;border-radius:var(--r2) var(--r2) 0 0;font-size:12px;font-weight:700">Metas SMART de la semana</div>
       <div style="background:var(--surface);border:1px solid var(--border2);border-top:none;border-radius:0 0 var(--r2) var(--r2);overflow:hidden">
         <div style="display:grid;grid-template-columns:40px 1fr 140px 90px 80px 100px 90px;padding:6px 10px;background:var(--surface2);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;gap:6px">
           <span>N.</span><span>Proyecto / Tarea</span><span>Responsable</span><span>Prioridad</span><span>Fecha límite</span><span>Comentarios</span><span>Estatus</span>
@@ -2890,32 +2892,47 @@ function completarChecklist(pid,sid){
 // ─── TAREAS SEMANALES ─────────────────────────────────────────────────
 function addTareaS(pid){
   const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;
-  openModal2(`<div class="mh"><div><h3 class="mh-title">Nuevo objetivo de la semana</h3><div style="font-size:11px;color:var(--muted);margin-top:2px">${p.name}</div></div><button class="mh-x" onclick="cM2()">✕</button></div>
+  // Calculate current week key (monday ISO)
+  const hoy=new Date();const dow=hoy.getDay();
+  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));
+  const semKey=lunes.toISOString().slice(0,10);
+  const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
+  const viernesStr=viernes.toLocaleDateString('es-MX',{day:'numeric',month:'long'});
+  openModal2(`<div class="mh"><div><h3 class="mh-title">Nueva Meta SMART</h3><div style="font-size:11px;color:var(--muted);margin-top:2px">${p.name} &nbsp;·&nbsp; Semana del ${lunes.toLocaleDateString('es-MX',{day:'numeric',month:'long'})} al ${viernesStr}</div></div><button class="mh-x" onclick="cM2()">✕</button></div>
   <div class="mbody">
-    <label class="lbl">Tarea / Objetivo</label>
-    <input class="inp" id="nts-tarea" placeholder="Ej. Finalizar prototipo funcional" style="margin-bottom:10px"/>
-    <label class="lbl">Prioridad</label>
-    <select class="inp" id="nts-prior" style="margin-bottom:10px"><option>Alta</option><option selected>Media</option><option>Baja</option></select>
-    <label class="lbl">Fecha límite</label>
-    <input type="date" class="inp" id="nts-fecha" style="margin-bottom:10px"/>
-    <label class="lbl">Comentarios</label>
-    <input class="inp" id="nts-coment" placeholder="Opcional..." style="margin-bottom:16px"/>
-    <div style="display:flex;justify-content:flex-end;gap:8px">
+    <div style="background:rgba(26,31,60,.06);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:1.6">
+      <strong style="color:var(--navy)">Una buena Meta SMART debe ser:</strong><br>
+      Especifica · Medible · Alcanzable · Relevante · Con fecha clara<br>
+      <em>Ejemplo: "Entregar 2 modelados 3D del escritorio basico con vista explosionada para revision de gerencia el viernes."</em>
+    </div>
+    <label class="lbl">Meta SMART <span style="color:var(--bad)">*</span></label>
+    <textarea class="inp" id="nts-tarea" placeholder="Describe claramente que vas a lograr esta semana y como sabras que lo lograste..." style="margin-bottom:10px;min-height:72px;resize:vertical"></textarea>
+    <label class="lbl">Criterio de exito</label>
+    <input class="inp" id="nts-criterio" placeholder="Como sabras que la meta fue lograda? (entregable, aprobacion, etc.)" style="margin-bottom:10px"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label class="lbl">Prioridad</label>
+      <select class="inp" id="nts-prior"><option>Alta</option><option selected>Media</option><option>Baja</option></select></div>
+      <div><label class="lbl">Fecha limite</label>
+      <input type="date" class="inp" id="nts-fecha" value="${viernes.toISOString().slice(0,10)}"/></div>
+    </div>
+    <input type="hidden" id="nts-semkey" value="${semKey}"/>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
       <button class="btn sm" onclick="cM2()">Cancelar</button>
-      <button class="btn sm primary" onclick="guardarTareaS('${pid}')">Guardar objetivo</button>
+      <button class="btn sm primary" onclick="guardarTareaS('${pid}')">Guardar Meta SMART</button>
     </div>
   </div>`);
 }
 function guardarTareaS(pid){
   const p=PROJ.find(x=>x.id===pid);if(!p)return;
   const tarea=document.getElementById('nts-tarea').value.trim();
+  const criterio=document.getElementById('nts-criterio')?.value.trim()||'';
   const prioridad=document.getElementById('nts-prior').value;
   const fechaLimite=document.getElementById('nts-fecha').value;
-  const comentarios=document.getElementById('nts-coment').value.trim();
-  if(!tarea){toast('Escribe el objetivo');return;}
+  const semKey=document.getElementById('nts-semkey')?.value||'';
+  if(!tarea){toast('Escribe la meta SMART');return;}
   p.tareasSemana=p.tareasSemana||[];
-  p.tareasSemana.push({tarea,prioridad,fechaLimite,comentarios,estatus:'Pendiente',autor:cu?.nombre||'?',proyecto:p.name});
-  sch(p);cM2();rModal();sMT('semana');toast('Objetivo agregado ✓');
+  p.tareasSemana.push({tarea,criterio,prioridad,fechaLimite,estatus:'Pendiente',autor:cu?.nombre||'?',proyecto:p.name,semana:semKey,creadoEn:Date.now()});
+  sch(p);cM2();rModal();sMT('semana');toast('Meta SMART agregada ✓');
 }
 function delTareaS(pid,idx){
   const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;
@@ -2924,7 +2941,12 @@ function delTareaS(pid,idx){
 }
 function updTareaS(pid,idx,estatus){
   const p=PROJ.find(x=>x.id===pid);if(!p)return;
-  p.tareasSemana[idx].estatus=estatus;sch(p);rModal();sMT('semana');
+  p.tareasSemana[idx].estatus=estatus;
+  if(estatus==='Lograda'||estatus==='Parcial'||estatus==='No lograda'){
+    p.tareasSemana[idx].cierreEn=Date.now();
+    p.tareasSemana[idx].resultado=estatus;
+  }
+  sch(p);rModal();sMT('semana');
 }
 
 // ─── DIAGRAMA DE PROCESO NPD ─────────────────────────────────────────
@@ -4898,98 +4920,163 @@ function buildMetasSmart(p, ed){
   var viernesStr = viernes.toISOString().slice(0,10);
   var semLabel = lunes.toLocaleDateString('es-MX',{day:'numeric',month:'long'}) + ' - ' + viernes.toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
 
-  var auto = [];
-  FK.forEach(function(fk){
-    (p.tp[fk]||[]).forEach(function(t,i){
-      var fi = t.fi||'', ff = t.ff||'';
-      if(t.e==='Completado') return;
-      if((fi&&fi>=lunesStr&&fi<=viernesStr)||(ff&&ff>=lunesStr&&ff<=viernesStr)){
-        auto.push({fk:fk,i:i,t:t,fi:fi,ff:ff});
-      }
-    });
+  // Split: activas (this week, not closed) vs historial (closed or past weeks)
+  var ts2 = p.tareasSemana||[];
+  var activas = ts2.filter(function(t){
+    var s = t.semana||'';
+    var esCerrada = t.estatus==='Lograda'||t.estatus==='Parcial'||t.estatus==='No lograda';
+    if(esCerrada) return false;
+    if(!s) return true; // legacy: show in active
+    return s >= lunesStr; // this week or future
+  });
+  var historial = ts2.filter(function(t){
+    var esCerrada = t.estatus==='Lograda'||t.estatus==='Parcial'||t.estatus==='No lograda';
+    var s = t.semana||'';
+    return esCerrada || (s && s < lunesStr);
   });
 
-  var ts2 = p.tareasSemana||[];
-  var tsComp = ts2.filter(function(t){return t.estatus==='Completada';}).length;
-  var tsCurs = ts2.filter(function(t){return t.estatus==='En curso';}).length;
-  var tsPend = ts2.filter(function(t){return t.estatus==='Pendiente';}).length;
-  var tsVenc = ts2.filter(function(t){return t.estatus!=='Completada'&&t.fechaLimite&&pd(t.fechaLimite)<TODAY;}).length;
-  var tsProg = ts2.length ? Math.round(tsComp/ts2.length*100) : 0;
+  // KPIs historial
+  var hLogradas = historial.filter(function(t){return t.estatus==='Lograda';}).length;
+  var hParciales = historial.filter(function(t){return t.estatus==='Parcial';}).length;
+  var hNoLogradas = historial.filter(function(t){return t.estatus==='No lograda';}).length;
+  var hTotal = historial.length;
+  var cumplimiento = hTotal>0 ? Math.round((hLogradas + hParciales*0.5)/hTotal*100) : null;
 
   var h = '<div class="mpg" id="mp-semana">';
 
+  // Header
   h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">';
-  h += '<div><div style="font-size:13px;font-weight:800;color:var(--navy)">Metas SMART - Semana</div>';
-  h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+semLabel+'</div></div>';
-  if(ed) h += '<button class="btn sm primary" onclick="addTareaS(\''+pid+'\')">+ Meta manual</button>';
+  h += '<div><div style="font-size:13px;font-weight:800;color:var(--navy)">Metas SMART</div>';
+  h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">Semana: '+semLabel+'</div></div>';
+  if(ed) h += '<button class="btn sm primary" onclick="addTareaS(\''+pid+'\')">+ Nueva Meta SMART</button>';
   h += '</div>';
 
-  if(auto.length > 0){
-    h += '<div style="background:rgba(26,31,60,.04);border:1px solid rgba(26,31,60,.1);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">';
-    h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--navy);margin-bottom:10px">';
-    h += 'METAS AUTOMATICAS - Project Plan esta semana ('+auto.length+')</div>';
-    auto.forEach(function(item){
-      var fk=item.fk, i=item.i, t=item.t, fi=item.fi, ff=item.ff;
-      var isVenc = ff && pd(ff)<TODAY && t.e!=='Completado';
-      h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid '+(isVenc?'rgba(217,53,53,.3)':'var(--border2)')+';border-radius:var(--r);margin-bottom:5px;border-left:3px solid '+FD[fk].c+'">';
-      h += '<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:700;color:var(--text)">'+t.n+'</div>';
-      h += '<div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap">';
-      h += '<span style="font-size:9px;background:'+FD[fk].bg+';color:'+FD[fk].tc+';padding:1px 6px;border-radius:99px;font-weight:600">'+fk+'</span>';
-      if(fi) h += '<span style="font-size:9px;color:var(--muted)">Inicio: '+fmtD(fi)+'</span>';
-      if(ff) h += '<span style="font-size:9px;color:'+(isVenc?'var(--bad)':'var(--muted)')+'">Vence: '+fmtD(ff)+'</span>';
-      h += '</div></div>';
-      h += '<select style="font-size:10px;padding:3px 6px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface)"';
-      h += ' onchange="uT(\''+pid+'\',\''+fk+'\','+i+',\'e\',this.value)">';
-      ['No iniciado','En progreso','Completado','Bloqueado'].forEach(function(s){
-        h += '<option'+(t.e===s?' selected':'')+'>'+s+'</option>';
-      });
-      h += '</select></div>';
-    });
+  // Empty state
+  if(activas.length===0){
+    h += '<div style="padding:20px;background:var(--surface2);border-radius:var(--r2);text-align:center;margin-bottom:14px">';
+    h += '<div style="font-size:22px;margin-bottom:6px">🎯</div>';
+    h += '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px">Sin Metas SMART esta semana</div>';
+    h += '<div style="font-size:11px;color:var(--muted)">'+(ed?'Usa el boton para agregar tus compromisos de la semana.':'El ingeniero aun no ha definido sus metas.')+'</div>';
     h += '</div>';
   } else {
-    h += '<div style="padding:10px 14px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--muted);margin-bottom:12px">Sin tareas del Project Plan programadas para esta semana.</div>';
-  }
-
-  if(ts2.length > 0){
-    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px">';
-    [{v:tsComp,l:'Completadas',c:'var(--ok)',bg:'var(--ok-bg)'},{v:tsCurs,l:'En curso',c:'var(--purple)',bg:'var(--purple-bg)'},{v:tsPend,l:'Pendientes',c:'var(--muted)',bg:'var(--surface2)'},{v:tsVenc,l:'Vencidas',c:tsVenc>0?'var(--bad)':'var(--muted)',bg:tsVenc>0?'var(--bad-bg)':'var(--surface2)'}].forEach(function(k){
-      h += '<div style="background:'+k.bg+';border-radius:var(--r);padding:8px 10px;text-align:center"><div style="font-size:18px;font-weight:800;color:'+k.c+'">'+k.v+'</div><div style="font-size:10px;color:'+k.c+'">'+k.l+'</div></div>';
-    });
-    h += '</div>';
-    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div style="flex:1;height:5px;background:var(--border2);border-radius:3px;overflow:hidden"><div style="height:100%;background:'+bC(tsProg)+';width:'+tsProg+'%;border-radius:3px"></div></div>';
-    h += '<span style="font-size:11px;font-weight:700;color:'+bC(tsProg)+'">'+tsProg+'%</span><span style="font-size:10px;color:var(--muted)">'+tsComp+'/'+ts2.length+' completados</span></div>';
-  }
-
-  if(ts2.length===0 && auto.length===0){
-    h += '<div style="padding:16px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--muted);text-align:center">Sin metas esta semana.'+(ed?' Usa el boton para agregar una meta manual.':'')+' </div>';
-  }
-
-  h += '<div id="ts-list-'+pid+'">';
-  ts2.forEach(function(t,i){
-    var venc = t.estatus!=='Completada' && t.fechaLimite && pd(t.fechaLimite)<TODAY;
-    var priCol = t.prioridad==='Alta'?'var(--bad)':t.prioridad==='Media'?'var(--warn)':'var(--muted)';
-    var stCol = t.estatus==='Completada'?'var(--ok)':t.estatus==='En curso'?'var(--purple)':'var(--muted)';
-    h += '<div style="background:'+(t.estatus==='Completada'?'rgba(30,158,94,.04)':venc?'rgba(217,53,53,.04)':'var(--surface)')+';border:1px solid '+(t.estatus==='Completada'?'rgba(30,158,94,.3)':venc?'rgba(217,53,53,.3)':'var(--border2)')+';border-radius:var(--r);margin-bottom:5px;padding:9px 11px">';
-    h += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px"><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--text);'+(t.estatus==='Completada'?'text-decoration:line-through;opacity:.6':'')+'">';
-    h += t.tarea+'</div>';
-    if(t.comentarios) h += '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+t.comentarios+'</div>';
-    h += '</div><span style="font-size:10px;padding:2px 7px;border-radius:99px;font-weight:700;white-space:nowrap;color:'+priCol+'">'+t.prioridad+'</span>';
-    if(ed) h += '<span style="cursor:pointer;color:var(--muted);font-size:11px;padding:2px 5px" onclick="delTareaS(\''+pid+'\','+i+')" title="Eliminar">x</span>';
-    h += '</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
-    if(t.fechaLimite) h += '<span style="font-size:10px;'+(venc?'color:var(--bad);font-weight:700':'color:var(--muted)')+'">'+fmtD(t.fechaLimite)+'</span>';
-    if(ed){
-      h += '<div style="display:flex;gap:4px;margin-left:auto">';
-      ['Pendiente','En curso','Completada'].forEach(function(s){
-        h += '<button class="btn xs'+(t.estatus===s?' primary':'')+'" onclick="updTareaS(\''+pid+'\','+i+',\''+s+'\')">'+s+'</button>';
-      });
+    h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--navy);margin-bottom:8px">Metas activas esta semana ('+activas.length+')</div>';
+    activas.forEach(function(t,i){
+      var idx = ts2.indexOf(t);
+      var venc = t.fechaLimite && new Date(t.fechaLimite+'T23:59:59') < hoy;
+      var priCol = t.prioridad==='Alta'?'var(--bad)':t.prioridad==='Media'?'var(--warn)':'var(--ok)';
+      h += '<div style="background:var(--surface);border:1px solid '+(venc?'rgba(217,53,53,.3)':'var(--border2)')+';border-radius:var(--r2);margin-bottom:8px;padding:12px 14px;border-left:3px solid '+priCol+'">';
+      h += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">';
+      h += '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--text);line-height:1.4">'+t.tarea+'</div>';
+      if(t.criterio) h += '<div style="font-size:10px;color:var(--muted);margin-top:4px;padding:5px 8px;background:var(--surface2);border-radius:var(--r)">Criterio de exito: '+t.criterio+'</div>';
+      h += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">';
+      h += '<span style="font-size:9px;color:'+priCol+';font-weight:700;background:'+priCol.replace(')',',0.12)').replace('var(','rgba(').replace('--bad','217,53,53').replace('--warn','196,125,10').replace('--ok','30,158,94')+'">'+t.prioridad+'</span>';
+      if(t.fechaLimite) h += '<span style="font-size:9px;color:'+(venc?'var(--bad)':'var(--muted)')+'">Limite: '+fmtD(t.fechaLimite)+(venc?' - VENCIDA':'')+'</span>';
+      if(t.semana) h += '<span style="font-size:9px;color:var(--muted)">Sem: '+fmtD(t.semana)+'</span>';
+      h += '</div></div>';
+      if(ed) h += '<span style="cursor:pointer;color:var(--muted);font-size:11px" onclick="delTareaS(\''+pid+'\','+idx+')" title="Eliminar">x</span>';
       h += '</div>';
-    } else {
-      h += '<span style="margin-left:auto;font-size:11px;font-weight:700;color:'+stCol+'">'+t.estatus+'</span>';
-    }
-    h += '</div></div>';
-  });
-  h += '</div></div>';
+      if(ed){
+        h += '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px">Cierre de semana:</div>';
+        h += '<div style="display:flex;gap:5px;flex-wrap:wrap">';
+        [
+          {s:'En progreso',col:'var(--purple)',icon:'→'},
+          {s:'Lograda',col:'var(--ok)',icon:'✓'},
+          {s:'Parcial',col:'var(--warn)',icon:'~'},
+          {s:'No lograda',col:'var(--bad)',icon:'✕'}
+        ].forEach(function(btn){
+          var active = t.estatus===btn.s;
+          h += '<button style="padding:4px 10px;border-radius:99px;border:1.5px solid '+btn.col+';background:'+(active?btn.col:'transparent')+';color:'+(active?'#fff':btn.col)+';font-size:10px;font-weight:700;cursor:pointer" onclick="updTareaS(\''+pid+'\','+idx+',\''+btn.s+'\')">'+btn.icon+' '+btn.s+'</button>';
+        });
+        h += '</div>';
+      } else {
+        var stCol = t.estatus==='Lograda'?'var(--ok)':t.estatus==='Parcial'?'var(--warn)':t.estatus==='No lograda'?'var(--bad)':'var(--muted)';
+        h += '<span style="font-size:11px;font-weight:700;color:'+stCol+'">'+t.estatus+'</span>';
+      }
+      h += '</div>';
+    });
+  }
+
+  // Historial
+  if(historial.length>0){
+    h += '<details style="margin-top:14px"><summary style="cursor:pointer;font-size:11px;font-weight:700;color:var(--navy);padding:8px 12px;background:var(--surface2);border-radius:var(--r2);border:1px solid var(--border2);list-style:none;display:flex;align-items:center;justify-content:space-between">';
+    h += '<span>Historial de Metas SMART ('+historial.length+')</span>';
+    if(cumplimiento!==null) h += '<span style="font-size:10px;color:'+(cumplimiento>=80?'var(--ok)':cumplimiento>=50?'var(--warn)':'var(--bad)')+'">Cumplimiento: '+cumplimiento+'%</span>';
+    h += '</summary><div style="margin-top:6px">';
+    historial.slice().reverse().forEach(function(t){
+      var stCol = t.estatus==='Lograda'?'var(--ok)':t.estatus==='Parcial'?'var(--warn)':t.estatus==='No lograda'?'var(--bad)':'var(--muted)';
+      var stIcon = t.estatus==='Lograda'?'✓':t.estatus==='Parcial'?'~':t.estatus==='No lograda'?'✕':'·';
+      h += '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border2)">';
+      h += '<span style="font-size:13px;color:'+stCol+';flex-shrink:0">'+stIcon+'</span>';
+      h += '<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--text);'+(t.estatus==='Lograda'?'text-decoration:line-through;opacity:.6':'')+'">' + t.tarea+'</div>';
+      if(t.semana) h += '<div style="font-size:9px;color:var(--muted);margin-top:2px">Sem: '+fmtD(t.semana)+'</div>';
+      h += '</div>';
+      h += '<span style="font-size:10px;font-weight:700;color:'+stCol+';white-space:nowrap">'+t.estatus+'</span>';
+      h += '</div>';
+    });
+    h += '</div></details>';
+  }
+
+  h += '</div>';
   return h;
+}
+
+// GLOSARIO SMART
+function rGlosario(c){
+  c.innerHTML = '<div style="max-width:760px;margin:0 auto">'
+  + '<div style="background:var(--navy);border-radius:var(--r2);padding:18px 22px;margin-bottom:20px">'
+  + '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:4px">METODOLOGIA</div>'
+  + '<div style="font-size:22px;font-weight:900;color:#fff;font-family:var(--font-d)">Metas SMART</div>'
+  + '<div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:4px">Creado por George T. Doran en 1981 · Management Review</div>'
+  + '</div>'
+
+  + '<div style="background:var(--surface2);border-radius:var(--r2);padding:14px 18px;margin-bottom:18px;border-left:4px solid var(--purple)">'
+  + '<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">Por que usamos Metas SMART?</div>'
+  + '<div style="font-size:12px;color:var(--muted);line-height:1.7">Una tarea generica como "avanzar en el proyecto" no es medible ni comprometible. Una Meta SMART convierte esa tarea en un compromiso claro que cualquier persona puede verificar al final de la semana. En Linea Italia las usamos para que cada ingeniero defina exactamente que va a lograr esa semana y pueda rendir cuentas de ello.</div>'
+  + '</div>'
+
+  + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">'
+  + [
+    {l:'S — Especifica',c:'#534AB7',d:'La meta describe exactamente QUE se va a lograr, no de manera vaga. Incluye el entregable concreto.',e:'Mal: "Avanzar en los planos". Bien: "Entregar planos dimensionales del escritorio L 160cm con tolerancias definidas."'},
+    {l:'M — Medible',c:'#185FA5',d:'Existe un criterio claro para saber si se logro o no. Puede ser un entregable fisico, una aprobacion, un porcentaje o una fecha.',e:'Mal: "Hacer el prototipo". Bien: "Tener prototipo fisico ensamblado listo para pruebas de carga el viernes."'},
+    {l:'A — Alcanzable',c:'#0F6E56',d:'La meta es realista para una semana con los recursos disponibles. No es aspiracional — es comprometible.',e:'Mal: "Terminar todo el proyecto". Bien: "Completar la fase de disenio del modulo de tablero esta semana."'},
+    {l:'R — Relevante',c:'#854F0B',d:'La meta contribuye directamente al avance del proyecto NPD. No es una actividad de soporte sin impacto en el resultado.',e:'Mal: "Organizar archivos del servidor". Bien: "Validar el costo final del herraje con proveedor para cerrar BOM."'},
+    {l:'T — Con tiempo',c:'#993C1D',d:'Tiene una fecha limite clara. En nuestro caso siempre es dentro de la semana — el viernes a mas tardar.',e:'Mal: "Pronto". Bien: "Para el viernes 30 de mayo de 2026."'}
+  ].map(function(k){
+    return '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;border-top:3px solid '+k.c+'">'
+    + '<div style="font-size:13px;font-weight:800;color:'+k.c+';margin-bottom:6px">'+k.l+'</div>'
+    + '<div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:8px">'+k.d+'</div>'
+    + '<div style="font-size:10px;color:var(--muted);background:var(--surface2);padding:7px 10px;border-radius:var(--r);line-height:1.6">'+k.e+'</div>'
+    + '</div>';
+  }).join('')
+  + '</div>'
+
+  + '<div style="background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--r2);padding:16px 18px;margin-bottom:14px">'
+  + '<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:10px">Como funciona en el NPD Manager</div>'
+  + '<div style="display:flex;flex-direction:column;gap:8px">'
+  + [
+    {d:'LUNES',t:'El ingeniero define sus 3 a 5 Metas SMART de la semana dentro de cada proyecto. Las escribe de forma especifica con criterio de exito claro.',c:'var(--purple)'},
+    {d:'DURANTE LA SEMANA',t:'Actualiza el estatus de cada meta: Pendiente o En progreso. Si se bloquea, lo registra con un comentario.',c:'var(--warn)'},
+    {d:'VIERNES',t:'Cierra cada meta con: Lograda / Parcial / No lograda. El historial queda guardado automaticamente.',c:'var(--ok)'},
+    {d:'REPORTE EJECUTIVO',t:'Fernando ve las Metas SMART de cada ingeniero y su indice de cumplimiento historico para tomar decisiones.',c:'var(--navy)'}
+  ].map(function(s,i){
+    return '<div style="display:flex;gap:12px;align-items:flex-start">'
+    + '<div style="width:28px;height:28px;border-radius:50%;background:'+s.c+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">'+(i+1)+'</div>'
+    + '<div><div style="font-size:10px;font-weight:700;color:'+s.c+';letter-spacing:.06em">'+s.d+'</div>'
+    + '<div style="font-size:12px;color:var(--muted);line-height:1.5">'+s.t+'</div></div>'
+    + '</div>';
+  }).join('')
+  + '</div></div>'
+
+  + '<div style="background:rgba(26,31,60,.04);border-radius:var(--r2);padding:14px 18px;border:1px solid rgba(26,31,60,.1)">'
+  + '<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">Ejemplos de Metas SMART para Linea Italia</div>'
+  + '<div style="font-size:11px;color:var(--muted);line-height:1.8">'
+  + '"Entregar 3 modelados 3D del escritorio ejecutivo con opciones de cajones y sin cajones para revision de gerencia el viernes 30 de mayo."<br>'
+  + '"Obtener aprobacion de BOM del proveedor de herrajes para el proyecto Lincoln antes del jueves — confirmacion por escrito."<br>'
+  + '"Completar corrida piloto de 3 piezas del sillon Attese con firma de calidad y hoja de inspeccion dimensional."<br>'
+  + '"Validar que el costo real del modulo basico Vetta no supera $X definido en el objetivo del proyecto — hoja de costos actualizada."'
+  + '</div></div>'
+
+  + '</div>';
 }
 
 </script>
