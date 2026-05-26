@@ -794,6 +794,7 @@ function rSB(){
       {id:'mis-proyectos',i:'⊞',l:'Mis proyectos',b:risk},
       {id:'calendario',i:'📅',l:'Calendario',b:0},
       {id:'diagrama',i:'◈',l:'Diagrama de proceso',b:0},
+      {id:'glosario',i:'📖',l:'Glosario SMART',b:0},
     ];
   }
   document.getElementById('sb').innerHTML=`
@@ -1213,6 +1214,20 @@ function rMiDashboard(c){
   const avg=mis.length?Math.round(mis.reduce((s,p)=>s+p.avance,0)/mis.length):0;
   const ec=ecOf(cu?.perfil||'GI');
 
+  // Metas SMART KPIs
+  const hoy_ms=new Date(); hoy_ms.setHours(0,0,0,0);
+  const dow_ms=hoy_ms.getDay();
+  const lunes_ms=new Date(hoy_ms); lunes_ms.setDate(hoy_ms.getDate()-(dow_ms===0?6:dow_ms-1));
+  const lunesStr_ms=lunes_ms.toISOString().slice(0,10);
+  const viernes_ms=new Date(lunes_ms); viernes_ms.setDate(lunes_ms.getDate()+4);
+  const viernesStr_ms=viernes_ms.toISOString().slice(0,10);
+  const todasMetas=mis.flatMap(p=>(p.tareasSemana||[]).map(t=>({...t,pid:p.id,pname:p.name})));
+  const metasActivas=todasMetas.filter(t=>t.estatus!=='Lograda'&&t.estatus!=='Parcial'&&t.estatus!=='No lograda'&&(!t.semana||t.semana>=lunesStr_ms));
+  const metasHist=todasMetas.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial'||t.estatus==='No lograda');
+  const metasLogradas=metasHist.filter(t=>t.estatus==='Lograda').length;
+  const metasParciales=metasHist.filter(t=>t.estatus==='Parcial').length;
+  const cumplMetas=metasHist.length?Math.round((metasLogradas+metasParciales*0.5)/metasHist.length*100):null;
+
   // Siguiente milestone de un proyecto
   function getSigMS(p){
     for(const fk of FK){
@@ -1284,6 +1299,41 @@ function rMiDashboard(c){
   </div>`;
 
   // ── FILA PRINCIPAL: Mis proyectos + Alertas ──
+  // Metas SMART block
+  h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Metas SMART</div>
+      ${cumplMetas!==null?`<span style="font-size:11px;font-weight:700;color:${cumplMetas>=80?'var(--ok)':cumplMetas>=50?'var(--warn)':'var(--bad)'}">Cumplimiento histórico: ${cumplMetas}%</span>`:''}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+      <div style="background:var(--surface2);border-radius:var(--r);padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--navy)">${metasActivas.length}</div>
+        <div style="font-size:10px;color:var(--muted)">Activas esta semana</div>
+      </div>
+      <div style="background:var(--ok-bg);border-radius:var(--r);padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--ok)">${metasLogradas}</div>
+        <div style="font-size:10px;color:var(--ok)">Logradas</div>
+      </div>
+      <div style="background:var(--warn-bg);border-radius:var(--r);padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--warn)">${metasParciales}</div>
+        <div style="font-size:10px;color:var(--warn)">Parciales</div>
+      </div>
+      <div style="background:var(--bad-bg);border-radius:var(--r);padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--bad)">${metasHist.filter(t=>t.estatus==='No lograda').length}</div>
+        <div style="font-size:10px;color:var(--bad)">No logradas</div>
+      </div>
+    </div>
+    ${metasActivas.length>0?`<div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Mis metas activas esta semana</div>
+    ${metasActivas.slice(0,3).map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2)" onclick="oP('${t.pid}')" style="cursor:pointer">
+      <div style="width:6px;height:6px;border-radius:50%;background:${t.prioridad==='Alta'?'var(--bad)':t.prioridad==='Media'?'var(--warn)':'var(--ok)'};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.tarea}</div>
+      <div style="font-size:9px;color:var(--muted)">${t.pname}</div></div>
+      <span style="font-size:9px;color:var(--muted);white-space:nowrap">${t.fechaLimite?fmtD(t.fechaLimite):'Sin fecha'}</span>
+    </div>`).join('')}
+    ${metasActivas.length>3?`<div style="font-size:10px;color:var(--muted);padding-top:6px">+${metasActivas.length-3} más metas esta semana</div>`:''}`:
+    `<div style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center;padding:8px">Sin metas definidas esta semana · <span style="color:var(--navy);cursor:pointer;font-weight:700" onclick="sv2('mis-proyectos')">Agregar en mis proyectos →</span></div>`}
+  </div>`;
+
   h+=`<div style="display:grid;grid-template-columns:1fr 320px;gap:12px;margin-bottom:12px">
 
     <!-- Mis proyectos con avance -->
@@ -1821,7 +1871,7 @@ function rReporte(c){
 
   // ── OBJETIVOS DE LA SEMANA (GLOBAL) ──
   const todasTareasSem=[];
-  actScope.forEach(p=>{(p.tareasSemana||[]).forEach((t,i)=>{if(selEng&&p.eng!==selEng)return;todasTareasSem.push({...t,pid:p.id,idx:i,pname:p.name,eng:p.eng});});});
+  actScope.forEach(p=>{(p.tareasSemana||[]).forEach((t,i)=>{ if(t.estatus==='Lograda'||t.estatus==='Parcial'||t.estatus==='No lograda'||t.estatus==='Completada') return;if(selEng&&p.eng!==selEng)return;todasTareasSem.push({...t,pid:p.id,idx:i,pname:p.name,eng:p.eng});});});
   if(todasTareasSem.length){
     const sorted=todasTareasSem.sort((a,b)=>{const po={Alta:0,Media:1,Baja:2};return(po[a.prioridad]||1)-(po[b.prioridad]||1);});
     h+=`<div style="margin-bottom:16px">
@@ -4926,13 +4976,13 @@ function buildMetasSmart(p, ed){
   var ts2 = p.tareasSemana||[];
   var activas = ts2.filter(function(t){
     var s = t.semana||'';
-    var esCerrada = t.estatus==='Lograda'||t.estatus==='Parcial'||t.estatus==='No lograda';
+    var esCerrada = t.estatus==='Lograda'||t.estatus==='Parcial'||t.estatus==='No lograda'||t.estatus==='Completada';
     if(esCerrada) return false;
     if(!s) return true; // legacy: show in active
     return s >= lunesStr; // this week or future
   });
   var historial = ts2.filter(function(t){
-    var esCerrada = t.estatus==='Lograda'||t.estatus==='Parcial'||t.estatus==='No lograda';
+    var esCerrada = t.estatus==='Lograda'||t.estatus==='Parcial'||t.estatus==='No lograda'||t.estatus==='Completada';
     var s = t.semana||'';
     return esCerrada || (s && s < lunesStr);
   });
