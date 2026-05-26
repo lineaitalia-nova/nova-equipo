@@ -2059,7 +2059,7 @@ function rModal(){
     <div class="mt active" data-t="resumen" onclick="sMT('resumen')">Resumen</div>
     <div class="mt" data-t="skus" onclick="sMT('skus')">SKUs (${skus.length})</div>
     <div class="mt" data-t="tareas" onclick="sMT('tareas')">Project Plan</div>
-    <div class="mt" data-t="semana" onclick="sMT('semana')">Objetivos Semana</div>
+    <div class="mt" data-t="semana" onclick="sMT('semana')">Metas SMART</div>
     <div class="mt" data-t="cronograma" onclick="sMT('cronograma')">Cronograma</div>
     <div class="mt" data-t="gates" onclick="sMT('gates')">Gates${allA?' ✓':''}</div>
     <div class="mt" data-t="notas" onclick="sMT('notas')">Notas (${(p.notas||[]).length})</div>
@@ -2372,53 +2372,9 @@ function rModal(){
   const tsCurs=ts2.filter(t=>t.estatus==='En curso').length;
   const tsPend=ts2.filter(t=>t.estatus==='Pendiente').length;
   const tsProg=ts2.length?Math.round(tsComp/ts2.length*100):0;
-  h+=`<div class="mpg" id="mp-semana">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:13px;font-weight:700">Objetivos de la semana</div>
-      ${ed?`<button class="btn sm primary" onclick="addTareaS('${p.id}')">+ Agregar objetivo</button>`:''}
-    </div>
-    ${ts2.length>0?`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px">
-      <div style="background:var(--ok-bg);border:1px solid rgba(30,158,94,.2);border-radius:var(--r);padding:8px 10px;text-align:center"><div style="font-size:18px;font-weight:800;font-family:var(--font-d);color:var(--ok)">${tsComp}</div><div style="font-size:10px;color:var(--ok);font-weight:600">Completadas</div></div>
-      <div style="background:var(--purple-bg);border:1px solid rgba(83,74,183,.2);border-radius:var(--r);padding:8px 10px;text-align:center"><div style="font-size:18px;font-weight:800;font-family:var(--font-d);color:var(--purple)">${tsCurs}</div><div style="font-size:10px;color:var(--purple);font-weight:600">En curso</div></div>
-      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;text-align:center"><div style="font-size:18px;font-weight:800;font-family:var(--font-d);color:var(--muted)">${tsPend}</div><div style="font-size:10px;color:var(--muted);font-weight:600">Pendientes</div></div>
-      <div style="background:${tsVenc>0?'var(--bad-bg)':'var(--surface2)'};border:1px solid ${tsVenc>0?'rgba(217,53,53,.2)':'var(--border2)'};border-radius:var(--r);padding:8px 10px;text-align:center"><div style="font-size:18px;font-weight:800;font-family:var(--font-d);color:${tsVenc>0?'var(--bad)':'var(--muted)'}">${tsVenc}</div><div style="font-size:10px;color:${tsVenc>0?'var(--bad)':'var(--muted)'};font-weight:600">Vencidas</div></div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-      <div style="flex:1;height:6px;background:var(--border2);border-radius:3px;overflow:hidden"><div style="height:100%;background:${bC(tsProg)};width:${tsProg}%;border-radius:3px;transition:width .4s"></div></div>
-      <span style="font-size:12px;font-weight:700;color:${bC(tsProg)};min-width:36px">${tsProg}%</span>
-      <span style="font-size:10px;color:var(--muted)">${tsComp}/${ts2.length} completados</span>
-    </div>`:''}
-    ${ts2.length===0?`<div style="padding:16px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--muted);text-align:center">Sin objetivos registrados esta semana.${ed?' Usa el botón para agregar.':''}</div>`:''}
-    <div id="ts-list-${p.id}">
-    ${ts2.map((t,i)=>{
-      const venc=t.estatus!=='Completada'&&t.fechaLimite&&pd(t.fechaLimite)<TODAY;
-      const priCol=t.prioridad==='Alta'?'var(--bad)':t.prioridad==='Media'?'var(--warn)':'var(--muted)';
-      const priBg=t.prioridad==='Alta'?'var(--bad-bg)':t.prioridad==='Media'?'var(--warn-bg)':'var(--surface2)';
-      const stCol=t.estatus==='Completada'?'var(--ok)':t.estatus==='En curso'?'var(--purple)':'var(--muted)';
-      const rowBg=t.estatus==='Completada'?'rgba(30,158,94,.04)':venc?'rgba(217,53,53,.04)':'var(--surface)';
-      const borderCol=t.estatus==='Completada'?'rgba(30,158,94,.3)':venc?'rgba(217,53,53,.3)':'var(--border2)';
-      return`<div style="background:${rowBg};border:1px solid ${borderCol};border-radius:var(--r);margin-bottom:5px;padding:9px 11px">
-        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:700;color:var(--text);${t.estatus==='Completada'?'text-decoration:line-through;opacity:.6':''}">${t.tarea}</div>
-            ${t.comentarios?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${t.comentarios}</div>`:''}
-          </div>
-          <span style="font-size:10px;background:${priBg};color:${priCol};padding:2px 7px;border-radius:99px;font-weight:700;white-space:nowrap">${t.prioridad}</span>
-          ${ed?`<span style="cursor:pointer;color:var(--muted);font-size:11px;padding:2px 5px;border-radius:3px;flex-shrink:0" onclick="delTareaS('${p.id}',${i})" title="Eliminar">✕</span>`:''}
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          ${t.fechaLimite?`<span style="font-size:10px;${venc?'color:var(--bad);font-weight:700':'color:var(--muted)'}">📅 ${venc?'⚠ Vencida: ':''}${fmtD(t.fechaLimite)}</span>`:''}
-          ${ed?`<div style="display:flex;gap:4px;margin-left:auto">
-            ${['Pendiente','En curso','Completada'].map(s=>`<button class="btn xs${t.estatus===s?' primary':''}" style="${t.estatus===s?'':'opacity:.6'}" onclick="updTareaS('${p.id}',${i},'${s}')">${s}</button>`).join('')}
-          </div>`:`<span style="margin-left:auto;font-size:11px;font-weight:700;color:${stCol}">${t.estatus}</span>`}
-        </div>
-      </div>`;
-    }).join('')}
-    </div>
-  </div>`;
+    h+=buildMetasSmart(p,ed);
 
-  // ── GATES ──
-  p.gates=p.gates||{};Object.keys(GATES).forEach(gk=>{if(!p.gates[gk])p.gates[gk]={items:new Array(GATES[gk].items.length).fill(false),aprobado:false,f:''};});
+    p.gates=p.gates||{};Object.keys(GATES).forEach(gk=>{if(!p.gates[gk])p.gates[gk]={items:new Array(GATES[gk].items.length).fill(false),aprobado:false,f:''};});
   const gatesAprobados=Object.values(p.gates).filter(g=>g.aprobado).length;
   const totalGates=Object.keys(GATES).length;
   h+=`<div class="mpg" id="mp-gates">
@@ -4931,6 +4887,111 @@ function showWelcomePopup(){
   document.body.appendChild(overlay);
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
 }
+// METAS SMART
+function buildMetasSmart(p, ed){
+  var pid = p.id;
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  var dow = hoy.getDay();
+  var lunes = new Date(hoy); lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));
+  var viernes = new Date(lunes); viernes.setDate(lunes.getDate()+4);
+  var lunesStr = lunes.toISOString().slice(0,10);
+  var viernesStr = viernes.toISOString().slice(0,10);
+  var semLabel = lunes.toLocaleDateString('es-MX',{day:'numeric',month:'long'}) + ' - ' + viernes.toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+
+  var auto = [];
+  FK.forEach(function(fk){
+    (p.tp[fk]||[]).forEach(function(t,i){
+      var fi = t.fi||'', ff = t.ff||'';
+      if(t.e==='Completado') return;
+      if((fi&&fi>=lunesStr&&fi<=viernesStr)||(ff&&ff>=lunesStr&&ff<=viernesStr)){
+        auto.push({fk:fk,i:i,t:t,fi:fi,ff:ff});
+      }
+    });
+  });
+
+  var ts2 = p.tareasSemana||[];
+  var tsComp = ts2.filter(function(t){return t.estatus==='Completada';}).length;
+  var tsCurs = ts2.filter(function(t){return t.estatus==='En curso';}).length;
+  var tsPend = ts2.filter(function(t){return t.estatus==='Pendiente';}).length;
+  var tsVenc = ts2.filter(function(t){return t.estatus!=='Completada'&&t.fechaLimite&&pd(t.fechaLimite)<TODAY;}).length;
+  var tsProg = ts2.length ? Math.round(tsComp/ts2.length*100) : 0;
+
+  var h = '<div class="mpg" id="mp-semana">';
+
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">';
+  h += '<div><div style="font-size:13px;font-weight:800;color:var(--navy)">Metas SMART - Semana</div>';
+  h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+semLabel+'</div></div>';
+  if(ed) h += '<button class="btn sm primary" onclick="addTareaS(\''+pid+'\')">+ Meta manual</button>';
+  h += '</div>';
+
+  if(auto.length > 0){
+    h += '<div style="background:rgba(26,31,60,.04);border:1px solid rgba(26,31,60,.1);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">';
+    h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--navy);margin-bottom:10px">';
+    h += 'METAS AUTOMATICAS - Project Plan esta semana ('+auto.length+')</div>';
+    auto.forEach(function(item){
+      var fk=item.fk, i=item.i, t=item.t, fi=item.fi, ff=item.ff;
+      var isVenc = ff && pd(ff)<TODAY && t.e!=='Completado';
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid '+(isVenc?'rgba(217,53,53,.3)':'var(--border2)')+';border-radius:var(--r);margin-bottom:5px;border-left:3px solid '+FD[fk].c+'">';
+      h += '<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:700;color:var(--text)">'+t.n+'</div>';
+      h += '<div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap">';
+      h += '<span style="font-size:9px;background:'+FD[fk].bg+';color:'+FD[fk].tc+';padding:1px 6px;border-radius:99px;font-weight:600">'+fk+'</span>';
+      if(fi) h += '<span style="font-size:9px;color:var(--muted)">Inicio: '+fmtD(fi)+'</span>';
+      if(ff) h += '<span style="font-size:9px;color:'+(isVenc?'var(--bad)':'var(--muted)')+'">Vence: '+fmtD(ff)+'</span>';
+      h += '</div></div>';
+      h += '<select style="font-size:10px;padding:3px 6px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface)"';
+      h += ' onchange="uT(\''+pid+'\',\''+fk+'\','+i+',\'e\',this.value)">';
+      ['No iniciado','En progreso','Completado','Bloqueado'].forEach(function(s){
+        h += '<option'+(t.e===s?' selected':'')+'>'+s+'</option>';
+      });
+      h += '</select></div>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div style="padding:10px 14px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--muted);margin-bottom:12px">Sin tareas del Project Plan programadas para esta semana.</div>';
+  }
+
+  if(ts2.length > 0){
+    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px">';
+    [{v:tsComp,l:'Completadas',c:'var(--ok)',bg:'var(--ok-bg)'},{v:tsCurs,l:'En curso',c:'var(--purple)',bg:'var(--purple-bg)'},{v:tsPend,l:'Pendientes',c:'var(--muted)',bg:'var(--surface2)'},{v:tsVenc,l:'Vencidas',c:tsVenc>0?'var(--bad)':'var(--muted)',bg:tsVenc>0?'var(--bad-bg)':'var(--surface2)'}].forEach(function(k){
+      h += '<div style="background:'+k.bg+';border-radius:var(--r);padding:8px 10px;text-align:center"><div style="font-size:18px;font-weight:800;color:'+k.c+'">'+k.v+'</div><div style="font-size:10px;color:'+k.c+'">'+k.l+'</div></div>';
+    });
+    h += '</div>';
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div style="flex:1;height:5px;background:var(--border2);border-radius:3px;overflow:hidden"><div style="height:100%;background:'+bC(tsProg)+';width:'+tsProg+'%;border-radius:3px"></div></div>';
+    h += '<span style="font-size:11px;font-weight:700;color:'+bC(tsProg)+'">'+tsProg+'%</span><span style="font-size:10px;color:var(--muted)">'+tsComp+'/'+ts2.length+' completados</span></div>';
+  }
+
+  if(ts2.length===0 && auto.length===0){
+    h += '<div style="padding:16px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--muted);text-align:center">Sin metas esta semana.'+(ed?' Usa el boton para agregar una meta manual.':'')+' </div>';
+  }
+
+  h += '<div id="ts-list-'+pid+'">';
+  ts2.forEach(function(t,i){
+    var venc = t.estatus!=='Completada' && t.fechaLimite && pd(t.fechaLimite)<TODAY;
+    var priCol = t.prioridad==='Alta'?'var(--bad)':t.prioridad==='Media'?'var(--warn)':'var(--muted)';
+    var stCol = t.estatus==='Completada'?'var(--ok)':t.estatus==='En curso'?'var(--purple)':'var(--muted)';
+    h += '<div style="background:'+(t.estatus==='Completada'?'rgba(30,158,94,.04)':venc?'rgba(217,53,53,.04)':'var(--surface)')+';border:1px solid '+(t.estatus==='Completada'?'rgba(30,158,94,.3)':venc?'rgba(217,53,53,.3)':'var(--border2)')+';border-radius:var(--r);margin-bottom:5px;padding:9px 11px">';
+    h += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px"><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--text);'+(t.estatus==='Completada'?'text-decoration:line-through;opacity:.6':'')+'">';
+    h += t.tarea+'</div>';
+    if(t.comentarios) h += '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+t.comentarios+'</div>';
+    h += '</div><span style="font-size:10px;padding:2px 7px;border-radius:99px;font-weight:700;white-space:nowrap;color:'+priCol+'">'+t.prioridad+'</span>';
+    if(ed) h += '<span style="cursor:pointer;color:var(--muted);font-size:11px;padding:2px 5px" onclick="delTareaS(\''+pid+'\','+i+')" title="Eliminar">x</span>';
+    h += '</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+    if(t.fechaLimite) h += '<span style="font-size:10px;'+(venc?'color:var(--bad);font-weight:700':'color:var(--muted)')+'">'+fmtD(t.fechaLimite)+'</span>';
+    if(ed){
+      h += '<div style="display:flex;gap:4px;margin-left:auto">';
+      ['Pendiente','En curso','Completada'].forEach(function(s){
+        h += '<button class="btn xs'+(t.estatus===s?' primary':'')+'" onclick="updTareaS(\''+pid+'\','+i+',\''+s+'\')">'+s+'</button>';
+      });
+      h += '</div>';
+    } else {
+      h += '<span style="margin-left:auto;font-size:11px;font-weight:700;color:'+stCol+'">'+t.estatus+'</span>';
+    }
+    h += '</div></div>';
+  });
+  h += '</div></div>';
+  return h;
+}
+
 </script>
 </body>
 </html>
