@@ -1163,9 +1163,10 @@ function tipoB(t){return t==='Tipo 1'?`<span style="background:#DBEAFE;color:#1D
 
 function getIvy(){
   // Solo Q1 y Q2, Q1 primero - al terminar Q1 avanza a Q2
-  // No excluimos por isProj porque las tareas reales también tienen proyecto PROJ
-  const q1Done = tasks.filter(t=>t.cuadrante==='Q1-Hacer'&&t.estado!=='Completada'&&t.estado!=='Cancelada'&&t.tipo!=='Tipo 2').length===0;
-  return [...tasks.filter(t=>t.estado!=='Completada'&&t.estado!=='Cancelada'&&t.tipo!=='Tipo 2'&&(t.cuadrante==='Q1-Hacer'||t.cuadrante==='Q2-Planificar'))]
+  // Excluir tareas cuyo proyecto sea PROJ+número (proyectos NPD a largo plazo)
+  const projNumRx=/^PROJ\d+$/i;
+  const q1Done = tasks.filter(t=>t.cuadrante==='Q1-Hacer'&&t.estado!=='Completada'&&t.estado!=='Cancelada'&&t.tipo!=='Tipo 2'&&!projNumRx.test((t.proyecto||'').trim())).length===0;
+  return [...tasks.filter(t=>t.estado!=='Completada'&&t.estado!=='Cancelada'&&t.tipo!=='Tipo 2'&&(t.cuadrante==='Q1-Hacer'||t.cuadrante==='Q2-Planificar')&&!projNumRx.test((t.proyecto||'').trim()))]
     .sort((a,b)=>(QUAD_O[a.cuadrante]??9)-(QUAD_O[b.cuadrante]??9)||(dL(a.fecha_limite)??999)-(dL(b.fecha_limite)??999)||(PRIO_O[a.prioridad]??9)-(PRIO_O[b.prioridad]??9))
     .slice(0,6);
 }
