@@ -358,6 +358,7 @@ input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) bri
 
   <div class="nav-sec">Reportes</div>
   <button class="nb" data-view="historial"><span class="ni">🕐</span> Historial</button>
+  <button class="nb" data-view="reporte-semanal"><span class="ni">📊</span> Reporte Semanal</button>
   <button class="nb lider-only" data-view="accesos" style="display:none"><span class="ni">🔐</span> Control de accesos</button>
   <button class="nb" data-view="biblioteca"><span class="ni">📚</span> Biblioteca</button>
   <button class="nb" data-view="valores"><span class="ni">⬡</span> Nostri Valori</button>
@@ -385,6 +386,7 @@ input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) bri
     <div class="view" id="view-taller"></div>
     <div class="view" id="view-evaluacion"></div>
     <div class="view" id="view-historial"></div>
+    <div class="view" id="view-reporte-semanal"></div>
     <div class="view" id="view-accesos"></div>
     <div class="view" id="view-biblioteca"></div>
     <div class="view" id="view-valores"></div>
@@ -763,6 +765,7 @@ const VIEW_META={
   'biblioteca':{t:'Biblioteca Gerencial',s:'4 libros con autoevaluación'},
   'valores':{t:'Nostri Valori',s:'Los 4 valores medulares de Línea Italia'},
   'vto':{t:'VTO 2026',s:'Visión · Tracción y Organización'},
+  'reporte-semanal':{t:'Reporte Semanal',s:'Desempeño semanal — Programadas vs Completadas'},
 };
 
 document.querySelectorAll('.nb[data-view]').forEach(b=>b.onclick=()=>goView(b.dataset.view));
@@ -786,6 +789,7 @@ function topActions(v){
   if(v==='equipo')return`<button class="btn primary" onclick="openTareaModal(true)">+ Asignar tarea</button>`;
   if(v==='taller')return`<button class="btn primary" onclick="openProtoModal()">+ Prototipo</button>`;
   if(v==='historial')return`<button class="btn secondary" onclick="generarPDF()">📄 Exportar PDF</button>`;
+  if(v==='reporte-semanal')return`<button class="btn primary" onclick="exportarReporteSemanal()">📄 Exportar PDF</button>`;
   return'';
 }
 
@@ -795,7 +799,8 @@ function renderView(v){
     'dashboard':rDash,'mis-tareas':rMisTareas,'kanban':rKanban,
     'equipo':rEquipo,'taller':rTaller,'evaluacion':rEval,
     'historial':rHistorial,'accesos':rAccesos,
-    'biblioteca':rBiblioteca,'valores':rValores,'vto':rVto
+    'biblioteca':rBiblioteca,'valores':rValores,'vto':rVto,
+    'reporte-semanal':rReporteSemanal
   };
   if(map[v])map[v]();
 }
@@ -1607,6 +1612,296 @@ function generarPDFPersonal(){
   </body></html>`);
   win.document.close();
   setTimeout(()=>win.print(),600);
+}
+
+
+// ══ REPORTE SEMANAL DE DESEMPEÑO ════════════════════════════════
+function getWeekRange(offset=0){
+  const d=new Date();
+  const day=d.getDay();
+  const diff=d.getDate()-day+(day===0?-6:1)-(offset*7);
+  const mon=new Date(d);mon.setDate(diff);mon.setHours(0,0,0,0);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);sun.setHours(23,59,59,999);
+  return{start:mon,end:sun,
+    startStr:mon.toISOString().split('T')[0],
+    endStr:sun.toISOString().split('T')[0],
+    label:`${mon.getDate()}/${mon.getMonth()+1} – ${sun.getDate()}/${sun.getMonth()+1}/${sun.getFullYear()}`
+  };
+}
+
+let rsWeekOffset=0;
+
+function rReporteSemanal(){
+  const el=document.getElementById('view-reporte-semanal');if(!el)return;
+  const u=SESSION;
+  const {start,end,startStr,endStr,label}=getWeekRange(rsWeekOffset);
+
+  // Tareas programadas (inicio o vencimiento dentro de la semana)
+  const programadas=DB.tareas.filter(t=>{
+    if(t.assignedTo!==u.id)return false;
+    const ini=t.fechaInicio?new Date(t.fechaInicio):null;
+    const due=t.due?new Date(t.due):null;
+    const cre=new Date(t.createdAt||Date.now());
+    return (ini&&ini>=start&&ini<=end)||(due&&due>=start&&due<=end)||(cre>=start&&cre<=end);
+  });
+
+  // Completadas durante la semana (completedAt dentro del rango)
+  const completadasSemana=DB.tareas.filter(t=>{
+    if(t.assignedTo!==u.id||t.status!=='done')return false;
+    if(!t.completedAt)return false;
+    const cd=new Date(t.completedAt);
+    return cd>=start&&cd<=end;
+  });
+
+  // También tareas que no tienen completedAt pero status done y fechaInicio en semana
+  const doneEnSemana=programadas.filter(t=>t.status==='done');
+  // Merge evitando duplicados
+  const allDone=[...completadasSemana];
+  doneEnSemana.forEach(t=>{if(!allDone.find(d=>d.id===t.id))allDone.push(t);});
+
+  const pendientes=programadas.filter(t=>t.status==='pending');
+  const enProceso=programadas.filter(t=>t.status==='progress');
+  const bloqueadas=programadas.filter(t=>t.status==='blocked');
+  const vencidas=programadas.filter(t=>isOverdue(t));
+
+  const totalProg=programadas.length||1;
+  const pctCump=Math.round(allDone.length/totalProg*100);
+  const pctColor=pctCump>=90?'var(--green)':pctCump>=70?'var(--blue)':pctCump>=50?'var(--amber)':'var(--red)';
+
+  const statusLbl={pending:'⏳ Pendiente',progress:'🔄 En proceso',done:'✅ Completada',blocked:'🚫 Bloqueada'};
+
+  el.innerHTML=`
+  <!-- Header con navegación de semana -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text)">Reporte Semanal de Desempeño</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${u.nombre} ${u.apellido} · ${u.area} · ${u.rol}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn secondary sm" onclick="rsWeekOffset++;rReporteSemanal()">‹ Semana anterior</button>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:6px 14px;font-size:12px;font-weight:600;color:var(--gold);white-space:nowrap">📅 ${label}</div>
+      <button class="btn secondary sm" onclick="if(rsWeekOffset>0){rsWeekOffset--;rReporteSemanal()}" ${rsWeekOffset===0?'style="opacity:.4;cursor:not-allowed"':''}>Semana siguiente ›</button>
+    </div>
+    <button class="btn primary" onclick="exportarReporteSemanal()">📄 Exportar PDF</button>
+  </div>
+
+  <!-- KPIs principales -->
+  <div class="kpi-grid" style="margin-bottom:20px">
+    <div class="kpi" style="border-top:3px solid ${pctColor}">
+      <div class="kpi-val" style="color:${pctColor}">${pctCump}%</div>
+      <div class="kpi-lbl">Cumplimiento</div>
+    </div>
+    <div class="kpi" style="border-top:3px solid var(--green)">
+      <div class="kpi-val" style="color:var(--green)">${allDone.length}</div>
+      <div class="kpi-lbl">Completadas</div>
+    </div>
+    <div class="kpi" style="border-top:3px solid var(--blue)">
+      <div class="kpi-val" style="color:var(--blue)">${programadas.length}</div>
+      <div class="kpi-lbl">Programadas</div>
+    </div>
+    <div class="kpi" style="border-top:3px solid var(--red)">
+      <div class="kpi-val" style="color:var(--red)">${vencidas.length}</div>
+      <div class="kpi-lbl">Vencidas</div>
+    </div>
+  </div>
+
+  <!-- Barra de progreso visual -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="card-title" style="margin-bottom:0">Programadas vs Completadas</div>
+      <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:${pctColor}">${allDone.length} / ${programadas.length}</div>
+    </div>
+    <div style="height:14px;background:var(--surface3);border-radius:99px;overflow:hidden;margin-bottom:12px">
+      <div style="height:100%;width:${Math.min(100,pctCump)}%;background:${pctColor};border-radius:99px;transition:width .6s"></div>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:var(--green)"></div><span style="font-size:11px;color:var(--text2)">Completadas <strong>${allDone.length}</strong></span></div>
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:var(--blue)"></div><span style="font-size:11px;color:var(--text2)">En proceso <strong>${enProceso.length}</strong></span></div>
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:var(--amber)"></div><span style="font-size:11px;color:var(--text2)">Pendientes <strong>${pendientes.length}</strong></span></div>
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:var(--red)"></div><span style="font-size:11px;color:var(--text2)">Bloqueadas <strong>${bloqueadas.length}</strong></span></div>
+      ${vencidas.length>0?`<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:2px;background:var(--red);opacity:.5"></div><span style="font-size:11px;color:var(--red)">Vencidas <strong>${vencidas.length}</strong></span></div>`:''}
+    </div>
+  </div>
+
+  <!-- Tabla completa -->
+  <div class="card">
+    <div class="sh" style="margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:0">Detalle de tareas de la semana</div>
+      <span style="font-size:11px;color:var(--text3)">${programadas.length} tarea${programadas.length!==1?'s':''}</span>
+    </div>
+    ${programadas.length===0
+      ?`<div class="empty"><div class="empty-icon">📋</div><div>Sin tareas registradas en este período.</div></div>`
+      :`<div style="overflow-x:auto">
+      <table class="task-table">
+        <thead><tr>
+          <th>#</th><th>Tarea</th><th>Proyecto</th><th>Tipo</th><th>Prioridad</th>
+          <th>Estado</th><th>F. Inicio</th><th>F. Límite</th><th>Avance</th>
+        </tr></thead>
+        <tbody>
+        ${programadas.map((t,i)=>{
+          const isOver=isOverdue(t);
+          const doneThis=allDone.find(d=>d.id===t.id);
+          return`<tr>
+            <td class="td-num">${i+1}</td>
+            <td style="max-width:220px"><div style="font-size:12px;font-weight:500;color:var(--text);line-height:1.3">${t.desc}</div></td>
+            <td style="font-size:11px;color:var(--text2)">${t.proyecto||'—'}</td>
+            <td><span class="tag muted">${t.tipo||t.area||'—'}</span></td>
+            <td><span class="tag ${prioColor(t.prioridad)}">${t.prioridad||'—'}</span></td>
+            <td><span class="tag ${statusColor(t.status)}">${statusLbl[t.status]||t.status}</span>${isOver?'<span class="tag bad" style="margin-left:4px;font-size:9px">⚠ Vencida</span>':''}</td>
+            <td style="font-size:11px;color:var(--text3)">${fmtDate(t.fechaInicio)}</td>
+            <td style="font-size:11px;color:${isOver?'var(--red)':'var(--text3)'}${isOver?';font-weight:600':''}">${fmtDate(t.due)}</td>
+            <td>
+              <div class="progress-bar"><div class="progress-fill" style="width:${t.avance||0}%;background:${(t.avance||0)>=100?'var(--green)':(t.avance||0)>50?'var(--blue)':'var(--amber)'}"></div></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace">${t.avance||0}%</div>
+            </td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table></div>`
+    }
+  </div>`;
+}
+
+function exportarReporteSemanal(){
+  const u=SESSION;
+  const {start,end,label,startStr,endStr}=getWeekRange(rsWeekOffset);
+
+  const programadas=DB.tareas.filter(t=>{
+    if(t.assignedTo!==u.id)return false;
+    const ini=t.fechaInicio?new Date(t.fechaInicio):null;
+    const due=t.due?new Date(t.due):null;
+    const cre=new Date(t.createdAt||Date.now());
+    return (ini&&ini>=start&&ini<=end)||(due&&due>=start&&due<=end)||(cre>=start&&cre<=end);
+  });
+
+  const completadasSemana=DB.tareas.filter(t=>{
+    if(t.assignedTo!==u.id||t.status!=='done')return false;
+    if(!t.completedAt)return false;
+    const cd=new Date(t.completedAt);
+    return cd>=start&&cd<=end;
+  });
+  const doneEnSemana=programadas.filter(t=>t.status==='done');
+  const allDone=[...completadasSemana];
+  doneEnSemana.forEach(t=>{if(!allDone.find(d=>d.id===t.id))allDone.push(t);});
+
+  const vencidas=programadas.filter(t=>isOverdue(t));
+  const pctCump=programadas.length>0?Math.round(allDone.length/programadas.length*100):0;
+  const statusLbl2={pending:'Pendiente',progress:'En proceso',done:'Completada',blocked:'Bloqueada'};
+  const calLabel=pctCump>=90?'Excelente':pctCump>=70?'Muy bueno':pctCump>=50?'Regular':'Por mejorar';
+  const calColor=pctCump>=90?'#16A34A':pctCump>=70?'#2563EB':pctCump>=50?'#D97706':'#DC2626';
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>Reporte Semanal — ${u.nombre} ${u.apellido} — ${label}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Calibri,Arial,sans-serif;font-size:12px;color:#1E293B;padding:30px;background:#fff;max-width:950px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:14px;border-bottom:3px solid #0D1B3E}
+    .logo{font-size:22px;font-weight:900;color:#0D1B3E;letter-spacing:-1px}
+    .logo-sub{font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:.12em;margin-top:2px}
+    h1{font-size:18px;color:#0D1B3E;margin:0 0 3px}
+    .sub{font-size:11px;color:#64748B}
+    .score-strip{background:#0D1B3E;color:#fff;border-radius:10px;padding:14px 20px;margin-bottom:18px;display:flex;align-items:center;gap:24px}
+    .score-num{font-size:38px;font-weight:700;color:${calColor};line-height:1}
+    .score-pct{font-size:12px;color:rgba(255,255,255,.6);margin-top:3px}
+    .score-label{font-size:16px;font-weight:600;color:${calColor}}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+    .kpi{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;text-align:center}
+    .kv{font-size:26px;font-weight:700}
+    .kl{font-size:9px;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+    .bar-wrap{background:#E2E8F0;border-radius:99px;height:12px;overflow:hidden;margin-bottom:6px}
+    .bar-fill{height:100%;border-radius:99px;background:${calColor}}
+    .bar-lbl{font-size:10px;color:#64748B;text-align:right}
+    table{width:100%;border-collapse:collapse;margin-top:14px;font-size:10.5px}
+    th{background:#0D1B3E;color:#fff;padding:7px 9px;text-align:left;font-size:9.5px;letter-spacing:.04em}
+    td{padding:6px 9px;border-bottom:1px solid #F1F5F9;vertical-align:middle}
+    tr:nth-child(even)td{background:#F8FAFC}
+    .tag-done{background:#DCFCE7;color:#16A34A;padding:2px 7px;border-radius:99px;font-weight:600;font-size:9px}
+    .tag-prog{background:#DBEAFE;color:#2563EB;padding:2px 7px;border-radius:99px;font-weight:600;font-size:9px}
+    .tag-pend{background:#FEF3C7;color:#D97706;padding:2px 7px;border-radius:99px;font-weight:600;font-size:9px}
+    .tag-block{background:#FEE2E2;color:#DC2626;padding:2px 7px;border-radius:99px;font-weight:600;font-size:9px}
+    .tag-prio-a{color:#DC2626;font-weight:700}
+    .tag-prio-m{color:#D97706;font-weight:600}
+    .tag-prio-b{color:#16A34A;font-weight:600}
+    .venc{color:#DC2626;font-weight:600}
+    .firma-row{display:flex;gap:40px;margin-top:48px}
+    .firma{flex:1;border-top:1px solid #1E293B;padding-top:8px;font-size:10px;color:#64748B;text-align:center}
+    .footer{margin-top:20px;font-size:9px;color:#94A3B8;display:flex;justify-content:space-between;border-top:1px solid #E2E8F0;padding-top:8px}
+    @media print{button{display:none!important}}
+  </style></head><body>
+  <div class="header">
+    <div>
+      <div class="logo">NOVA</div>
+      <div class="logo-sub">Línea Italia · Gestión de Equipo</div>
+    </div>
+    <div style="text-align:right">
+      <h1>Reporte Semanal de Desempeño</h1>
+      <div class="sub">${u.nombre} ${u.apellido} · ${u.area} · ${u.rol}</div>
+      <div class="sub" style="margin-top:3px">Semana: ${label}</div>
+      <div class="sub">Generado: ${new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+    </div>
+  </div>
+
+  <div class="score-strip">
+    <div>
+      <div class="score-num">${pctCump}%</div>
+      <div class="score-pct">Cumplimiento semanal</div>
+    </div>
+    <div style="width:1px;height:50px;background:rgba(255,255,255,.15)"></div>
+    <div>
+      <div class="score-label">${calLabel}</div>
+      <div class="score-pct">${allDone.length} de ${programadas.length} tareas completadas</div>
+    </div>
+    <div style="flex:1;margin-left:16px">
+      <div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(100,pctCump)}%"></div></div>
+      <div class="bar-lbl">${pctCump}%</div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="kv" style="color:#16A34A">${allDone.length}</div><div class="kl">Completadas</div></div>
+    <div class="kpi"><div class="kv" style="color:#2563EB">${programadas.length}</div><div class="kl">Programadas</div></div>
+    <div class="kpi"><div class="kv" style="color:#D97706">${programadas.filter(t=>t.status==='pending').length}</div><div class="kl">Pendientes</div></div>
+    <div class="kpi"><div class="kv" style="color:#DC2626">${vencidas.length}</div><div class="kl">Vencidas</div></div>
+  </div>
+
+  <div style="font-size:11px;font-weight:700;color:#0D1B3E;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Detalle de tareas</div>
+  <table>
+    <thead><tr>
+      <th>#</th><th>Tarea</th><th>Proyecto</th><th>Tipo</th><th>Prioridad</th>
+      <th>Estado</th><th>F. Inicio</th><th>F. Límite</th><th>Avance</th>
+    </tr></thead>
+    <tbody>
+    ${programadas.map((t,i)=>{
+      const isOv=isOverdue(t);
+      const tagCls={done:'tag-done',progress:'tag-prog',pending:'tag-pend',blocked:'tag-block'}[t.status]||'tag-pend';
+      const prioCls={Alta:'tag-prio-a',Media:'tag-prio-m',Baja:'tag-prio-b'}[t.prioridad]||'';
+      return`<tr>
+        <td>${i+1}</td>
+        <td>${t.desc}</td>
+        <td>${t.proyecto||'—'}</td>
+        <td>${t.tipo||t.area||'—'}</td>
+        <td class="${prioCls}">${t.prioridad||'—'}</td>
+        <td><span class="${tagCls}">${statusLbl2[t.status]||t.status}</span>${isOv?' <span style="color:#DC2626;font-size:9px">⚠ Vencida</span>':''}</td>
+        <td>${t.fechaInicio||'—'}</td>
+        <td class="${isOv?'venc':''}">${t.due||'—'}</td>
+        <td>${t.avance||0}%</td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>
+
+  <div class="firma-row">
+    <div class="firma">${u.nombre} ${u.apellido}<br>Colaborador · ${u.area}</div>
+    <div class="firma">René Orlando Esparza Martínez<br>Gerente de Innovación y Diseño</div>
+  </div>
+  <div class="footer">
+    <span>NOVA · Sistema de Gestión de Equipo · Línea Italia</span>
+    <span>Confidencial — Solo uso interno</span>
+  </div>
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),700);
 }
 
 // ══ BIBLIOTECA ══════════════════════════════════════════════
