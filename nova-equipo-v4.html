@@ -1636,28 +1636,16 @@ function rReporteSemanal(){
   const u=SESSION;
   const {start,end,startStr,endStr,label}=getWeekRange(rsWeekOffset);
 
-  // Tareas programadas (inicio o vencimiento dentro de la semana)
+  // Programadas = tareas con fecha límite dentro de la semana
   const programadas=DB.tareas.filter(t=>{
     if(t.assignedTo!==u.id)return false;
-    const ini=t.fechaInicio?new Date(t.fechaInicio):null;
-    const due=t.due?new Date(t.due):null;
-    const cre=new Date(t.createdAt||Date.now());
-    return (ini&&ini>=start&&ini<=end)||(due&&due>=start&&due<=end)||(cre>=start&&cre<=end);
+    if(!t.due)return false;
+    const due=new Date(t.due);
+    return due>=start&&due<=end;
   });
 
-  // Completadas durante la semana (completedAt dentro del rango)
-  const completadasSemana=DB.tareas.filter(t=>{
-    if(t.assignedTo!==u.id||t.status!=='done')return false;
-    if(!t.completedAt)return false;
-    const cd=new Date(t.completedAt);
-    return cd>=start&&cd<=end;
-  });
-
-  // También tareas que no tienen completedAt pero status done y fechaInicio en semana
-  const doneEnSemana=programadas.filter(t=>t.status==='done');
-  // Merge evitando duplicados
-  const allDone=[...completadasSemana];
-  doneEnSemana.forEach(t=>{if(!allDone.find(d=>d.id===t.id))allDone.push(t);});
+  // Completadas = de las programadas, las que ya tienen status done
+  const allDone=programadas.filter(t=>t.status==='done');
 
   const pendientes=programadas.filter(t=>t.status==='pending');
   const enProceso=programadas.filter(t=>t.status==='progress');
@@ -1768,21 +1756,12 @@ function exportarReporteSemanal(){
 
   const programadas=DB.tareas.filter(t=>{
     if(t.assignedTo!==u.id)return false;
-    const ini=t.fechaInicio?new Date(t.fechaInicio):null;
-    const due=t.due?new Date(t.due):null;
-    const cre=new Date(t.createdAt||Date.now());
-    return (ini&&ini>=start&&ini<=end)||(due&&due>=start&&due<=end)||(cre>=start&&cre<=end);
+    if(!t.due)return false;
+    const due=new Date(t.due);
+    return due>=start&&due<=end;
   });
 
-  const completadasSemana=DB.tareas.filter(t=>{
-    if(t.assignedTo!==u.id||t.status!=='done')return false;
-    if(!t.completedAt)return false;
-    const cd=new Date(t.completedAt);
-    return cd>=start&&cd<=end;
-  });
-  const doneEnSemana=programadas.filter(t=>t.status==='done');
-  const allDone=[...completadasSemana];
-  doneEnSemana.forEach(t=>{if(!allDone.find(d=>d.id===t.id))allDone.push(t);});
+  const allDone=programadas.filter(t=>t.status==='done');
 
   const vencidas=programadas.filter(t=>isOverdue(t));
   const pctCump=programadas.length>0?Math.round(allDone.length/programadas.length*100):0;
