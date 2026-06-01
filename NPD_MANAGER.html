@@ -5048,7 +5048,7 @@ function buildMetasSmart(p, ed){
       if(ed) h += '<span style="cursor:pointer;color:var(--muted);font-size:11px" onclick="delTareaS(\''+pid+'\','+idx+')" title="Eliminar">x</span>';
       h += '</div>';
       // Estatus siempre clickeable
-      var stBtns2=[{s:'Pendiente',col:'var(--muted)',icon:'○'},{s:'En progreso',col:'var(--purple)',icon:'→'},{s:'Lograda',col:'var(--ok)',icon:'✓'},{s:'No lograda',col:'var(--bad)',icon:'✕'}];
+      var stBtns2=[{s:'Pendiente',col:'var(--muted)',icon:'o'},{s:'En progreso',col:'var(--purple)',icon:'>'},{s:'Lograda',col:'var(--ok)',icon:'+'},{s:'No lograda',col:'var(--bad)',icon:'x'}];
       h += '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">';
       stBtns2.forEach(function(btn){
         var active = t.estatus===btn.s;
@@ -5066,14 +5066,23 @@ function buildMetasSmart(p, ed){
     if(cumplimiento!==null) h += '<span style="font-size:10px;color:'+(cumplimiento>=80?'var(--ok)':cumplimiento>=50?'var(--warn)':'var(--bad)')+'">Cumplimiento: '+cumplimiento+'%</span>';
     h += '</summary><div style="margin-top:6px">';
     historial.slice().reverse().forEach(function(t){
+      var hidx = ts2.indexOf(t);
       var stCol = t.estatus==='Lograda'?'var(--ok)':t.estatus==='Parcial'?'var(--warn)':t.estatus==='No lograda'?'var(--bad)':'var(--muted)';
       var stIcon = t.estatus==='Lograda'?'✓':t.estatus==='Parcial'?'~':t.estatus==='No lograda'?'✕':'·';
-      h += '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border2)">';
-      h += '<span style="font-size:13px;color:'+stCol+';flex-shrink:0">'+stIcon+'</span>';
+      h += '<div style="padding:10px;border-bottom:1px solid var(--border2)">';
+      h += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:7px">';
+      h += '<span style="font-size:13px;color:'+stCol+';flex-shrink:0;margin-top:1px">'+stIcon+'</span>';
       h += '<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--text);'+(t.estatus==='Lograda'?'text-decoration:line-through;opacity:.6':'')+'">' + t.tarea+'</div>';
       if(t.semana) h += '<div style="font-size:9px;color:var(--muted);margin-top:2px">Sem: '+fmtD(t.semana)+'</div>';
+      h += '</div></div>';
+      // Botones de estatus siempre visibles
+      var hBtns=[{s:'Pendiente',col:'var(--muted)',icon:'o'},{s:'En progreso',col:'var(--purple)',icon:'>'},{s:'Lograda',col:'var(--ok)',icon:'+'},{s:'No lograda',col:'var(--bad)',icon:'x'}];
+      h += '<div style="display:flex;gap:4px;flex-wrap:wrap;padding-left:21px">';
+      hBtns.forEach(function(btn){
+        var active=t.estatus===btn.s;
+        h += '<button style="padding:3px 9px;border-radius:99px;border:1.5px solid '+btn.col+';background:'+(active?btn.col:'transparent')+';color:'+(active?'#fff':btn.col)+';font-size:10px;font-weight:700;cursor:pointer" onclick="updTareaS(\''+pid+'\','+hidx+',\''+btn.s+'\')">'+btn.icon+' '+btn.s+'</button>';
+      });
       h += '</div>';
-      h += '<span style="font-size:10px;font-weight:700;color:'+stCol+';white-space:nowrap">'+t.estatus+'</span>';
       h += '</div>';
     });
     h += '</div></details>';
