@@ -639,7 +639,15 @@ async function gsPull(){
       });
       return Object.values(map);
     };
-    DB.tareas=dedupeLatest(allTareas);
+    // Cargar lista de eliminadas desde Firebase
+    let deletedIds=new Set();
+    try{
+      const dr=await fetch(FB_URL+'/deleted.json');
+      const deletedData=await dr.json();
+      if(deletedData)Object.keys(deletedData).forEach(k=>deletedIds.add(k));
+    }catch(e){}
+    // Filtrar eliminadas y reasignadas: usar assignedTo más reciente
+    DB.tareas=dedupeLatest(allTareas).filter(t=>!t.deleted&&!deletedIds.has(t.id));
     DB.reportes=dedupeLatest(allReportes);
     DB.prototipos=dedupeLatest(allPrototipos);
     if(Object.keys(myEval).length>0)DB.eval_progreso=myEval;
@@ -1467,7 +1475,7 @@ function rEval(){
   const pct=tareas.length>0?Math.round(done.length/tareas.length*100):0;
   const avgAv=tareas.length>0?Math.round(tareas.reduce((s,t)=>s+(t.avance||0),0)/tareas.length):0;
   const reportes=DB.reportes.filter(r=>r.userId===u.id&&(!mes||r.semana?.slice(0,7)===mes)).length;
-  const ptScore=Math.max(0,Math.round(pct*0.5+avgAv*0.3+(reportes>0?20:0)-venc.length*5));
+  const ptScore=Math.min(100,Math.max(0,Math.round(pct*0.55+avgAv*0.35+Math.min(reportes*5,10)-venc.length*3)));
   const desemp=ptScore>=90?'Excelente':ptScore>=75?'Muy bueno':ptScore>=60?'Bueno':ptScore>=40?'Regular':'Por mejorar';
   const dColor={Excelente:'ok','Muy bueno':'ok',Bueno:'info',Regular:'warn','Por mejorar':'bad'}[desemp];
   const scoreColor=ptScore>=75?'var(--green)':ptScore>=50?'var(--amber)':'var(--red)';
@@ -1531,7 +1539,7 @@ function generarPDFPersonal(){
   const pct=tareas.length>0?Math.round(done.length/tareas.length*100):0;
   const avgAv=tareas.length>0?Math.round(tareas.reduce((s,t)=>s+(t.avance||0),0)/tareas.length):0;
   const reportes=DB.reportes.filter(r=>r.userId===u.id&&(!mes||r.semana?.slice(0,7)===mes)).length;
-  const ptScore=Math.max(0,Math.round(pct*0.5+avgAv*0.3+(reportes>0?20:0)-venc.length*5));
+  const ptScore=Math.min(100,Math.max(0,Math.round(pct*0.55+avgAv*0.35+Math.min(reportes*5,10)-venc.length*3)));
   const desemp=ptScore>=90?'Excelente':ptScore>=75?'Muy bueno':ptScore>=60?'Bueno':ptScore>=40?'Regular':'Por mejorar';
 
   const statusLabel={pending:'Pendiente',progress:'En proceso',done:'Completada',blocked:'Bloqueada'};
@@ -2246,7 +2254,7 @@ document.getElementById('btn-save-av').onclick=()=>{
   t.updatedAt=Date.now();
   if(t.status==='done'){t.avance=100;t.completedAt=Date.now();}
   const newAssign=document.getElementById('av-assign')?.value;
-  if(newAssign&&newAssign!=='')t.assignedTo=newAssign;
+  if(newAssign&&newAssign!==''){t.assignedTo=newAssign;t.updatedAt=Date.now();}
   const nota=document.getElementById('av-nota').value.trim();
   if(nota){if(!t.historial)t.historial=[];t.historial.push({fecha:todayStr(),nota,avance:t.avance});}
   const _avT=DB.tareas.find(t=>t.id===avanceTargetId);
@@ -2258,8 +2266,16 @@ document.getElementById('btn-save-av').onclick=()=>{
 
 function deleteTask(id){
   if(!confirm('¿Eliminar esta tarea?'))return;
-  DB.tareas=DB.tareas.filter(t=>t.id!==id);
-  saveLocal();gsPush();renderView(currentView);updateBadges();
+  // Marcar como deleted=true para que todos la filtren al sincronizar
+  const t=DB.tareas.find(x=>x.id===id);
+  if(t){t.deleted=true;t.deletedAt=Date.now();t.updatedAt=Date.now();}
+  saveLocal();gsPush();
+  // También borrar del nodo de deleted en Firebase para persistencia global
+  if(FB_URL){
+    fetch(FB_URL+'/deleted/'+id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,deletedAt:Date.now()})});
+  }
+  DB.tareas=DB.tareas.filter(x=>x.id!==id);
+  saveLocal();renderView(currentView);updateBadges();
   showToast('Tarea eliminada');
 }
 
