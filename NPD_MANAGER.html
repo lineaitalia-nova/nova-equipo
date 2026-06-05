@@ -936,49 +936,29 @@ function rInicio(c){
       <canvas id="engChart" style="width:100%;display:block"></canvas>
     </div>
 
-    <!-- ABAJO IZQUIERDA: Efectividad NPD — Velocímetro semáforo -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px;overflow:hidden">
+    <!-- ABAJO IZQUIERDA: Efectividad NPD — Canvas gauge (tamaño fijo, nunca se deforma) -->
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px">Efectividad NPD</div>
-      <!-- Gauge centrado arriba, ocupa todo el ancho disponible -->
-      <div style="width:100%;overflow:hidden">
-        <svg id="gaugeChart" viewBox="0 0 200 115" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto">
-          <defs>
-            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"   stop-color="#d93535"/>
-              <stop offset="35%"  stop-color="#c47d0a"/>
-              <stop offset="65%"  stop-color="#1e9e5e"/>
-              <stop offset="100%" stop-color="#0a7a45"/>
-            </linearGradient>
-          </defs>
-          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(0,0,0,0.07)" stroke-width="14" stroke-linecap="round"/>
-          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" opacity="0.18"/>
-          <path id="gaugeArc" fill="none" stroke-width="14" stroke-linecap="round"/>
-          <line id="gaugeNeedle" x1="100" y1="100" x2="100" y2="35" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="100" cy="100" r="5" id="gaugeHub" fill="#888"/>
-          <text x="14"  y="113" fill="rgba(128,128,128,0.55)" font-size="9" text-anchor="middle">0%</text>
-          <text x="100" y="16"  fill="rgba(128,128,128,0.55)" font-size="9" text-anchor="middle">50%</text>
-          <text x="186" y="113" fill="rgba(128,128,128,0.55)" font-size="9" text-anchor="middle">100%</text>
-        </svg>
-      </div>
-      <!-- Porcentaje y calificación centrados -->
-      <div style="text-align:center;margin-top:-8px;margin-bottom:12px">
-        <div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};line-height:1">${filtEf}%</div>
-        <div style="font-size:10px;font-weight:700;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:2px">${filtEf>=70?'Excelente':filtEf>=40?'Regular':'Por mejorar'}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:1px">${filtTerm.length} de ${filtProj.length} terminados</div>
-      </div>
-      <!-- Métricas debajo -->
-      <div style="display:flex;flex-direction:column;gap:5px">
-        ${[
-          {l:'Vencidos',    v:filtRisk.length, col:filtRisk.length>0?'var(--bad)':'var(--ok)'},
-          {l:'Por vencer',  v:filtSoon.length, col:filtSoon.length>0?'var(--warn)':'var(--ok)'},
-          {l:'Aprobaciones',v:filtPAp,         col:filtPAp>0?'var(--bad)':'var(--ok)'},
-        ].map(k=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px">
-          <span style="color:var(--muted)">${k.l}</span>
-          <span style="font-weight:800;color:${k.col}">${k.v}</span>
-        </div>`).join('')}
-        <button onclick="sv2('aprobaciones')" style="margin-top:4px;padding:5px;background:${filtPAp>0?'var(--bad-bg)':'var(--ok-bg)'};border:1px solid ${filtPAp>0?'rgba(217,53,53,.2)':'rgba(30,158,94,.2)'};border-radius:var(--r);font-size:10px;font-weight:700;color:${filtPAp>0?'var(--bad)':'var(--ok)'};cursor:pointer;font-family:var(--font-b);text-align:center;width:100%">
-          ${filtPAp>0?filtPAp+' aprobaciones pendientes':'✓ Aprobaciones al día'} →
-        </button>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="flex-shrink:0;width:160px;text-align:center">
+          <canvas id="gaugeChart" width="160" height="90" style="display:block;margin:0 auto"></canvas>
+          <div style="font-family:var(--font-d);font-size:24px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:2px;line-height:1">${filtEf}%</div>
+          <div style="font-size:10px;font-weight:700;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:2px">${filtEf>=70?'Excelente':filtEf>=40?'Regular':'Por mejorar'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px">${filtTerm.length} de ${filtProj.length} terminados</div>
+        </div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+          ${[
+            {l:'Vencidos',    v:filtRisk.length, col:filtRisk.length>0?'var(--bad)':'var(--ok)'},
+            {l:'Por vencer',  v:filtSoon.length, col:filtSoon.length>0?'var(--warn)':'var(--ok)'},
+            {l:'Aprobaciones',v:filtPAp,         col:filtPAp>0?'var(--bad)':'var(--ok)'},
+          ].map(k=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px">
+            <span style="color:var(--muted)">${k.l}</span>
+            <span style="font-weight:800;color:${k.col}">${k.v}</span>
+          </div>`).join('')}
+          <button onclick="sv2('aprobaciones')" style="margin-top:4px;padding:5px;background:${filtPAp>0?'var(--bad-bg)':'var(--ok-bg)'};border:1px solid ${filtPAp>0?'rgba(217,53,53,.2)':'rgba(30,158,94,.2)'};border-radius:var(--r);font-size:10px;font-weight:700;color:${filtPAp>0?'var(--bad)':'var(--ok)'};cursor:pointer;font-family:var(--font-b);text-align:center">
+            ${filtPAp>0?filtPAp+' aprobaciones pendientes':'✓ Aprobaciones al día'} →
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1214,32 +1194,42 @@ function rInicio(c){
     }
 
     // ─ Gauge velocímetro semáforo ─
+    // ─ Gauge velocímetro — Canvas 2D (tamaño fijo, sin deformación) ─
     (function(){
-      const arc=document.getElementById('gaugeArc');
-      const needle=document.getElementById('gaugeNeedle');
-      const hub=document.getElementById('gaugeHub');
-      if(!arc||!needle)return;
-      const cx=100,cy=100,r=80,needleLen=62;
-      // Clamp para evitar colapso de path SVG en extremos exactos
+      const gc=document.getElementById('gaugeChart');
+      if(!gc||!gc.getContext)return;
+      const ctx=gc.getContext('2d');
+      const W=160,H=90;
+      gc.width=W;gc.height=H;
+      ctx.clearRect(0,0,W,H);
+      const cx=W/2,cy=H-10,r=68;
       const pct=Math.min(0.99,Math.max(0.01,filtEf/100));
       const col=filtEf>=70?'#1e9e5e':filtEf>=40?'#c47d0a':'#d93535';
-      // Arco: parte en (20,110) y termina según pct
-      const startA=Math.PI;
-      const endA=Math.PI+Math.PI*pct;
-      const x1=+(cx+r*Math.cos(startA)).toFixed(2);
-      const y1=+(cy+r*Math.sin(startA)).toFixed(2);
-      const x2=+(cx+r*Math.cos(endA)).toFixed(2);
-      const y2=+(cy+r*Math.sin(endA)).toFixed(2);
-      arc.setAttribute('d',`M ${x1} ${y1} A ${r} ${r} 0 ${pct>0.5?1:0} 1 ${x2} ${y2}`);
-      arc.setAttribute('stroke',col);
+      // Track fondo
+      ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,2*Math.PI);
+      ctx.lineWidth=12;ctx.strokeStyle='rgba(0,0,0,0.07)';ctx.lineCap='round';ctx.stroke();
+      // Gradiente semáforo de fondo
+      const grad=ctx.createLinearGradient(cx-r,0,cx+r,0);
+      grad.addColorStop(0,'#d93535');grad.addColorStop(0.35,'#c47d0a');
+      grad.addColorStop(0.65,'#1e9e5e');grad.addColorStop(1,'#0a7a45');
+      ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,2*Math.PI);
+      ctx.strokeStyle=grad;ctx.globalAlpha=0.2;ctx.stroke();ctx.globalAlpha=1;
+      // Arco de progreso
+      ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,Math.PI+Math.PI*pct);
+      ctx.strokeStyle=col;ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();
+      // Marcas 0% 50% 100%
+      ctx.fillStyle='rgba(128,128,128,0.5)';ctx.font='8px DM Sans,sans-serif';ctx.textAlign='center';
+      ctx.fillText('0%',cx-r-2,cy+10);
+      ctx.fillText('50%',cx,cy-r-4);
+      ctx.fillText('100%',cx+r+2,cy+10);
       // Aguja
-      const na=Math.PI+Math.PI*pct;
-      const nx=+(cx+needleLen*Math.cos(na)).toFixed(2);
-      const ny=+(cy+needleLen*Math.sin(na)).toFixed(2);
-      needle.setAttribute('x1',cx);needle.setAttribute('y1',cy);
-      needle.setAttribute('x2',nx);needle.setAttribute('y2',ny);
-      needle.setAttribute('stroke',col);
-      hub.setAttribute('fill',col);
+      const ang=Math.PI+Math.PI*pct;
+      const nx=cx+52*Math.cos(ang);const ny=cy+52*Math.sin(ang);
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(nx,ny);
+      ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();
+      // Hub central
+      ctx.beginPath();ctx.arc(cx,cy,5,0,2*Math.PI);
+      ctx.fillStyle=col;ctx.fill();
     })();
 
     // ─ Barras por fase ─
