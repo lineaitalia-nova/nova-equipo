@@ -1005,7 +1005,7 @@ function rInicio(c){
   const semanas=[...new Set(todasMetasDash.map(t=>t.semana).filter(Boolean))].sort().reverse();
   const semSelDash=window._dashSemSel||semanas[0]||'todas';
   const metasSem=semSelDash==='todas'?todasMetasDash:todasMetasDash.filter(t=>t.semana===semSelDash);
-  const engsMetas=[...new Set(filtProj.map(p=>p.eng))];
+  const engsMetas=[...new Set(filtProj.map(p=>p.eng).filter(Boolean))];
 
   // Tabla por ingeniero
   const filasMetas=engsMetas.map(eng=>{
@@ -1017,8 +1017,8 @@ function rInicio(c){
     const noLog=mEng.filter(t=>t.estatus==='No lograda').length;
     const total=mEng.length;
     const pct=total>0?Math.round(prog/total*100):0;
-    const ec=ecOf(eng);
-    return{nombre,prog,pend,enProg,noLog,total,pct,ec};
+    const ec=ecOf(eng)||{bg:'#eee',tc:'#333',dot:'#888',init:'?'};
+    return{nombre,prog,pend,enProg,noLog,total,pct,dot:ec.dot};
   }).filter(f=>f.total>0);
 
   const totalMetasSem=metasSem.length;
@@ -1065,7 +1065,7 @@ function rInicio(c){
         </tr></thead>
         <tbody>
         ${filasMetas.map(f=>`<tr style="border-bottom:1px solid var(--border2)">
-          <td style="padding:7px 6px"><div style="display:flex;align-items:center;gap:6px"><span class="edot" style="background:${f.ec.dot}"></span><span style="font-size:11px;font-weight:600">${f.nombre}</span></div></td>
+          <td style="padding:7px 6px"><div style="display:flex;align-items:center;gap:6px"><span class="edot" style="background:${f.dot||'#888'}"></span><span style="font-size:11px;font-weight:600">${f.nombre}</span></div></td>
           <td style="text-align:center;font-size:11px;font-weight:700;padding:7px 6px">${f.total}</td>
           <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--ok)">${f.prog}</span></td>
           <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--purple)">${f.enProg}</span></td>
