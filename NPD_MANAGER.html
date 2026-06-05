@@ -941,7 +941,7 @@ function rInicio(c){
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px">Efectividad NPD</div>
       <div style="display:flex;align-items:center;gap:14px">
         <div style="text-align:center;flex-shrink:0">
-          <svg id="gaugeChart" viewBox="0 0 200 120" width="200" height="120" style="display:block;margin:0 auto;overflow:visible">
+          <svg id="gaugeChart" viewBox="0 0 160 95" width="160" height="95" style="display:block;margin:0 auto;overflow:hidden">
             <defs>
               <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#d93535"/>
@@ -950,14 +950,14 @@ function rInicio(c){
                 <stop offset="100%" stop-color="#0a7a45"/>
               </linearGradient>
             </defs>
-            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="14" stroke-linecap="round"/>
-            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" opacity="0.22"/>
-            <path id="gaugeArc" fill="none" stroke-width="14" stroke-linecap="round"/>
-            <line id="gaugeNeedle" x1="100" y1="100" stroke-width="2.5" stroke-linecap="round"/>
-            <circle cx="100" cy="100" r="5" id="gaugeHub"/>
-            <text x="14" y="115" fill="rgba(128,128,128,0.6)" font-size="9" text-anchor="middle">0%</text>
-            <text x="100" y="22" fill="rgba(128,128,128,0.6)" font-size="9" text-anchor="middle">50%</text>
-            <text x="186" y="115" fill="rgba(128,128,128,0.6)" font-size="9" text-anchor="middle">100%</text>
+            <path d="M 16 80 A 64 64 0 0 1 144 80" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="12" stroke-linecap="round"/>
+            <path d="M 16 80 A 64 64 0 0 1 144 80" fill="none" stroke="url(#gaugeGrad)" stroke-width="12" stroke-linecap="round" opacity="0.22"/>
+            <path id="gaugeArc" fill="none" stroke-width="12" stroke-linecap="round"/>
+            <line id="gaugeNeedle" x1="80" y1="80" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="80" cy="80" r="4" id="gaugeHub"/>
+            <text x="10" y="92" fill="rgba(128,128,128,0.6)" font-size="8" text-anchor="middle">0%</text>
+            <text x="80" y="14" fill="rgba(128,128,128,0.6)" font-size="8" text-anchor="middle">50%</text>
+            <text x="150" y="92" fill="rgba(128,128,128,0.6)" font-size="8" text-anchor="middle">100%</text>
           </svg>
           <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:-6px;line-height:1">${filtEf}%</div>
           <div style="font-size:10px;font-weight:700;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:3px">${filtEf>=70?'Excelente':filtEf>=40?'Regular':'Por mejorar'}</div>
@@ -1020,8 +1020,8 @@ function rInicio(c){
   // ── PANEL METAS SMART CONSOLIDADO ──
   const todasMetasDash=filtProj.flatMap(p=>(p.tareasSemana||[]).map(t=>({...t,pname:p.name,eng:p.eng})));
   const semanas=[...new Set(todasMetasDash.map(t=>t.semana).filter(Boolean))].sort().reverse();
-  const semActual=semanas[0]||'';
-  const metasSem=todasMetasDash.filter(t=>t.semana===semActual);
+  const semSelDash=window._dashSemSel||semanas[0]||'todas';
+  const metasSem=semSelDash==='todas'?todasMetasDash:todasMetasDash.filter(t=>t.semana===semSelDash);
   const engsMetas=[...new Set(filtProj.map(p=>p.eng))];
 
   // Tabla por ingeniero
@@ -1042,29 +1042,34 @@ function rInicio(c){
   const logradas=metasSem.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
   const pctGlobal=totalMetasSem>0?Math.round(logradas/totalMetasSem*100):0;
 
-  // Formatear la semana
-  const semLabel=semActual?`Semana del ${new Date(semActual+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'long'})}`:'-';
+  const fmtSemOpt=(s)=>{const d=new Date(s+'T12:00:00');const fin=new Date(d);fin.setDate(d.getDate()+6);return`Sem ${d.toLocaleDateString('es-MX',{day:'numeric',month:'short'})} – ${fin.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}`;};
+  const semLabel=semSelDash==='todas'?'Todas las semanas':fmtSemOpt(semSelDash);
 
   h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Metas SMART del equipo</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">${semLabel} · ${totalMetasSem} metas programadas</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${totalMetasSem} metas · ${semLabel}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <select style="font-size:11px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);cursor:pointer"
+          onchange="window._dashSemSel=this.value;rInicio(document.getElementById('vc'))">
+          <option value="todas" ${semSelDash==='todas'?'selected':''}>Todas las semanas</option>
+          ${semanas.map(s=>`<option value="${s}" ${semSelDash===s?'selected':''}>${fmtSemOpt(s)}</option>`).join('')}
+        </select>
         <div style="text-align:right">
           <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:${pctGlobal>=80?'var(--ok)':pctGlobal>=50?'var(--warn)':'var(--bad)'};line-height:1">${pctGlobal}%</div>
-          <div style="font-size:9px;color:var(--muted)">cumplimiento global</div>
+          <div style="font-size:9px;color:var(--muted)">cumplimiento</div>
         </div>
-        <div style="width:48px;height:48px;border-radius:50%;background:conic-gradient(${pctGlobal>=80?'#1e9e5e':pctGlobal>=50?'#c47d0a':'#d93535'} ${pctGlobal*3.6}deg, rgba(0,0,0,0.08) 0deg);display:flex;align-items:center;justify-content:center">
-          <div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${pctGlobal>=80?'var(--ok)':pctGlobal>=50?'var(--warn)':'var(--bad)'}">
+        <div style="width:44px;height:44px;border-radius:50%;background:conic-gradient(${pctGlobal>=80?'#1e9e5e':pctGlobal>=50?'#c47d0a':'#d93535'} ${pctGlobal*3.6}deg,rgba(0,0,0,0.08) 0deg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="width:30px;height:30px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${pctGlobal>=80?'var(--ok)':pctGlobal>=50?'var(--warn)':'var(--bad)'}">
             ${logradas}/${totalMetasSem}
           </div>
         </div>
       </div>
     </div>
     ${filasMetas.length===0
-      ?`<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">Sin metas registradas esta semana</div>`
+      ?`<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">Sin metas registradas</div>`
       :`<table style="width:100%;border-collapse:collapse">
         <thead><tr style="border-bottom:1px solid var(--border2)">
           <th style="text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:4px 6px">Ingeniero</th>
@@ -1077,12 +1082,7 @@ function rInicio(c){
         </tr></thead>
         <tbody>
         ${filasMetas.map(f=>`<tr style="border-bottom:1px solid var(--border2)">
-          <td style="padding:7px 6px">
-            <div style="display:flex;align-items:center;gap:6px">
-              <span class="edot" style="background:${f.ec.dot}"></span>
-              <span style="font-size:11px;font-weight:600">${f.nombre}</span>
-            </div>
-          </td>
+          <td style="padding:7px 6px"><div style="display:flex;align-items:center;gap:6px"><span class="edot" style="background:${f.ec.dot}"></span><span style="font-size:11px;font-weight:600">${f.nombre}</span></div></td>
           <td style="text-align:center;font-size:11px;font-weight:700;padding:7px 6px">${f.total}</td>
           <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--ok)">${f.prog}</span></td>
           <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--purple)">${f.enProg}</span></td>
@@ -1100,7 +1100,6 @@ function rInicio(c){
         </tbody>
       </table>`
     }
-    ${semanas.length>1?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);font-size:10px;color:var(--muted)">Semanas anteriores: ${semanas.slice(1,4).map(s=>new Date(s+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'})).join(' · ')}</div>`:''}
   </div>`;
 
   // ── ACCESOS RÁPIDOS ──
@@ -1211,10 +1210,9 @@ function rInicio(c){
       if(!arc||!needle)return;
       const pct=filtEf/100;
       const col=filtEf>=70?'#1e9e5e':filtEf>=40?'#c47d0a':'#d93535';
-      // Arco: de -180° a angle (0%=-180°, 100%=0°)
+      const cx=80,cy=80,r=64;
       const startAngle=Math.PI;
       const endAngle=Math.PI+Math.PI*pct;
-      const cx=100,cy=100,r=80;
       const x1=cx+r*Math.cos(startAngle);
       const y1=cy+r*Math.sin(startAngle);
       const x2=cx+r*Math.cos(endAngle);
@@ -1222,10 +1220,9 @@ function rInicio(c){
       const largeArc=pct>0.5?1:0;
       arc.setAttribute('d',pct>0?`M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`:'');
       arc.setAttribute('stroke',col);
-      // Aguja
       const needleAngle=Math.PI+Math.PI*pct;
-      const nx=cx+62*Math.cos(needleAngle);
-      const ny=cy+62*Math.sin(needleAngle);
+      const nx=cx+50*Math.cos(needleAngle);
+      const ny=cy+50*Math.sin(needleAngle);
       needle.setAttribute('x1',cx);needle.setAttribute('y1',cy);
       needle.setAttribute('x2',nx);needle.setAttribute('y2',ny);
       needle.setAttribute('stroke',col);
