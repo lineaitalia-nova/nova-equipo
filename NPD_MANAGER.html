@@ -502,9 +502,9 @@ const getArea = () => cu?.area || null;
 const canEditTask = (p, taskName) => {
   if(isG()) return true;
   if(isArea()) return (AREA_TAREAS[cu.area]||[]).includes(taskName);
-  return p.eng === cu?.perfil;
+  return p.eng === cu?.perfil || p.coLider === cu?.perfil;
 };
-const cE = p => isG() || p.eng === cu?.perfil || isArea();
+const cE = p => isG() || p.eng === cu?.perfil || p.coLider === cu?.perfil || isArea();
 const fmtD = s => {if(!s)return'—';const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})};
 const pd   = s => {if(!s)return null;const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d)};
 const dN   = (s,e) => {if(e==='Terminado')return null;const d=pd(s);return d?Math.round((d-TODAY)/86400000):null};
@@ -936,14 +936,32 @@ function rInicio(c){
       <canvas id="engChart" style="width:100%;display:block"></canvas>
     </div>
 
-    <!-- ABAJO IZQUIERDA: Efectividad NPD -->
+    <!-- ABAJO IZQUIERDA: Efectividad NPD — Velocímetro semáforo -->
     <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px">Efectividad NPD</div>
       <div style="display:flex;align-items:center;gap:14px">
         <div style="text-align:center;flex-shrink:0">
-          <canvas id="gaugeChart" width="180" height="100" style="display:block;margin:0 auto"></canvas>
-          <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:-4px">${filtEf}%</div>
-          <div style="font-size:10px;color:var(--muted)">${filtTerm.length} de ${filtProj.length} terminados</div>
+          <svg id="gaugeChart" viewBox="0 0 200 120" width="200" height="120" style="display:block;margin:0 auto;overflow:visible">
+            <defs>
+              <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#d93535"/>
+                <stop offset="40%" stop-color="#c47d0a"/>
+                <stop offset="70%" stop-color="#1e9e5e"/>
+                <stop offset="100%" stop-color="#0a7a45"/>
+              </linearGradient>
+            </defs>
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="14" stroke-linecap="round"/>
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" opacity="0.22"/>
+            <path id="gaugeArc" fill="none" stroke-width="14" stroke-linecap="round"/>
+            <line id="gaugeNeedle" x1="100" y1="100" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="100" cy="100" r="5" id="gaugeHub"/>
+            <text x="14" y="115" fill="rgba(128,128,128,0.6)" font-size="9" text-anchor="middle">0%</text>
+            <text x="100" y="22" fill="rgba(128,128,128,0.6)" font-size="9" text-anchor="middle">50%</text>
+            <text x="186" y="115" fill="rgba(128,128,128,0.6)" font-size="9" text-anchor="middle">100%</text>
+          </svg>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:-6px;line-height:1">${filtEf}%</div>
+          <div style="font-size:10px;font-weight:700;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:3px">${filtEf>=70?'Excelente':filtEf>=40?'Regular':'Por mejorar'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${filtTerm.length} de ${filtProj.length} terminados</div>
         </div>
         <div style="flex:1;display:flex;flex-direction:column;gap:6px">
           ${[
@@ -997,6 +1015,92 @@ function rInicio(c){
       }).join('')}
       ${filtRisk.length+filtSoon.length===0?`<div style="text-align:center;padding:20px;color:var(--ok);font-size:12px;font-weight:600">✓ Todos los proyectos en tiempo</div>`:''}
     </div>
+  </div>`;
+
+  // ── PANEL METAS SMART CONSOLIDADO ──
+  const todasMetasDash=filtProj.flatMap(p=>(p.tareasSemana||[]).map(t=>({...t,pname:p.name,eng:p.eng})));
+  const semanas=[...new Set(todasMetasDash.map(t=>t.semana).filter(Boolean))].sort().reverse();
+  const semActual=semanas[0]||'';
+  const metasSem=todasMetasDash.filter(t=>t.semana===semActual);
+  const engsMetas=[...new Set(filtProj.map(p=>p.eng))];
+
+  // Tabla por ingeniero
+  const filasMetas=engsMetas.map(eng=>{
+    const nombre=NOMBRES[eng]||eng;
+    const mEng=metasSem.filter(t=>t.eng===eng);
+    const prog=mEng.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
+    const pend=mEng.filter(t=>t.estatus==='Pendiente').length;
+    const enProg=mEng.filter(t=>t.estatus==='En progreso').length;
+    const noLog=mEng.filter(t=>t.estatus==='No lograda').length;
+    const total=mEng.length;
+    const pct=total>0?Math.round(prog/total*100):0;
+    const ec=ecOf(eng);
+    return{nombre,prog,pend,enProg,noLog,total,pct,ec};
+  }).filter(f=>f.total>0);
+
+  const totalMetasSem=metasSem.length;
+  const logradas=metasSem.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
+  const pctGlobal=totalMetasSem>0?Math.round(logradas/totalMetasSem*100):0;
+
+  // Formatear la semana
+  const semLabel=semActual?`Semana del ${new Date(semActual+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'long'})}`:'-';
+
+  h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Metas SMART del equipo</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${semLabel} · ${totalMetasSem} metas programadas</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="text-align:right">
+          <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:${pctGlobal>=80?'var(--ok)':pctGlobal>=50?'var(--warn)':'var(--bad)'};line-height:1">${pctGlobal}%</div>
+          <div style="font-size:9px;color:var(--muted)">cumplimiento global</div>
+        </div>
+        <div style="width:48px;height:48px;border-radius:50%;background:conic-gradient(${pctGlobal>=80?'#1e9e5e':pctGlobal>=50?'#c47d0a':'#d93535'} ${pctGlobal*3.6}deg, rgba(0,0,0,0.08) 0deg);display:flex;align-items:center;justify-content:center">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${pctGlobal>=80?'var(--ok)':pctGlobal>=50?'var(--warn)':'var(--bad)'}">
+            ${logradas}/${totalMetasSem}
+          </div>
+        </div>
+      </div>
+    </div>
+    ${filasMetas.length===0
+      ?`<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">Sin metas registradas esta semana</div>`
+      :`<table style="width:100%;border-collapse:collapse">
+        <thead><tr style="border-bottom:1px solid var(--border2)">
+          <th style="text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:4px 6px">Ingeniero</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:4px 6px">Total</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--ok);text-transform:uppercase;padding:4px 6px">Logradas</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--purple);text-transform:uppercase;padding:4px 6px">En progreso</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--warn);text-transform:uppercase;padding:4px 6px">Pendientes</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--bad);text-transform:uppercase;padding:4px 6px">No logradas</th>
+          <th style="text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:4px 6px;min-width:80px">Cumplimiento</th>
+        </tr></thead>
+        <tbody>
+        ${filasMetas.map(f=>`<tr style="border-bottom:1px solid var(--border2)">
+          <td style="padding:7px 6px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="edot" style="background:${f.ec.dot}"></span>
+              <span style="font-size:11px;font-weight:600">${f.nombre}</span>
+            </div>
+          </td>
+          <td style="text-align:center;font-size:11px;font-weight:700;padding:7px 6px">${f.total}</td>
+          <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--ok)">${f.prog}</span></td>
+          <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--purple)">${f.enProg}</span></td>
+          <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--warn)">${f.pend}</span></td>
+          <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:${f.noLog>0?'var(--bad)':'var(--muted)'}">${f.noLog}</span></td>
+          <td style="padding:7px 6px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="flex:1;height:6px;background:rgba(0,0,0,0.08);border-radius:99px;overflow:hidden;min-width:50px">
+                <div style="height:100%;width:${f.pct}%;background:${f.pct>=80?'var(--ok)':f.pct>=50?'var(--warn)':'var(--bad)'};border-radius:99px"></div>
+              </div>
+              <span style="font-size:10px;font-weight:700;color:${f.pct>=80?'var(--ok)':f.pct>=50?'var(--warn)':'var(--bad)'};min-width:28px">${f.pct}%</span>
+            </div>
+          </td>
+        </tr>`).join('')}
+        </tbody>
+      </table>`
+    }
+    ${semanas.length>1?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);font-size:10px;color:var(--muted)">Semanas anteriores: ${semanas.slice(1,4).map(s=>new Date(s+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'})).join(' · ')}</div>`:''}
   </div>`;
 
   // ── ACCESOS RÁPIDOS ──
@@ -1099,21 +1203,34 @@ function rInicio(c){
       });
     }
 
-    // ─ Gauge efectividad ─
-    const gc=document.getElementById('gaugeChart');
-    if(gc){
-      const ctx=gc.getContext('2d');
-      gc.width=180;gc.height=100;
-      const cx=90,cy=90,r=72;
-      ctx.clearRect(0,0,180,100);
-      ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,2*Math.PI);
-      ctx.lineWidth=16;ctx.strokeStyle='rgba(0,0,0,.08)';ctx.stroke();
-      const ang=Math.PI*(filtEf/100);
-      const gaugeCol=filtEf>=70?'#1e9e5e':filtEf>=40?'#c47d0a':'#d93535';
-      ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,Math.PI+ang);
-      ctx.lineWidth=16;ctx.strokeStyle=gaugeCol;
-      ctx.lineCap='round';ctx.stroke();
-    }
+    // ─ Gauge velocímetro semáforo ─
+    (function(){
+      const arc=document.getElementById('gaugeArc');
+      const needle=document.getElementById('gaugeNeedle');
+      const hub=document.getElementById('gaugeHub');
+      if(!arc||!needle)return;
+      const pct=filtEf/100;
+      const col=filtEf>=70?'#1e9e5e':filtEf>=40?'#c47d0a':'#d93535';
+      // Arco: de -180° a angle (0%=-180°, 100%=0°)
+      const startAngle=Math.PI;
+      const endAngle=Math.PI+Math.PI*pct;
+      const cx=100,cy=100,r=80;
+      const x1=cx+r*Math.cos(startAngle);
+      const y1=cy+r*Math.sin(startAngle);
+      const x2=cx+r*Math.cos(endAngle);
+      const y2=cy+r*Math.sin(endAngle);
+      const largeArc=pct>0.5?1:0;
+      arc.setAttribute('d',pct>0?`M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`:'');
+      arc.setAttribute('stroke',col);
+      // Aguja
+      const needleAngle=Math.PI+Math.PI*pct;
+      const nx=cx+62*Math.cos(needleAngle);
+      const ny=cy+62*Math.sin(needleAngle);
+      needle.setAttribute('x1',cx);needle.setAttribute('y1',cy);
+      needle.setAttribute('x2',nx);needle.setAttribute('y2',ny);
+      needle.setAttribute('stroke',col);
+      hub.setAttribute('fill',col);
+    })();
 
     // ─ Barras por fase ─
     const fc=document.getElementById('faseChart');
@@ -1996,6 +2113,14 @@ function nuevoProyecto(){
         <div><label class="lbl">Ingeniero responsable *</label>
           <select class="inp" id="np-eng">${engUsers.map(u=>`<option value="${u.perfil}"${u.perfil===defEng?' selected':''}>${u.nombre}</option>`).join('')}</select></div>
       </div>
+      <div style="margin-bottom:14px">
+        <label class="lbl">Co-líder (opcional)</label>
+        <select class="inp" id="np-colider">
+          <option value="">Sin co-líder</option>
+          ${engUsers.map(u=>`<option value="${u.perfil}">${u.nombre}</option>`).join('')}
+        </select>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">Para proyectos compartidos entre dos ingenieros</div>
+      </div>
       <label class="lbl">Nombre del proyecto *</label>
       <input class="inp" id="np-name" placeholder="Ej: Línea Attese 3.0, Mamparas Comodín..." maxlength="80" style="margin-bottom:14px;font-size:14px;font-weight:600"/>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
@@ -2032,7 +2157,8 @@ function guardarNuevoProyecto(){
   if(!name){toast('El nombre es obligatorio');document.getElementById('np-name')?.focus();return;}
   if(!fecha){toast('La fecha objetivo es obligatoria');return;}
   if(PROJ.find(p=>p.id===id)){toast(`Ya existe el proyecto "${id}". Elige otro ID.`);return;}
-  const raw={id,name,eng,fechaFinal:fecha,avance:0,estatus,fase:'Diseño',fechaFase:fecha,skus:[]};
+  const coLider=document.getElementById('np-colider')?.value||'';
+  const raw={id,name,eng,coLider:coLider||null,fechaFinal:fecha,avance:0,estatus,fase:'Diseño',fechaFase:fecha,skus:[]};
   const proj=mkProj(raw);
   proj.categoria=cat;
   if(desc) proj.notas=[{fecha:new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}),autor:cu?.nombre||'Sistema',texto:desc}];
@@ -2104,7 +2230,7 @@ function rModal(){
   </div>
     <div class="mh-sub"><span style="font-family:var(--font-m);font-size:10px;background:var(--surface2);padding:1px 5px;border-radius:3px">${p.id}</span>
     <span style="background:${ec.bg};color:${ec.tc};padding:1px 7px;border-radius:99px;font-size:10px;font-weight:700">${ec.init}</span>
-    <span style="font-size:11px">${NOMBRES[p.eng]||p.eng}</span>
+    <span style="font-size:11px">${NOMBRES[p.eng]||p.eng}${p.coLider?` <span style="color:var(--muted)">+</span> ${NOMBRES[p.coLider]||p.coLider}`:''}</span>
     ${fT(p.fase)}<span class="tag${ed?' ok':' gray'}" style="font-size:9px">${ed?'Editable':'Lectura'}</span>
     ${upd?`<span style="font-size:10px;color:var(--muted)">· ${upd}</span>`:''}</div></div>
     <button class="mh-x" onclick="cM()">✕</button></div>
