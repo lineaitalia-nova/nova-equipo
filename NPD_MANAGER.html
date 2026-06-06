@@ -1242,7 +1242,7 @@ function rInicio(c){
       const counts=fases.map(f=>filtProj.filter(p=>p.fase===f).length);
       const maxC=Math.max(...counts,1);
       const barW=Math.floor((W-40)/fases.length)-10;
-      const padB=42,padT=10,chartH=fc.height-padB-padT;
+      const padB=42,padT=22,chartH=fc.height-padB-padT;
       ctx.clearRect(0,0,W,fc.height);
       const faseColors={'Diseño':'#534AB7','Desarrollo':'#185FA5','Implementacion':'#0F6E56','Lanzamiento':'#854F0B','Seguimiento':'#993C1D'};
       fases.forEach((f,i)=>{
@@ -1258,7 +1258,8 @@ function rInicio(c){
           ctx.fillStyle=col;
           ctx.font='700 11px DM Sans,sans-serif';
           ctx.textAlign='center';ctx.textBaseline='bottom';
-          ctx.fillText(counts[i],x+barW/2,y-2);
+          const ny=Math.max(padT+14, y-2);
+          ctx.fillText(counts[i],x+barW/2,ny);
         }
         // Etiqueta
         ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#4a5568';
@@ -2177,9 +2178,28 @@ function guardarNuevoProyecto(){
   proj.categoria=cat;
   if(desc) proj.notas=[{fecha:new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}),autor:cu?.nombre||'Sistema',texto:desc}];
   addAct(proj,'creacion',`Proyecto creado por ${cu?.nombre||'Sistema'}`);
-  PROJ.push(proj);saveProj(proj);cM2();
+  PROJ.push(proj);
+  // Guardar en localStorage inmediatamente
+  try{proj.lu=new Date().toISOString();localStorage.setItem(VER+proj.id,JSON.stringify(proj));}catch(e){}
+  // Push a Firebase y luego navegar
+  cM2();
   toast(`Proyecto "${name}" creado ✓`);
-  setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),300);},200);
+  // Esperar a que Firebase confirme antes de navegar
+  if(FB_NPD){
+    const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
+    const data={};
+    keys.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
+    data['__deleted']=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
+    fetch(FB_NPD+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+      .then(()=>{
+        setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),300);},200);
+      })
+      .catch(()=>{
+        setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),300);},200);
+      });
+  } else {
+    setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),300);},200);
+  }
 }
 
 function nuevoUsuario(){
@@ -2348,7 +2368,7 @@ function rModal(){
       <input type="date" id="brief-date-input" value="${hasBrief||''}"
         style="font-size:12px;padding:5px 8px;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-family:var(--font-b);outline:none"/>
       <button class="btn sm" style="background:${GOLD};border-color:${GOLD};color:#1a1f3c;font-weight:700"
-        onclick="aplicarFechasEstandar('${p.id}',document.getElementById('brief-date-input').value)">
+        onclick="(function(){const v=document.getElementById('brief-date-input')?.value||'';if(!v){toast('Selecciona la fecha del Brief primero');return;}aplicarFechasEstandar('${p.id}',v);})()">
         ⚡ Autocompletar fechas
       </button>
     </div>
@@ -3723,6 +3743,8 @@ function subWorkdays(dateStr, days){
 const GOLD = 'C9A84C';
 function aplicarFechasEstandar(pid, briefDate){
   const p=PROJ.find(x=>x.id===pid);
+  // Intentar leer el input directamente si briefDate está vacío
+  if(!briefDate){briefDate=document.getElementById('brief-date-input')?.value||'';}
   if(!p||!briefDate){toast('Selecciona la fecha del Brief primero');return;}
   if(!cE(p)&&!isG()){toast('Sin permiso de edición');return;}
   let cur=briefDate;
