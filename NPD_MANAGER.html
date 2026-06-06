@@ -485,6 +485,7 @@ const RAW = [
   {id:'PROJ31',name:'Islas MultiUsos',eng:'RB',fechaFinal:'2026-05-31',avance:0,estatus:'En linea',fase:'Diseño',fechaFase:'2026-04-24',skus:[]},
   {id:'PROJ32',name:'Sillon con mampara',eng:'PR',fechaFinal:'2026-04-06',avance:15,estatus:'En linea',fase:'Diseño',fechaFase:'2026-06-01',skus:[]},
   {id:'PROJ33',name:'MAMPARA COMODIN',eng:'FR',fechaFinal:'2026-05-15',avance:0,estatus:'En linea',fase:'Diseño',fechaFase:'2026-04-30',skus:[]},
+  {id:'PROJ34',name:'Soft Seating',eng:'PR',coLider:'RB',fechaFinal:'2026-12-02',avance:0,estatus:'En linea',fase:'Diseño',fechaFase:'2026-06-05',skus:[]},
 ];
 
 // ─── STATE ──────────────────────────────────────────────────────────
@@ -593,46 +594,137 @@ function getFaseDates(p, f){
 function toISO(d){if(!d)return'';const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${dd}`;}
 
 // ─── PERSISTENCIA ───────────────────────────────────────────────────
-// ─── FIREBASE SYNC ──────────────────────────────────────────────────
+// ─── FIREBASE SYNC — Arquitectura por nodos individuales ─────────────
+// Cada proyecto tiene su propio nodo en Firebase: /npd/proyectos/PROJXX
+// Nunca se pierde un proyecto por un PUT que sobreescriba todo
 const FB_NPD='https://nova-lineaitalia-2-default-rtdb.firebaseio.com/npd';
+const FB_PROJ=FB_NPD+'/proyectos';  // Nodo de proyectos individuales
+const FB_USERS=FB_NPD+'/users';     // Nodo de usuarios
+const FB_DEL=FB_NPD+'/deleted';     // Nodo de eliminados
 
+// ── Guardar UN proyecto en su propio nodo Firebase ──
 function saveProj(p){
-  try{p.lu=new Date().toISOString();localStorage.setItem(VER+p.id,JSON.stringify(p));autoBackup();fbPush();}catch(e){}
+  try{
+    p.lu=new Date().toISOString();
+    localStorage.setItem(VER+p.id,JSON.stringify(p));
+    autoBackup();
+    // PATCH solo el nodo de este proyecto — no toca los demás
+    if(FB_PROJ){
+      fetch(FB_PROJ+'/'+p.id+'.json',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(p)
+      }).catch(()=>{});
+    }
+  }catch(e){}
 }
+
 function autoBackup(){
-  try{const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
+  try{
+    const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
     const data={ts:new Date().toISOString(),v:VER,items:{}};
     keys.forEach(k=>{try{data.items[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
     localStorage.setItem('li_autobackup',JSON.stringify(data));
   }catch(e){}
 }
-function saveUsers(){try{localStorage.setItem(VER+'users',JSON.stringify(USERS));fbPush();}catch(e){}}
 
-function fbPush(){
-  if(!FB_NPD)return;
-  const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
-  const data={};
-  keys.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
-  data['__deleted']=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
-  fetch(FB_NPD+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
-    .catch(e=>{});
+function saveUsers(){
+  try{
+    localStorage.setItem(VER+'users',JSON.stringify(USERS));
+    if(FB_USERS){
+      fetch(FB_USERS+'.json',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(USERS)
+      }).catch(()=>{});
+    }
+  }catch(e){}
 }
 
+// ── Eliminar proyecto de Firebase ──
+function fbDeleteProj(id){
+  if(FB_PROJ){
+    fetch(FB_PROJ+'/'+id+'.json',{method:'DELETE'}).catch(()=>{});
+  }
+  // Registrar en nodo deleted
+  const deleted=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
+  if(!deleted.includes(id)){deleted.push(id);}
+  localStorage.setItem(VER+'__deleted',JSON.stringify(deleted));
+  if(FB_DEL){
+    fetch(FB_DEL+'.json',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(deleted)
+    }).catch(()=>{});
+  }
+}
+
+// ── Pull completo desde Firebase — todos los nodos ──
 async function fbPull(){
   try{
-    const r=await fetch(FB_NPD+'.json');
-    const data=await r.json();
-    if(!data)return false;
-    Object.entries(data).forEach(([k,v])=>{
-      if(k==='__deleted'){localStorage.setItem(VER+'__deleted',JSON.stringify(v));}
-      else{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-    });
+    // Cargar proyectos
+    const [rProj, rUsers, rDel] = await Promise.allSettled([
+      fetch(FB_PROJ+'.json').then(r=>r.json()),
+      fetch(FB_USERS+'.json').then(r=>r.json()),
+      fetch(FB_DEL+'.json').then(r=>r.json())
+    ]);
+    // Guardar proyectos en localStorage
+    if(rProj.status==='fulfilled'&&rProj.value){
+      Object.entries(rProj.value).forEach(([id,p])=>{
+        if(p&&p.id){try{localStorage.setItem(VER+id,JSON.stringify(p));}catch(e){}}
+      });
+    }
+    // Guardar usuarios
+    if(rUsers.status==='fulfilled'&&Array.isArray(rUsers.value)){
+      try{localStorage.setItem(VER+'users',JSON.stringify(rUsers.value));}catch(e){}
+    }
+    // Guardar eliminados
+    if(rDel.status==='fulfilled'&&Array.isArray(rDel.value)){
+      try{localStorage.setItem(VER+'__deleted',JSON.stringify(rDel.value));}catch(e){}
+    }
     return true;
   }catch(e){return false;}
 }
 
+async function migrateFirebase(){
+  // Si existen datos en el nodo viejo /npd (formato PUT completo),
+  // migrarlos al nuevo formato de nodos individuales /npd/proyectos/PROJXX
+  try{
+    const r=await fetch(FB_NPD+'.json');
+    const data=await r.json();
+    if(!data||data.proyectos)return; // Ya está en formato nuevo
+    // Formato viejo: llaves tipo "li_npd_v3_PROJ1"
+    const VERold=Object.keys(data).find(k=>k.includes('_PROJ'));
+    if(!VERold)return;
+    const migraciones=[];
+    Object.entries(data).forEach(([k,v])=>{
+      if(k==='__deleted'||k==='users')return;
+      if(v&&v.id){
+        migraciones.push(
+          fetch(FB_PROJ+'/'+v.id+'.json',{method:'PUT',
+            headers:{'Content-Type':'application/json'},body:JSON.stringify(v)})
+        );
+      }
+    });
+    if(data.users&&Array.isArray(data.users)){
+      migraciones.push(
+        fetch(FB_USERS+'.json',{method:'PUT',
+          headers:{'Content-Type':'application/json'},body:JSON.stringify(data.users)})
+      );
+    }
+    await Promise.allSettled(migraciones);
+    console.log('Migración Firebase completada: '+migraciones.length+' nodos');
+  }catch(e){}
+}
+
 function loadAll(){
-  fbPull().then(()=>{_loadFromStorage();}).catch(()=>{_loadFromStorage();});
+  const timeout=new Promise((_,rej)=>setTimeout(()=>rej('timeout'),6000));
+  // Primero migrar si es necesario, luego cargar
+  migrateFirebase().finally(()=>{
+    Promise.race([fbPull(),timeout])
+      .then(()=>{_loadFromStorage();})
+      .catch(()=>{_loadFromStorage();});
+  });
 }
 
 function _loadFromStorage(){
@@ -2179,27 +2271,12 @@ function guardarNuevoProyecto(){
   if(desc) proj.notas=[{fecha:new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}),autor:cu?.nombre||'Sistema',texto:desc}];
   addAct(proj,'creacion',`Proyecto creado por ${cu?.nombre||'Sistema'}`);
   PROJ.push(proj);
-  // Guardar en localStorage inmediatamente
-  try{proj.lu=new Date().toISOString();localStorage.setItem(VER+proj.id,JSON.stringify(proj));}catch(e){}
-  // Push a Firebase y luego navegar
+  // saveProj guarda en localStorage Y en su propio nodo Firebase
+  saveProj(proj);
   cM2();
   toast(`Proyecto "${name}" creado ✓`);
-  // Esperar a que Firebase confirme antes de navegar
-  if(FB_NPD){
-    const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
-    const data={};
-    keys.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
-    data['__deleted']=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
-    fetch(FB_NPD+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
-      .then(()=>{
-        setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),300);},200);
-      })
-      .catch(()=>{
-        setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),300);},200);
-      });
-  } else {
-    setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),300);},200);
-  }
+  // Navegar después de dar tiempo a Firebase para confirmar
+  setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),400);},500);
 }
 
 function nuevoUsuario(){
@@ -3847,13 +3924,10 @@ function eliminarProyecto(pid){
   if(!confirm(`Segunda confirmacion: eliminar "${p.name}" de forma permanente?`))return;
   // Remove from localStorage
   localStorage.removeItem(VER+pid);
-  // Add to deleted list
-  const deleted=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
-  if(!deleted.includes(pid)){deleted.push(pid);localStorage.setItem(VER+'__deleted',JSON.stringify(deleted));}
   // Remove from PROJ array immediately
   PROJ=PROJ.filter(x=>x.id!==pid);
-  // Push deletion to Firebase
-  fbPush();
+  // Eliminar de Firebase usando nodo individual
+  fbDeleteProj(pid);
   const nombre=p.name;
   cM();
   sv2('inicio');
