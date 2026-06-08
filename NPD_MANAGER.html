@@ -700,44 +700,35 @@ async function fbPull(){
   }catch(e){return false;}
 }
 
-async function migrateFirebase(){
-  // Si existen datos en el nodo viejo /npd (formato PUT completo),
-  // migrarlos al nuevo formato de nodos individuales /npd/proyectos/PROJXX
-  try{
-    const r=await fetch(FB_NPD+'.json');
-    const data=await r.json();
-    if(!data||data.proyectos)return; // Ya está en formato nuevo
-    // Formato viejo: llaves tipo "li_npd_v3_PROJ1"
-    const VERold=Object.keys(data).find(k=>k.includes('_PROJ'));
-    if(!VERold)return;
-    const migraciones=[];
-    Object.entries(data).forEach(([k,v])=>{
-      if(k==='__deleted'||k==='users')return;
-      if(v&&v.id){
-        migraciones.push(
-          fetch(FB_PROJ+'/'+v.id+'.json',{method:'PUT',
-            headers:{'Content-Type':'application/json'},body:JSON.stringify(v)})
-        );
-      }
+function loadAll(){
+  // 1. Cargar desde localStorage inmediatamente (sin esperar Firebase)
+  _loadFromStorage();
+  // 2. Luego sincronizar con Firebase en background
+  const timeout=new Promise((_,rej)=>setTimeout(()=>rej('timeout'),5000));
+  Promise.race([fbPull(),timeout])
+    .then(()=>{
+      // Re-cargar con datos de Firebase mezclados
+      _loadFromStorage();
+      // Empujar estado actual a Firebase para sincronizar
+      fbPushAll();
+    })
+    .catch(()=>{
+      // Firebase falló — trabajar con localStorage
+      fbPushAll();
     });
-    if(data.users&&Array.isArray(data.users)){
-      migraciones.push(
-        fetch(FB_USERS+'.json',{method:'PUT',
-          headers:{'Content-Type':'application/json'},body:JSON.stringify(data.users)})
-      );
-    }
-    await Promise.allSettled(migraciones);
-    console.log('Migración Firebase completada: '+migraciones.length+' nodos');
-  }catch(e){}
 }
 
-function loadAll(){
-  const timeout=new Promise((_,rej)=>setTimeout(()=>rej('timeout'),6000));
-  // Primero migrar si es necesario, luego cargar
-  migrateFirebase().finally(()=>{
-    Promise.race([fbPull(),timeout])
-      .then(()=>{_loadFromStorage();})
-      .catch(()=>{_loadFromStorage();});
+// Empujar TODOS los proyectos actuales a Firebase (sincronización completa)
+function fbPushAll(){
+  if(!FB_PROJ)return;
+  PROJ.forEach(p=>{
+    if(!p||!p.id)return;
+    p.lu=p.lu||new Date().toISOString();
+    fetch(FB_PROJ+'/'+p.id+'.json',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(p)
+    }).catch(()=>{});
   });
 }
 
