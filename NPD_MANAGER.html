@@ -5074,7 +5074,7 @@ function exportarPDFPrototipos(){
     (p.skus||[]).forEach(sk=>{
       if(sk.fechaProto){
         protos.push({
-          nombre:(sk.codigo?sk.codigo+' · ':'')+( sk.nombre||sk.id),
+          nombre:(sk.codigo||'')+((sk.nombre&&!sk.nombre.startsWith('Modelo '))?' · '+sk.nombre:''),
           proyecto:p.name,
           projId:p.id,
           eng:p.eng,
