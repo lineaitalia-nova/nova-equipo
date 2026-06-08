@@ -599,25 +599,14 @@ const FB_NPD='https://nova-lineaitalia-2-default-rtdb.firebaseio.com/npd';
 function saveProj(p){
   try{p.lu=new Date().toISOString();localStorage.setItem(VER+p.id,JSON.stringify(p));autoBackup();fbPush();}catch(e){}
 }
-
 function autoBackup(){
-  try{
-    const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
+  try{const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
     const data={ts:new Date().toISOString(),v:VER,items:{}};
     keys.forEach(k=>{try{data.items[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
     localStorage.setItem('li_autobackup',JSON.stringify(data));
   }catch(e){}
 }
-
 function saveUsers(){try{localStorage.setItem(VER+'users',JSON.stringify(USERS));fbPush();}catch(e){}}
-
-// fbDeleteProj — elimina un proyecto de localStorage y Firebase
-function fbDeleteProj(id){
-  localStorage.removeItem(VER+id);
-  const deleted=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
-  if(!deleted.includes(id)){deleted.push(id);localStorage.setItem(VER+'__deleted',JSON.stringify(deleted));}
-  fbPush();
-}
 
 function fbPush(){
   if(!FB_NPD)return;
@@ -625,7 +614,8 @@ function fbPush(){
   const data={};
   keys.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
   data['__deleted']=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
-  fetch(FB_NPD+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).catch(()=>{});
+  fetch(FB_NPD+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .catch(e=>{});
 }
 
 async function fbPull(){
@@ -633,38 +623,16 @@ async function fbPull(){
     const r=await fetch(FB_NPD+'.json');
     const data=await r.json();
     if(!data)return false;
-    const localDel=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
     Object.entries(data).forEach(([k,v])=>{
-      if(k==='__deleted'){
-        const merged=[...new Set([...localDel,...(Array.isArray(v)?v:[])])];
-        localStorage.setItem(VER+'__deleted',JSON.stringify(merged));
-      } else {
-        // Solo sobreescribir si Firebase tiene versión más nueva
-        const local=localStorage.getItem(k);
-        if(local){
-          try{
-            const lp=JSON.parse(local);
-            const fbTime=new Date(v?.lu||0).getTime();
-            const localTime=new Date(lp?.lu||0).getTime();
-            if(fbTime>localTime){localStorage.setItem(k,JSON.stringify(v));}
-          }catch(e){localStorage.setItem(k,JSON.stringify(v));}
-        } else {
-          try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
-        }
-      }
+      if(k==='__deleted'){localStorage.setItem(VER+'__deleted',JSON.stringify(v));}
+      else{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
     });
     return true;
   }catch(e){return false;}
 }
 
 function loadAll(){
-  // Cargar local inmediatamente para respuesta rápida
-  _loadFromStorage();
-  // Sincronizar con Firebase en background
-  const timeout=new Promise((_,rej)=>setTimeout(()=>rej('timeout'),5000));
-  Promise.race([fbPull(),timeout])
-    .then(()=>{_loadFromStorage();fbPush();})
-    .catch(()=>{fbPush();});
+  fbPull().then(()=>{_loadFromStorage();}).catch(()=>{_loadFromStorage();});
 }
 
 function _loadFromStorage(){
@@ -802,9 +770,10 @@ function rSB(){
       {id:'inicio',i:'⊞',l:isG()?'Dashboard':'Inicio',b:risk,bc:risk>0?'':'ok'},
       {id:'proyectos',i:'▤',l:'Todos los proyectos',b:0},
       {id:'reporte',i:'↗',l:'Reporte ejecutivo',b:0},
-      {id:'indicadores',i:'📊',l:'Indicadores NPD',b:0},
+
       {id:'aprobaciones',i:'✓',l:'Aprobaciones',b:pAp},
       {id:'calendario',i:'📅',l:'Calendario',b:0},
+      {id:'cal-prototipos',i:'🔬',l:'Cal. Prototipos',b:0},
       {id:'diagrama',i:'◈',l:'Diagrama de proceso',b:0},
       {id:'usuarios',i:'⊙',l:'Gestión de usuarios',b:0},
       {id:'backup',i:'↓',l:'Respaldo de datos',b:0},
@@ -857,13 +826,14 @@ function rSB(){
 function sv2(v){
   av=v;rSB();
   const m=document.getElementById('main');
-  const titles={inicio:'Inicio','mi-dashboard':'Mi Dashboard',proyectos:'Proyectos',reporte:'Reporte ejecutivo',aprobaciones:'Aprobaciones','mis-proyectos':'Mis proyectos',usuarios:'Gestión de usuarios',diagrama:'Diagrama del proceso NPD',backup:'Respaldo de datos',indicadores:'Indicadores NPD','mis-tareas-area':`Tareas pendientes · ${cu?.nombre||''}`,calendario:'Calendario de proyectos'};
-  const subs={inicio:TODAY.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),'mi-dashboard':cu?.nombre||'',proyectos:`${PROJ.length} proyectos en total`,reporte:'Vista filtrable por ingeniero',aprobaciones:'Revisión y liberación','mis-proyectos':cu?.nombre||'',usuarios:'Administrar accesos al sistema',diagrama:'Proceso de Desarrollo de Nuevos Productos · Línea Italia',backup:'Exporta, importa y respalda toda la información de tus proyectos',indicadores:'Métricas de desempeño del proceso NPD · Línea Italia','mis-tareas-area':cu?.role||'',calendario:'Visualiza tareas por proyecto en vista mensual · Detecta empalmes'};
+  const titles={inicio:'Inicio','mi-dashboard':'Mi Dashboard',proyectos:'Proyectos',reporte:'Reporte ejecutivo',aprobaciones:'Aprobaciones','mis-proyectos':'Mis proyectos',usuarios:'Gestión de usuarios',diagrama:'Diagrama del proceso NPD',backup:'Respaldo de datos','mis-tareas-area':`Tareas pendientes · ${cu?.nombre||''}`,calendario:'Calendario de proyectos','cal-prototipos':'Calendario de Prototipos'};
+  const subs={inicio:TODAY.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),'mi-dashboard':cu?.nombre||'',proyectos:`${PROJ.length} proyectos en total`,reporte:'Vista filtrable por ingeniero',aprobaciones:'Revisión y liberación','mis-proyectos':cu?.nombre||'',usuarios:'Administrar accesos al sistema',diagrama:'Proceso de Desarrollo de Nuevos Productos · Línea Italia',backup:'Exporta, importa y respalda toda la información de tus proyectos','mis-tareas-area':cu?.role||'',calendario:'Visualiza tareas por proyecto en vista mensual · Detecta empalmes','cal-prototipos':'Prototipos programados · Carga semanal del taller · Empalmes'};
   m.innerHTML=`<div class="ph"><div class="ph-inner">
     <div><div class="ph-h2">${titles[v]}</div><p class="ph-sub">${subs[v]||''}</p></div>
     <div class="ph-acts">
       <div id="global-clock" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--navy);background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:5px 12px;letter-spacing:.04em;min-width:88px;text-align:center"></div>
       <button class="btn sm" onclick="fbPull().then(()=>{_loadFromStorage();render();toast('Actualizado ✓');})">↺ Actualizar</button>
+      ${v==='cal-prototipos'?`<button class="btn sm" onclick="exportarPDFPrototipos()" style="background:var(--navy);color:#fff;border-color:var(--navy)">🖨 Exportar PDF</button>`:''}
     </div>
   </div></div><div class="pad" id="vc"></div>`;
   const c=document.getElementById('vc');
@@ -877,9 +847,9 @@ function sv2(v){
   else if(v==='diagrama') rDiagrama(c);
   else if(v==='backup') rBackup(c);
   else if(v==='glosario') rGlosario(c);
-  else if(v==='indicadores') rIndicadores(c);
   else if(v==='mis-tareas-area') rMisTareasArea(c);
   else if(v==='calendario') rCalendario(c);
+  else if(v==='cal-prototipos') rCalPrototipos(c);
   // Live clock — top right, DM Mono, updates every second
   if(window._clockTmr) clearInterval(window._clockTmr);
   function tickClock(){
@@ -968,20 +938,19 @@ function rInicio(c){
       <canvas id="engChart" style="width:100%;display:block"></canvas>
     </div>
 
-    <!-- ABAJO IZQUIERDA: Efectividad NPD — Canvas gauge (tamaño fijo, nunca se deforma) -->
+    <!-- ABAJO IZQUIERDA: Efectividad NPD -->
     <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px">Efectividad NPD</div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="flex-shrink:0;width:160px;text-align:center">
-          <canvas id="gaugeChart" width="160" height="90" style="display:block;margin:0 auto"></canvas>
-          <div style="font-family:var(--font-d);font-size:24px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:2px;line-height:1">${filtEf}%</div>
-          <div style="font-size:10px;font-weight:700;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:2px">${filtEf>=70?'Excelente':filtEf>=40?'Regular':'Por mejorar'}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:1px">${filtTerm.length} de ${filtProj.length} terminados</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="text-align:center;flex-shrink:0">
+          <canvas id="gaugeChart" width="180" height="100" style="display:block;margin:0 auto"></canvas>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:-4px">${filtEf}%</div>
+          <div style="font-size:10px;color:var(--muted)">${filtTerm.length} de ${filtProj.length} terminados</div>
         </div>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
           ${[
-            {l:'Vencidos',    v:filtRisk.length, col:filtRisk.length>0?'var(--bad)':'var(--ok)'},
-            {l:'Por vencer',  v:filtSoon.length, col:filtSoon.length>0?'var(--warn)':'var(--ok)'},
+            {l:'Vencidos',   v:filtRisk.length,  col:filtRisk.length>0?'var(--bad)':'var(--ok)'},
+            {l:'Por vencer', v:filtSoon.length,  col:filtSoon.length>0?'var(--warn)':'var(--ok)'},
             {l:'Aprobaciones',v:filtPAp,         col:filtPAp>0?'var(--bad)':'var(--ok)'},
           ].map(k=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px">
             <span style="color:var(--muted)">${k.l}</span>
@@ -1032,90 +1001,74 @@ function rInicio(c){
     </div>
   </div>`;
 
-  // ── PANEL METAS SMART CONSOLIDADO ──
-  const todasMetasDash=filtProj.flatMap(p=>(p.tareasSemana||[]).map(t=>({...t,pname:p.name,eng:p.eng})));
+  // ── PANEL METAS SMART CONSOLIDADO ══
+  const todasMetasDash=filtProj.flatMap(p=>(p.tareasSemana||[]).map(t=>({...t,pname:p.name,eng:p.eng||''})));
   const semanas=[...new Set(todasMetasDash.map(t=>t.semana).filter(Boolean))].sort().reverse();
   const semSelDash=window._dashSemSel||semanas[0]||'todas';
   const metasSem=semSelDash==='todas'?todasMetasDash:todasMetasDash.filter(t=>t.semana===semSelDash);
   const engsMetas=[...new Set(filtProj.map(p=>p.eng).filter(Boolean))];
-
-  // Tabla por ingeniero
   const filasMetas=engsMetas.map(eng=>{
     const nombre=NOMBRES[eng]||eng;
     const mEng=metasSem.filter(t=>t.eng===eng);
-    const prog=mEng.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
-    const pend=mEng.filter(t=>t.estatus==='Pendiente').length;
-    const enProg=mEng.filter(t=>t.estatus==='En progreso').length;
-    const noLog=mEng.filter(t=>t.estatus==='No lograda').length;
+    const logradas=mEng.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
+    const noLogradas=mEng.filter(t=>t.estatus==='No lograda').length;
+    const pendientes=mEng.filter(t=>t.estatus==='Pendiente'||t.estatus==='En progreso').length;
     const total=mEng.length;
-    const pct=total>0?Math.round(prog/total*100):0;
-    const ec=ecOf(eng)||{bg:'#eee',tc:'#333',dot:'#888',init:'?'};
-    return{nombre,prog,pend,enProg,noLog,total,pct,dot:ec.dot};
+    const pct=total>0?Math.round(logradas/total*100):0;
+    const dotCol=USERS.find(u=>u.perfil===eng)?.color||'#888';
+    return{nombre,logradas,noLogradas,pendientes,total,pct,dotCol};
   }).filter(f=>f.total>0);
-
   const totalMetasSem=metasSem.length;
-  const logradas=metasSem.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
-  const pctGlobal=totalMetasSem>0?Math.round(logradas/totalMetasSem*100):0;
+  const totalLogradas=metasSem.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
+  const pctGlobal=totalMetasSem>0?Math.round(totalLogradas/totalMetasSem*100):0;
+  const fmtSemOpt=(s)=>{const d=new Date(s+'T12:00:00');const fin=new Date(d);fin.setDate(d.getDate()+6);return`${d.toLocaleDateString('es-MX',{day:'numeric',month:'short'})} – ${fin.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}`;};
 
-  const fmtSemOpt=(s)=>{const d=new Date(s+'T12:00:00');const fin=new Date(d);fin.setDate(d.getDate()+6);return`Sem ${d.toLocaleDateString('es-MX',{day:'numeric',month:'short'})} – ${fin.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}`;};
-  const semLabel=semSelDash==='todas'?'Todas las semanas':fmtSemOpt(semSelDash);
-
-  h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:12px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-      <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Metas SMART del equipo</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">${totalMetasSem} metas · ${semLabel}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <select style="font-size:11px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);cursor:pointer"
-          onchange="window._dashSemSel=this.value;rInicio(document.getElementById('vc'))">
-          <option value="todas" ${semSelDash==='todas'?'selected':''}>Todas las semanas</option>
-          ${semanas.map(s=>`<option value="${s}" ${semSelDash===s?'selected':''}>${fmtSemOpt(s)}</option>`).join('')}
-        </select>
-        <div style="text-align:right">
-          <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:${pctGlobal>=80?'var(--ok)':pctGlobal>=50?'var(--warn)':'var(--bad)'};line-height:1">${pctGlobal}%</div>
-          <div style="font-size:9px;color:var(--muted)">cumplimiento</div>
+  if(todasMetasDash.length>0){
+    h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Metas SMART del equipo</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${totalMetasSem} metas · ${semSelDash==='todas'?'Todas las semanas':fmtSemOpt(semSelDash)}</div>
         </div>
-        <div style="width:44px;height:44px;border-radius:50%;background:conic-gradient(${pctGlobal>=80?'#1e9e5e':pctGlobal>=50?'#c47d0a':'#d93535'} ${pctGlobal*3.6}deg,rgba(0,0,0,0.08) 0deg);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <div style="width:30px;height:30px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${pctGlobal>=80?'var(--ok)':pctGlobal>=50?'var(--warn)':'var(--bad)'}">
-            ${logradas}/${totalMetasSem}
+        <div style="display:flex;align-items:center;gap:8px">
+          <select style="font-size:11px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);cursor:pointer"
+            onchange="window._dashSemSel=this.value;rInicio(document.getElementById('vc'))">
+            <option value="todas" ${semSelDash==='todas'?'selected':''}>Todas las semanas</option>
+            ${semanas.map(s=>`<option value="${s}" ${semSelDash===s?'selected':''}>${fmtSemOpt(s)}</option>`).join('')}
+          </select>
+          <div style="text-align:right">
+            <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:${pctGlobal>=70?'var(--ok)':pctGlobal>=50?'var(--warn)':'var(--bad)'};line-height:1">${pctGlobal}%</div>
+            <div style="font-size:9px;color:var(--muted)">cumplimiento</div>
           </div>
         </div>
       </div>
-    </div>
-    ${filasMetas.length===0
-      ?`<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">Sin metas registradas</div>`
-      :`<table style="width:100%;border-collapse:collapse">
+      <table style="width:100%;border-collapse:collapse">
         <thead><tr style="border-bottom:1px solid var(--border2)">
-          <th style="text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:4px 6px">Ingeniero</th>
-          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:4px 6px">Total</th>
-          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--ok);text-transform:uppercase;padding:4px 6px">Logradas</th>
-          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--purple);text-transform:uppercase;padding:4px 6px">En progreso</th>
-          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--warn);text-transform:uppercase;padding:4px 6px">Pendientes</th>
-          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--bad);text-transform:uppercase;padding:4px 6px">No logradas</th>
-          <th style="text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:4px 6px;min-width:80px">Cumplimiento</th>
+          <th style="text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:3px 6px">Ingeniero</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:3px 6px">Total</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--ok);text-transform:uppercase;padding:3px 6px">Logradas</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--bad);text-transform:uppercase;padding:3px 6px">No logradas</th>
+          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:3px 6px">Pendientes</th>
+          <th style="text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:3px 6px;min-width:80px">Cumplimiento</th>
         </tr></thead>
         <tbody>
         ${filasMetas.map(f=>`<tr style="border-bottom:1px solid var(--border2)">
-          <td style="padding:7px 6px"><div style="display:flex;align-items:center;gap:6px"><span class="edot" style="background:${f.dot||'#888'}"></span><span style="font-size:11px;font-weight:600">${f.nombre}</span></div></td>
-          <td style="text-align:center;font-size:11px;font-weight:700;padding:7px 6px">${f.total}</td>
-          <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--ok)">${f.prog}</span></td>
-          <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--purple)">${f.enProg}</span></td>
-          <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:var(--warn)">${f.pend}</span></td>
-          <td style="text-align:center;padding:7px 6px"><span style="font-size:11px;font-weight:700;color:${f.noLog>0?'var(--bad)':'var(--muted)'}">${f.noLog}</span></td>
-          <td style="padding:7px 6px">
-            <div style="display:flex;align-items:center;gap:6px">
-              <div style="flex:1;height:6px;background:rgba(0,0,0,0.08);border-radius:99px;overflow:hidden;min-width:50px">
-                <div style="height:100%;width:${f.pct}%;background:${f.pct>=80?'var(--ok)':f.pct>=50?'var(--warn)':'var(--bad)'};border-radius:99px"></div>
-              </div>
-              <span style="font-size:10px;font-weight:700;color:${f.pct>=80?'var(--ok)':f.pct>=50?'var(--warn)':'var(--bad)'};min-width:28px">${f.pct}%</span>
+          <td style="padding:6px 6px"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:${f.dotCol};flex-shrink:0"></div><span style="font-size:11px;font-weight:600">${f.nombre}</span></div></td>
+          <td style="text-align:center;font-size:11px;font-weight:700;padding:6px">${f.total}</td>
+          <td style="text-align:center;padding:6px"><span style="font-size:11px;font-weight:700;color:var(--ok)">${f.logradas}</span></td>
+          <td style="text-align:center;padding:6px"><span style="font-size:11px;font-weight:700;color:${f.noLogradas>0?'var(--bad)':'var(--muted)'}">${f.noLogradas}</span></td>
+          <td style="text-align:center;padding:6px"><span style="font-size:11px;color:var(--muted)">${f.pendientes}</span></td>
+          <td style="padding:6px"><div style="display:flex;align-items:center;gap:6px">
+            <div style="flex:1;height:6px;background:rgba(0,0,0,0.08);border-radius:99px;overflow:hidden;min-width:50px">
+              <div style="height:100%;width:${f.pct}%;background:${f.pct>=70?'var(--ok)':f.pct>=50?'var(--warn)':'var(--bad)'};border-radius:99px"></div>
             </div>
-          </td>
+            <span style="font-size:10px;font-weight:700;color:${f.pct>=70?'var(--ok)':f.pct>=50?'var(--warn)':'var(--bad)'};min-width:28px">${f.pct}%</span>
+          </div></td>
         </tr>`).join('')}
         </tbody>
-      </table>`
-    }
-  </div>`;
+      </table>
+    </div>`;
+  }
 
   // ── ACCESOS RÁPIDOS ──
   h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
@@ -1175,18 +1128,11 @@ function rInicio(c){
       const W=ec2.offsetWidth||ec2.parentElement?.offsetWidth-32||400;
       ec2.width=W;
       const engsAll=fEng2==='todos'?USERS.filter(u=>u.perfil!=='GI'):[USERS.find(u=>u.perfil===fEng2)].filter(Boolean);
-      // Solo mostrar ingenieros con al menos 1 proyecto
       const engsF=engsAll.filter(u=>filtProj.some(p=>p.eng===u.perfil));
       const barH=30,gap=12,padL=110,padR=70,padT=8;
       // Auto height based on number of engineers
-      ec2.height=Math.max(engsF.length*(barH+gap)+padT*2, 60);
+      ec2.height=engsF.length*(barH+gap)+padT*2;
       ctx.clearRect(0,0,ec2.width,ec2.height);
-      if(engsF.length===0){
-        ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#888';
-        ctx.font='12px DM Sans,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText('Sin proyectos en este período',W/2,30);
-        return;
-      }
       const maxW=W-padL-padR;
       engsF.forEach((u,i)=>{
         const pp=filtProj.filter(p=>p.eng===u.perfil);
@@ -1225,43 +1171,36 @@ function rInicio(c){
       });
     }
 
-    // ─ Gauge velocímetro semáforo ─
-    // ─ Gauge velocímetro — Canvas 2D (tamaño fijo, sin deformación) ─
+    // ─ Gauge velocímetro semáforo — Canvas 2D ─
     (function(){
       const gc=document.getElementById('gaugeChart');
       if(!gc||!gc.getContext)return;
       const ctx=gc.getContext('2d');
-      const W=160,H=90;
-      gc.width=W;gc.height=H;
+      const W=160,H=90;gc.width=W;gc.height=H;
       ctx.clearRect(0,0,W,H);
-      const cx=W/2,cy=H-10,r=68;
+      const cx=W/2,cy=H-8,r=68;
       const pct=Math.min(0.99,Math.max(0.01,filtEf/100));
       const col=filtEf>=70?'#1e9e5e':filtEf>=40?'#c47d0a':'#d93535';
       // Track fondo
       ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,2*Math.PI);
       ctx.lineWidth=12;ctx.strokeStyle='rgba(0,0,0,0.07)';ctx.lineCap='round';ctx.stroke();
-      // Gradiente semáforo de fondo
+      // Gradiente semáforo
       const grad=ctx.createLinearGradient(cx-r,0,cx+r,0);
       grad.addColorStop(0,'#d93535');grad.addColorStop(0.35,'#c47d0a');
       grad.addColorStop(0.65,'#1e9e5e');grad.addColorStop(1,'#0a7a45');
       ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,2*Math.PI);
       ctx.strokeStyle=grad;ctx.globalAlpha=0.2;ctx.stroke();ctx.globalAlpha=1;
-      // Arco de progreso
+      // Arco progreso
       ctx.beginPath();ctx.arc(cx,cy,r,Math.PI,Math.PI+Math.PI*pct);
       ctx.strokeStyle=col;ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();
-      // Marcas 0% 50% 100%
+      // Marcas
       ctx.fillStyle='rgba(128,128,128,0.5)';ctx.font='8px DM Sans,sans-serif';ctx.textAlign='center';
-      ctx.fillText('0%',cx-r-2,cy+10);
-      ctx.fillText('50%',cx,cy-r-4);
-      ctx.fillText('100%',cx+r+2,cy+10);
+      ctx.fillText('0%',cx-r+2,cy+10);ctx.fillText('50%',cx,cy-r-3);ctx.fillText('100%',cx+r-2,cy+10);
       // Aguja
       const ang=Math.PI+Math.PI*pct;
-      const nx=cx+52*Math.cos(ang);const ny=cy+52*Math.sin(ang);
-      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(nx,ny);
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+52*Math.cos(ang),cy+52*Math.sin(ang));
       ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();
-      // Hub central
-      ctx.beginPath();ctx.arc(cx,cy,5,0,2*Math.PI);
-      ctx.fillStyle=col;ctx.fill();
+      ctx.beginPath();ctx.arc(cx,cy,5,0,2*Math.PI);ctx.fillStyle=col;ctx.fill();
     })();
 
     // ─ Barras por fase ─
@@ -1290,28 +1229,16 @@ function rInicio(c){
           ctx.fillStyle=col;
           ctx.font='700 11px DM Sans,sans-serif';
           ctx.textAlign='center';ctx.textBaseline='bottom';
-          const ny=Math.max(padT+14, y-2);
-          ctx.fillText(counts[i],x+barW/2,ny);
+          const ny2=Math.max(padT+12,y-2);ctx.fillText(counts[i],x+barW/2,ny2);
         }
         // Etiqueta
         ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#4a5568';
         ctx.font='500 9px DM Sans,sans-serif';
         ctx.textAlign='center';ctx.textBaseline='top';
-        // Nombres con partición inteligente por silaba
-        const faseNombres={
-          'Diseño':    ['Diseño',       null],
-          'Desarrollo':['Desarrollo',   null],
-          'Implementacion':['Imple-',   'mentación'],
-          'Lanzamiento':['Lanza-',      'miento'],
-          'Seguimiento':['Segui-',      'miento']
-        };
-        const [linea1,linea2]=(faseNombres[f]||[f,null]);
-        if(linea2){
-          ctx.fillText(linea1,x+barW/2,padT+chartH+4);
-          ctx.fillText(linea2,x+barW/2,padT+chartH+14);
-        } else {
-          ctx.fillText(linea1,x+barW/2,padT+chartH+9);
-        }
+        const fNombres={'Diseño':['Diseño',null],'Desarrollo':['Desarrollo',null],'Implementacion':['Imple-','mentación'],'Lanzamiento':['Lanza-','miento'],'Seguimiento':['Segui-','miento']};
+        const [l1,l2]=(fNombres[f]||[f,null]);
+        if(l2){ctx.fillText(l1,x+barW/2,padT+chartH+4);ctx.fillText(l2,x+barW/2,padT+chartH+14);}
+        else{ctx.fillText(l1,x+barW/2,padT+chartH+9);}
       });
     }
   });
@@ -1430,7 +1357,7 @@ function rMiDashboard(c){
   h+=`<div style="background:linear-gradient(135deg,${ec.bg} 0%,var(--surface) 100%);border:1px solid var(--border2);border-radius:var(--r2);padding:18px 22px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
     <div style="width:48px;height:48px;border-radius:50%;background:${ec.bg};border:3px solid var(--surface);box-shadow:0 2px 12px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:${ec.tc};flex-shrink:0">${ec.init}</div>
     <div style="flex:1">
-      <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--text)">${saludo}, ${cu?.nombre?.split(' ')[0]||cu?.uid||'René'}</div>
+      <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--text)">${saludo}, ${cu?.nombre?.split(' ')[0]||'Ingeniero'}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:2px">${TODAY.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
     </div>
     ${venc.length>0
@@ -2201,13 +2128,9 @@ function guardarNuevoProyecto(){
   proj.categoria=cat;
   if(desc) proj.notas=[{fecha:new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}),autor:cu?.nombre||'Sistema',texto:desc}];
   addAct(proj,'creacion',`Proyecto creado por ${cu?.nombre||'Sistema'}`);
-  PROJ.push(proj);
-  // saveProj guarda en localStorage Y en su propio nodo Firebase
-  saveProj(proj);
-  cM2();
+  PROJ.push(proj);saveProj(proj);cM2();
   toast(`Proyecto "${name}" creado ✓`);
-  // Navegar después de dar tiempo a Firebase para confirmar
-  setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),400);},500);
+  setTimeout(()=>{sv2(isG()?'proyectos':'mis-proyectos');setTimeout(()=>oP(id),300);},200);
 }
 
 function nuevoUsuario(){
@@ -2344,7 +2267,7 @@ function rModal(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div><div style="font-size:13px;font-weight:700">Modelos / SKUs</div><div style="font-size:11px;color:var(--muted)">${skus.length} modelos · ${sD} completados${sP!==null?' · '+sP+'%':''}</div></div><div style="display:flex;gap:5px">${['Pendiente','En proceso','Completado'].map(s=>{const cl=s==='Completado'?'ok':s==='En proceso'?'purple':'gray';return`<span class="tag ${cl}">${skus.filter(x=>x.e===s).length} ${s}</span>`;}).join('')}</div></div>
     ${skus.length?`<div style="height:4px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:11px"><div style="height:100%;background:${bC(sP)};width:${sP}%;border-radius:2px"></div></div>`:''}
     <div style="display:grid;grid-template-columns:1fr 125px 100px 110px 26px;gap:7px;padding:4px 9px;font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em"><span>Modelo</span><span>Código</span><span>Estatus</span><span>Checklist</span><span></span></div>
-    ${skus.map((sk)=>{const sc=sk.e==='Completado'?'sd':sk.e==='En proceso'?'sp':'';const ckD=CK.filter(c=>sk.checks[c]).length,ckP=Math.round(ckD/CK.length*100);return`<div><div class="ski ${sc}">${ed?`<input class="ski-ni" value="${sk.nombre}" placeholder="Nombre..." onchange="uSF('${p.id}','${sk.id}','nombre',this.value)">`:`<span style="font-size:13px;font-weight:600">${sk.nombre}</span>`}${ed?`<input class="ski-ci" value="${sk.codigo}" placeholder="Código" onchange="uSF('${p.id}','${sk.id}','codigo',this.value)">`:`<span style="font-size:11px;color:var(--muted);font-family:var(--font-m)">${sk.codigo||'—'}</span>`}${ed?`<select class="ski-si" onchange="uSS('${p.id}','${sk.id}',this.value)">${['Pendiente','En proceso','Completado'].map(s=>`<option${sk.e===s?' selected':''}>${s}</option>`).join('')}</select>`:`<span class="tag${sk.e==='Completado'?' ok':sk.e==='En proceso'?' purple':' gray'}">${sk.e}</span>`}<div><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:9px;color:var(--muted)">${ckD}/${CK.length}</span><span style="font-size:9px;font-weight:700;color:${bC(ckP)}">${ckP}%</span></div><div style="height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-bottom:3px"><div style="height:100%;background:${bC(ckP)};width:${ckP}%;border-radius:2px"></div></div><div style="display:flex;gap:4px"><button class="ski-cb" onclick="tSCk('${p.id}','${sk.id}')">${sk.ckOpen?'Cerrar ▲':'Checklist ▼'}</button>${ed&&ckP<100?`<button class="ski-cb" style="background:var(--ok-bg);border-color:var(--ok);color:var(--ok)" onclick="completarChecklist('${p.id}','${sk.id}')">✓ Todo</button>`:''}</div></div>${ed?`<span class="ski-del" onclick="dSku('${p.id}','${sk.id}')">✕</span>`:'<span></span>'}</div>${sk.ckOpen?`<div class="ck-d"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:11px;font-weight:700">${sk.nombre}</span>${ed&&ckP<100?`<button onclick="completarChecklist('${p.id}','${sk.id}')" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;border:1.5px solid var(--ok);background:var(--ok-bg);color:var(--ok);cursor:pointer;font-family:var(--font-b)">✓ Completar todos los entregables</button>`:''}</div><div class="ck-grid">${CK.map(col=>`<div class="ck-i${sk.checks[col]?' done':''}" ${ed?`onclick="tSCI('${p.id}','${sk.id}','${col}')"`:''}><div class="ck-box">${sk.checks[col]?'✓':''}</div><span>${col}</span></div>`).join('')}</div></div>`:''}</div>`;}).join('')}
+    ${skus.map((sk)=>{const sc=sk.e==='Completado'?'sd':sk.e==='En proceso'?'sp':'';const ckD=CK.filter(c=>sk.checks[c]).length,ckP=Math.round(ckD/CK.length*100);return`<div><div class="ski ${sc}">${ed?`<input class="ski-ni" value="${sk.nombre}" placeholder="Nombre..." onchange="uSF('${p.id}','${sk.id}','nombre',this.value)">`:`<span style="font-size:13px;font-weight:600">${sk.nombre}</span>`}${ed?`<input class="ski-ci" value="${sk.codigo}" placeholder="Código" onchange="uSF('${p.id}','${sk.id}','codigo',this.value)">`:`<span style="font-size:11px;color:var(--muted);font-family:var(--font-m)">${sk.codigo||'—'}</span>`}${ed?`<select class="ski-si" onchange="uSS('${p.id}','${sk.id}',this.value)">${['Pendiente','En proceso','Completado'].map(s=>`<option${sk.e===s?' selected':''}>${s}</option>`).join('')}</select>`:`<span class="tag${sk.e==='Completado'?' ok':sk.e==='En proceso'?' purple':' gray'}">${sk.e}</span>`}<div><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:9px;color:var(--muted)">${ckD}/${CK.length}</span><span style="font-size:9px;font-weight:700;color:${bC(ckP)}">${ckP}%</span></div><div style="height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-bottom:3px"><div style="height:100%;background:${bC(ckP)};width:${ckP}%;border-radius:2px"></div></div><div style="display:flex;gap:4px"><button class="ski-cb" onclick="tSCk('${p.id}','${sk.id}')">${sk.ckOpen?'Cerrar ▲':'Checklist ▼'}</button><span style="font-size:9px;color:var(--muted);margin-left:6px">Proto:</span>${ed?`<input type="date" value="${sk.fechaProto||''}" title="Fecha prototipo" style="font-size:9px;padding:1px 4px;border:1px solid var(--border2);border-radius:3px;background:var(--surface2);color:var(--text);max-width:100px" onchange="updSkuFechaProto('${p.id}','${sk.id}',this.value)">`:`<span style="font-size:9px;color:${sk.fechaProto?'var(--text)':'var(--muted)'}">${sk.fechaProto?new Date(sk.fechaProto+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}):'—'}</span>`}${ed&&ckP<100?`<button class="ski-cb" style="background:var(--ok-bg);border-color:var(--ok);color:var(--ok)" onclick="completarChecklist('${p.id}','${sk.id}')">✓ Todo</button>`:''}</div></div>${ed?`<span class="ski-del" onclick="dSku('${p.id}','${sk.id}')">✕</span>`:'<span></span>'}</div>${sk.ckOpen?`<div class="ck-d"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:11px;font-weight:700">${sk.nombre}</span>${ed&&ckP<100?`<button onclick="completarChecklist('${p.id}','${sk.id}')" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;border:1.5px solid var(--ok);background:var(--ok-bg);color:var(--ok);cursor:pointer;font-family:var(--font-b)">✓ Completar todos los entregables</button>`:''}</div><div class="ck-grid">${CK.map(col=>`<div class="ck-i${sk.checks[col]?' done':''}" ${ed?`onclick="tSCI('${p.id}','${sk.id}','${col}')"`:''}><div class="ck-box">${sk.checks[col]?'✓':''}</div><span>${col}</span></div>`).join('')}</div></div>`:''}</div>`;}).join('')}
     ${ed?`<button class="add-sku" onclick="aSku('${p.id}')">+ Agregar modelo / SKU</button>`:''}
   </div>`;
 
@@ -2376,7 +2299,7 @@ function rModal(){
       <input type="date" id="brief-date-input" value="${hasBrief||''}"
         style="font-size:12px;padding:5px 8px;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-family:var(--font-b);outline:none"/>
       <button class="btn sm" style="background:${GOLD};border-color:${GOLD};color:#1a1f3c;font-weight:700"
-        onclick="(function(){const v=document.getElementById('brief-date-input')?.value||'';if(!v){toast('Selecciona la fecha del Brief primero');return;}aplicarFechasEstandar('${p.id}',v);})()">
+        onclick="aplicarFechasEstandar('${p.id}',document.getElementById('brief-date-input').value)">
         ⚡ Autocompletar fechas
       </button>
     </div>
@@ -3051,6 +2974,8 @@ function uT(pid,f,i,k,v){
   }
 }
 function aSku(pid){const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;p.skus=p.skus||[];p.skus.push({id:'s'+Date.now(),nombre:`Modelo ${p.skus.length+1}`,codigo:'',e:'Pendiente',checks:Object.fromEntries(CK.map(c=>[c,false])),ckOpen:false});addAct(p,'tarea','Agregó nuevo SKU');sch(p);rModal();sMT('skus');}
+function updSkuFechaProto(pid,sid,fecha){const p=PROJ.find(x=>x.id===pid);if(!p)return;const sk=p.skus.find(s=>s.id===sid);if(!sk)return;sk.fechaProto=fecha;sch(p);toast('Fecha de prototipo guardada');}
+
 function dSku(pid,sid){const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;const sk=p.skus.find(s=>s.id===sid);if(!confirm(`¿Eliminar "${sk?.nombre}"?`))return;p.skus=p.skus.filter(s=>s.id!==sid);sch(p);rModal();sMT('skus');}
 function uSF(pid,sid,k,v){const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;const sk=p.skus.find(s=>s.id===sid);if(sk){sk[k]=v;sch(p);}}
 function uSS(pid,sid,v){const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;const sk=p.skus.find(s=>s.id===sid);if(!sk)return;sk.e=v;addAct(p,'tarea',`SKU "${sk.nombre}" → ${v}`);sch(p);rModal();sMT('skus');}
@@ -3114,17 +3039,11 @@ function addTareaS(pid){
   const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;
   // Calculate current week key (monday ISO)
   const hoy=new Date();const dow=hoy.getDay();
-  // Si es viernes, las metas son para la SIGUIENTE semana
-  const esViernes=dow===5;
-  const diasOffset=esViernes?3:(dow===0?1:8-dow); // viernes+3=lunes siguiente
-  const lunes=new Date(hoy);
-  if(esViernes){lunes.setDate(hoy.getDate()+3);}
-  else{lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));}
+  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(dow===0?6:dow-1));
   const semKey=lunes.toISOString().slice(0,10);
   const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
   const viernesStr=viernes.toLocaleDateString('es-MX',{day:'numeric',month:'long'});
-  const semLabel=esViernes?`Próxima semana: del ${lunes.toLocaleDateString('es-MX',{day:'numeric',month:'long'})} al ${viernesStr}`:`Semana del ${lunes.toLocaleDateString('es-MX',{day:'numeric',month:'long'})} al ${viernesStr}`;
-  openModal2(`<div class="mh"><div><h3 class="mh-title">Nueva Meta SMART</h3><div style="font-size:11px;color:var(--muted);margin-top:2px">${p.name} &nbsp;·&nbsp; ${semLabel}</div></div><button class="mh-x" onclick="cM2()">✕</button></div>
+  openModal2(`<div class="mh"><div><h3 class="mh-title">Nueva Meta SMART</h3><div style="font-size:11px;color:var(--muted);margin-top:2px">${p.name} &nbsp;·&nbsp; Semana del ${lunes.toLocaleDateString('es-MX',{day:'numeric',month:'long'})} al ${viernesStr}</div></div><button class="mh-x" onclick="cM2()">✕</button></div>
   <div class="mbody">
     <div style="background:rgba(26,31,60,.06);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:1.6">
       <strong style="color:var(--navy)">Una buena Meta SMART debe ser:</strong><br>
@@ -3171,12 +3090,8 @@ function updTareaS(pid,idx,estatus){
   if(estatus==='Lograda'||estatus==='Parcial'||estatus==='No lograda'){
     p.tareasSemana[idx].cierreEn=Date.now();
     p.tareasSemana[idx].resultado=estatus;
-  } else {
-    // Si regresa a Pendiente o En progreso, quitar el cierre
-    delete p.tareasSemana[idx].cierreEn;
-    delete p.tareasSemana[idx].resultado;
   }
-  sch(p);rModal();sMT('semana');toast('Estatus actualizado ✓');
+  sch(p);rModal();sMT('semana');
 }
 
 // ─── DIAGRAMA DE PROCESO NPD ─────────────────────────────────────────
@@ -3751,7 +3666,6 @@ function subWorkdays(dateStr, days){
 const GOLD = 'C9A84C';
 function aplicarFechasEstandar(pid, briefDate){
   const p=PROJ.find(x=>x.id===pid);
-  // Intentar leer el input directamente si briefDate está vacío
   if(!briefDate){briefDate=document.getElementById('brief-date-input')?.value||'';}
   if(!p||!briefDate){toast('Selecciona la fecha del Brief primero');return;}
   if(!cE(p)&&!isG()){toast('Sin permiso de edición');return;}
@@ -3777,14 +3691,6 @@ function aplicarFechasEstandar(pid, briefDate){
 function uTFecha(pid,f,i,campo,val){
   const p=PROJ.find(x=>x.id===pid);if(!p||(!cE(p)&&!isG()))return;
   const t=(p.tp[f]||[])[i];if(!t)return;
-
-  // Auto-move weekend dates to nearest workday
-  if(val){
-    const d=new Date(val+'T12:00:00');
-    const dow=d.getDay();
-    if(dow===6){d.setDate(d.getDate()+2);val=d.toISOString().slice(0,10);toast('Fecha movida al lunes (no hay trabajo en fin de semana)');}
-    else if(dow===0){d.setDate(d.getDate()+1);val=d.toISOString().slice(0,10);toast('Fecha movida al lunes (no hay trabajo en fin de semana)');}
-  }
 
   // Punto 2: fecha final del proyecto solo la puede mover el gerente
   const isLastTask=(f==='Lanzamiento'&&i===(p.tp['Lanzamiento']||[]).length-1&&campo==='ff');
@@ -3855,10 +3761,13 @@ function eliminarProyecto(pid){
   if(!confirm(`Segunda confirmacion: eliminar "${p.name}" de forma permanente?`))return;
   // Remove from localStorage
   localStorage.removeItem(VER+pid);
+  // Add to deleted list
+  const deleted=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
+  if(!deleted.includes(pid)){deleted.push(pid);localStorage.setItem(VER+'__deleted',JSON.stringify(deleted));}
   // Remove from PROJ array immediately
   PROJ=PROJ.filter(x=>x.id!==pid);
-  // Eliminar de Firebase usando nodo individual
-  fbDeleteProj(pid);
+  // Push deletion to Firebase
+  fbPush();
   const nombre=p.name;
   cM();
   sv2('inicio');
@@ -4366,160 +4275,6 @@ function verAreaGerente(area){
 }
 
 // ─── INDICADORES NPD ─────────────────────────────────────────────────
-function rIndicadores(c){
-  const term=PROJ.filter(p=>p.estatus==='Terminado');
-  const act=PROJ.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
-  const todos=PROJ.filter(p=>p.estatus!=='Cancelado');
-
-  // ── KPI 1: Cumplimiento de fechas ──
-  const conFechas=term.filter(p=>p.fechaFinal&&p.tp['Lanzamiento']);
-  const cumplieron=conFechas.filter(p=>{
-    const lastFf=[...( p.tp['Lanzamiento']||[])].reverse().find(t=>t.ff)?.ff;
-    if(!lastFf||!p.fechaFinal) return false;
-    return lastFf<=p.fechaFinal;
-  });
-  const tasaCumplimiento=conFechas.length?Math.round(cumplieron.length/conFechas.length*100):null;
-
-  // ── KPI 2: Tiempo promedio por fase ──
-  const tiemposFases={};
-  FK.filter(f=>f!=='Seguimiento').forEach(fk=>{
-    const tiempos=[];
-    term.forEach(p=>{
-      const ts=p.tp[fk]||[];
-      const firstFi=ts.find(t=>t.fi)?.fi;
-      const lastFf=[...ts].reverse().find(t=>t.ff)?.ff;
-      if(firstFi&&lastFf){const d=workdaysBetween(firstFi,lastFf)+1;if(d>0&&d<200)tiempos.push(d);}
-    });
-    tiemposFases[fk]={avg:tiempos.length?Math.round(tiempos.reduce((s,v)=>s+v,0)/tiempos.length):null,std:FD[fk].tareas.reduce((s,t)=>s+(t.d||1),0),n:tiempos.length};
-  });
-
-  // ── KPI 3: Tasa de reclamos post-lanzamiento ──
-  const conSeg=term.filter(p=>(p.tp['Seguimiento']||[]).some(t=>t.e==='Completado'));
-  const conReclamo=conSeg.filter(p=>{
-    const t=(p.tp['Seguimiento']||[]).find(t=>t.n.includes('reclamos'));
-    return t&&t.ref&&t.ref.trim().length>0;
-  });
-  const tasaReclamos=conSeg.length?Math.round(conReclamo.length/conSeg.length*100):null;
-
-  // ── KPI 4: Proyectos activos vs capacidad ──
-  const NOMBRES_ENG=NOMBRES;
-  const porIng={};
-  act.forEach(p=>{if(!porIng[p.eng])porIng[p.eng]=0;porIng[p.eng]++;});
-
-  // ── KPI 5: Eficiencia del proceso (avance promedio activos) ──
-  const avgAvance=act.length?Math.round(act.reduce((s,p)=>s+p.avance,0)/act.length):0;
-
-  // ── KPI 6: Gates aprobados vs total ──
-  const totalGates=todos.length*5;
-  const gatesAprobados=todos.reduce((s,p)=>s+Object.values(p.gates||{}).filter(g=>g.aprobado).length,0);
-  const tasaGates=totalGates?Math.round(gatesAprobados/totalGates*100):0;
-
-  // ── KPI 7: Evidencias registradas ──
-  let totalEv=0,evCon=0;
-  todos.forEach(p=>{
-    Object.values(p.gates||{}).forEach(g=>{
-      (g.items||[]).forEach((_,i)=>{
-        if(g.items[i]){totalEv++;if(g.evidencias?.[i]?.trim())evCon++;}
-      });
-    });
-  });
-  const tasaEvidencia=totalEv?Math.round(evCon/totalEv*100):0;
-
-  c.innerHTML=`
-  <!-- HEADER -->
-  <div style="background:var(--navy);border-radius:var(--r2);padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
-    <div>
-      <div style="font-size:13px;font-weight:700;color:#fff">Panel de Indicadores NPD</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:1px">Línea Italia · ${todos.length} proyectos · ${term.length} terminados · Actualizado: ${new Date().toLocaleDateString('es-MX')}</div>
-    </div>
-    <div style="font-size:11px;color:rgba(255,255,255,.5)">Solo gerente</div>
-  </div>
-
-  <!-- KPIs principales -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
-    ${[
-      {l:'Cumplimiento\nde fechas',v:tasaCumplimiento!==null?tasaCumplimiento+'%':'Sin datos',s:`${cumplieron.length}/${conFechas.length} proyectos`,col:tasaCumplimiento===null?'var(--muted)':tasaCumplimiento>=80?'var(--ok)':tasaCumplimiento>=50?'var(--warn)':'var(--bad)',bg:tasaCumplimiento===null?'var(--surface2)':tasaCumplimiento>=80?'var(--ok-bg)':tasaCumplimiento>=50?'var(--warn-bg)':'var(--bad-bg)',note:'% proyectos terminados a tiempo'},
-      {l:'Avance promedio\nproyectos activos',v:avgAvance+'%',s:`${act.length} proyectos activos`,col:bC(avgAvance),bg:'var(--surface2)',note:'Promedio de avance del equipo'},
-      {l:'Gates aprobados\nvs. total',v:tasaGates+'%',s:`${gatesAprobados}/${totalGates} gates`,col:tasaGates>=60?'var(--ok)':tasaGates>=30?'var(--warn)':'var(--bad)',bg:'var(--surface2)',note:'Madurez del proceso NPD'},
-      {l:'Evidencias\nregistradas',v:tasaEvidencia+'%',s:`${evCon}/${totalEv} ítems con ref.`,col:tasaEvidencia>=80?'var(--ok)':tasaEvidencia>=40?'var(--warn)':'var(--bad)',bg:'var(--surface2)',note:'% de gates con evidencia documentada'},
-    ].map(k=>`<div style="background:${k.bg};border:1px solid var(--border2);border-radius:var(--r2);padding:14px;border-top:3px solid ${k.col}">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px;line-height:1.3">${k.l}</div>
-      <div style="font-size:26px;font-weight:800;font-family:var(--font-d);color:${k.col};line-height:1">${k.v}</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px">${k.s}</div>
-      <div style="font-size:9px;color:var(--muted);margin-top:2px;font-style:italic">${k.note}</div>
-    </div>`).join('')}
-  </div>
-
-  <!-- Tiempo por fase: real vs estándar -->
-  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:14px">
-    <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">Tiempo real por fase vs. estándar</div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Basado en ${term.length} proyectos terminados con fechas registradas. Verde = por debajo del estándar · Rojo = por encima.</div>
-    ${FK.filter(f=>f!=='Seguimiento').map(f=>{
-      const fd=FD[f];const {avg,std,n}=tiemposFases[f]||{avg:null,std:0,n:0};
-      const diff=avg?avg-std:null;
-      const pctBar=avg?Math.min(100,Math.round(avg/std*100)):0;
-      const col=diff===null?'var(--muted)':diff<=0?'var(--ok)':'var(--bad)';
-      return`<div style="display:grid;grid-template-columns:130px 1fr 90px 90px 90px;gap:8px;align-items:center;margin-bottom:8px">
-        <span style="font-size:11px;font-weight:600;color:${fd.tc};background:${fd.bg};padding:2px 8px;border-radius:99px;text-align:center">${f}</span>
-        <div style="position:relative">
-          <div style="height:8px;background:var(--border2);border-radius:4px;overflow:hidden">
-            <div style="height:100%;background:${col};width:${pctBar}%;border-radius:4px;transition:width .4s"></div>
-          </div>
-          ${avg?`<div style="position:absolute;left:${Math.min(92,Math.round(std/Math.max(avg,std)*100))}%;top:-3px;width:2px;height:14px;background:var(--navy);border-radius:1px" title="Estándar: ${std}d"></div>`:''}
-        </div>
-        <div style="text-align:center;font-size:11px;font-weight:700;color:${col}">${avg?avg+'d real':'—'}</div>
-        <div style="text-align:center;font-size:11px;color:var(--muted)">${std}d est.</div>
-        <div style="text-align:center;font-size:11px;font-weight:700;color:${col}">${diff===null?'—':diff===0?'En tiempo':diff>0?`+${diff}d`:`${diff}d`}</div>
-      </div>`;
-    }).join('')}
-    <div style="font-size:10px;color:var(--muted);margin-top:6px">📌 La línea vertical en cada barra indica el estándar definido. N = proyectos con datos.</div>
-  </div>
-
-  <!-- Carga por ingeniero -->
-  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:14px">
-    <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px">Carga de proyectos activos por ingeniero</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
-      ${Object.entries(porIng).map(([eng,n])=>{
-        const u=USERS.find(x=>x.perfil===eng);
-        const ec=ecOf(eng);
-        const col=n<=2?'var(--ok)':n<=3?'var(--warn)':'var(--bad)';
-        return`<div style="background:var(--surface2);border-radius:var(--r);padding:12px;border-left:3px solid ${col}">
-          <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
-            <div style="width:24px;height:24px;border-radius:50%;background:${ec.bg};color:${ec.tc};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">${ec.init}</div>
-            <div style="font-size:12px;font-weight:600;color:var(--text)">${u?.nombre||eng}</div>
-          </div>
-          <div style="font-size:22px;font-weight:800;font-family:var(--font-d);color:${col}">${n}</div>
-          <div style="font-size:10px;color:var(--muted)">proyectos activos · ${n<=2?'Carga óptima':n===3?'Carga alta':'Sobrecarga'}</div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>
-
-  <!-- Reclamos post-lanzamiento -->
-  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
-    <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px">Incidencias post-lanzamiento</div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Proyectos cuya tarea "Seguimiento a reclamos" tiene un folio de referencia registrado.</div>
-    ${conSeg.length===0
-      ?`<div style="padding:12px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--muted)">Sin proyectos con seguimiento completado aún.</div>`
-      :`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        <div style="background:var(--bad-bg);border-radius:var(--r);padding:12px;text-align:center;border:1px solid rgba(217,53,53,.2)">
-          <div style="font-size:24px;font-weight:800;font-family:var(--font-d);color:var(--bad)">${conReclamo.length}</div>
-          <div style="font-size:10px;color:var(--bad)">Con incidencia</div>
-        </div>
-        <div style="background:var(--ok-bg);border-radius:var(--r);padding:12px;text-align:center;border:1px solid rgba(30,158,94,.2)">
-          <div style="font-size:24px;font-weight:800;font-family:var(--font-d);color:var(--ok)">${conSeg.length-conReclamo.length}</div>
-          <div style="font-size:10px;color:var(--ok)">Sin incidencia</div>
-        </div>
-        <div style="background:var(--surface2);border-radius:var(--r);padding:12px;text-align:center">
-          <div style="font-size:24px;font-weight:800;font-family:var(--font-d);color:${tasaReclamos<=20?'var(--ok)':'var(--bad)'}">${tasaReclamos!==null?tasaReclamos+'%':'—'}</div>
-          <div style="font-size:10px;color:var(--muted)">Tasa de incidencia</div>
-        </div>
-      </div>`}
-    <div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:var(--r);font-size:11px;color:var(--muted)">
-      💡 Para registrar incidencias: en la fase de Seguimiento, la tarea "Seguimiento a reclamos" tiene un campo de folio de referencia. Si hay reclamo, registra el folio ahí.
-    </div>
-  </div>`;
-}
 
 // ─── RE-RENDER MODAL PRESERVANDO SCROLL ──────────────────────────────
 function rModalKeepScroll(tab){
@@ -4645,8 +4400,6 @@ function buildDayMap(evs,year,month){
     if(!ini) return;
     for(let d=new Date(ini);d<=fin;d.setDate(d.getDate()+1)){
       if(d.getFullYear()===year&&d.getMonth()===month){
-        const dow=d.getDay();
-        if(dow===0||dow===6) continue; // Skip weekends - only workdays
         const k=d.getDate();
         if(!map[k]) map[k]=[];
         map[k].push(ev);
@@ -5214,14 +4967,12 @@ function buildMetasSmart(p, ed){
       h += '</div></div>';
       if(ed) h += '<span style="cursor:pointer;color:var(--muted);font-size:11px" onclick="delTareaS(\''+pid+'\','+idx+')" title="Eliminar">x</span>';
       h += '</div>';
-      // Estatus siempre clickeable
-      var stBtns2=[{s:'Pendiente',col:'var(--muted)',icon:'o'},{s:'En progreso',col:'var(--purple)',icon:'>'},{s:'Lograda',col:'var(--ok)',icon:'+'},{s:'No lograda',col:'var(--bad)',icon:'x'}];
-      h += '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">';
-      stBtns2.forEach(function(btn){
-        var active = t.estatus===btn.s;
-        h += '<button style="padding:4px 10px;border-radius:99px;border:1.5px solid '+btn.col+';background:'+(active?btn.col:'transparent')+';color:'+(active?'#fff':btn.col)+';font-size:10px;font-weight:700;cursor:pointer" onclick="updTareaS(\''+pid+'\','+idx+',\''+btn.s+'\')">'+btn.icon+' '+btn.s+'</button>';
+      // Solo Lograda y No lograda — siempre visible para todos
+      [{s:'Lograda',col:'var(--ok)',icon:'✓'},{s:'No lograda',col:'var(--bad)',icon:'✕'}].forEach(function(btn){
+        var active=t.estatus===btn.s;
+        var oa="updTareaS('"+pid+"',"+idx+",'"+btn.s+"')";
+        h+='<button style="padding:4px 12px;border-radius:99px;border:1.5px solid '+btn.col+';background:'+(active?btn.col:'transparent')+';color:'+(active?'#fff':btn.col)+';font-size:10px;font-weight:700;cursor:pointer" onclick="'+oa+'">'+btn.icon+' '+btn.s+'</button>';
       });
-      h += '</div>';
       h += '</div>';
     });
   }
@@ -5233,24 +4984,23 @@ function buildMetasSmart(p, ed){
     if(cumplimiento!==null) h += '<span style="font-size:10px;color:'+(cumplimiento>=80?'var(--ok)':cumplimiento>=50?'var(--warn)':'var(--bad)')+'">Cumplimiento: '+cumplimiento+'%</span>';
     h += '</summary><div style="margin-top:6px">';
     historial.slice().reverse().forEach(function(t){
-      var hidx = ts2.indexOf(t);
-      var stCol = t.estatus==='Lograda'?'var(--ok)':t.estatus==='Parcial'?'var(--warn)':t.estatus==='No lograda'?'var(--bad)':'var(--muted)';
-      var stIcon = t.estatus==='Lograda'?'✓':t.estatus==='Parcial'?'~':t.estatus==='No lograda'?'✕':'·';
-      h += '<div style="padding:10px;border-bottom:1px solid var(--border2)">';
-      h += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:7px">';
-      h += '<span style="font-size:13px;color:'+stCol+';flex-shrink:0;margin-top:1px">'+stIcon+'</span>';
-      h += '<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--text);'+(t.estatus==='Lograda'?'text-decoration:line-through;opacity:.6':'')+'">' + t.tarea+'</div>';
-      if(t.semana) h += '<div style="font-size:9px;color:var(--muted);margin-top:2px">Sem: '+fmtD(t.semana)+'</div>';
-      h += '</div></div>';
-      // Botones de estatus siempre visibles
-      var hBtns=[{s:'Pendiente',col:'var(--muted)',icon:'o'},{s:'En progreso',col:'var(--purple)',icon:'>'},{s:'Lograda',col:'var(--ok)',icon:'+'},{s:'No lograda',col:'var(--bad)',icon:'x'}];
-      h += '<div style="display:flex;gap:4px;flex-wrap:wrap;padding-left:21px">';
+      var hidx=ts2.indexOf(t);
+      var stCol=t.estatus==='Lograda'?'var(--ok)':t.estatus==='Parcial'?'var(--warn)':t.estatus==='No lograda'?'var(--bad)':'var(--muted)';
+      var stIcon=t.estatus==='Lograda'?'✓':t.estatus==='Parcial'?'~':t.estatus==='No lograda'?'✕':'·';
+      h+='<div style="padding:10px;border-bottom:1px solid var(--border2)">';
+      h+='<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">';
+      h+='<span style="font-size:13px;color:'+stCol+';flex-shrink:0;margin-top:1px">'+stIcon+'</span>';
+      h+='<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--text);'+(t.estatus==='Lograda'?'text-decoration:line-through;opacity:.6':'')+'">' + t.tarea+'</div>';
+      if(t.semana)h+='<div style="font-size:9px;color:var(--muted);margin-top:2px">Sem: '+fmtD(t.semana)+'</div>';
+      h+='</div></div>';
+      var hBtns=[{s:'Lograda',col:'var(--ok)',icon:'+'},{s:'No lograda',col:'var(--bad)',icon:'x'}];
+      h+='<div style="display:flex;gap:4px;flex-wrap:wrap;padding-left:21px">';
       hBtns.forEach(function(btn){
         var active=t.estatus===btn.s;
-        h += '<button style="padding:3px 9px;border-radius:99px;border:1.5px solid '+btn.col+';background:'+(active?btn.col:'transparent')+';color:'+(active?'#fff':btn.col)+';font-size:10px;font-weight:700;cursor:pointer" onclick="updTareaS(\''+pid+'\','+hidx+',\''+btn.s+'\')">'+btn.icon+' '+btn.s+'</button>';
+        var oAct="updTareaS('"+pid+"',"+hidx+",'"+btn.s+"')";
+        h+='<button style="padding:3px 9px;border-radius:99px;border:1.5px solid '+btn.col+';background:'+(active?btn.col:'transparent')+';color:'+(active?'#fff':btn.col)+';font-size:10px;font-weight:700;cursor:pointer" onclick="'+oAct+'">'+btn.icon+' '+btn.s+'</button>';
       });
-      h += '</div>';
-      h += '</div>';
+      h+='</div></div>';
     });
     h += '</div></details>';
   }
@@ -5317,6 +5067,272 @@ function rGlosario(c){
 
   + '</div>';
 }
+
+function exportarPDFPrototipos(){
+  const protos=[];
+  PROJ.forEach(p=>{
+    (p.skus||[]).forEach(sk=>{
+      if(sk.fechaProto){
+        protos.push({
+          nombre:sk.nombre||sk.id,
+          proyecto:p.name,
+          projId:p.id,
+          eng:p.eng,
+          engNombre:NOMBRES[p.eng]||p.eng,
+          fecha:sk.fechaProto,
+          estatus:sk.e||'Pendiente',
+          color:USERS.find(u=>u.perfil===p.eng)?.color||'#534AB7'
+        });
+      }
+    });
+  });
+
+  const hoy=new Date();
+  const activos=protos.filter(p=>p.estatus!=='Completado').sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const completados=protos.filter(p=>p.estatus==='Completado');
+  const atrasados=activos.filter(p=>new Date(p.fecha+'T12:00:00')<hoy);
+  const fechaCount={};
+  protos.forEach(p=>{fechaCount[p.fecha]=(fechaCount[p.fecha]||0)+1;});
+  const empalmes=Object.entries(fechaCount).filter(([,v])=>v>1).map(([k])=>k);
+
+  const fmtFecha=(f)=>new Date(f+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+  const fmtCorta=(f)=>new Date(f+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});
+  const diasRest=(f)=>{const d=Math.ceil((new Date(f+'T12:00:00')-hoy)/(1000*60*60*24));return d;};
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>Calendario de Prototipos — ${hoy.toLocaleDateString('es-MX',{month:'long',year:'numeric'})}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Calibri,Arial,sans-serif;font-size:12px;color:#1E293B;padding:28px;background:#fff;max-width:960px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:3px solid #0D1B3E}
+    .logo{font-size:20px;font-weight:900;color:#0D1B3E;letter-spacing:-1px}
+    .logo-sub{font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+    h1{font-size:17px;color:#0D1B3E;margin-bottom:2px}
+    .sub{font-size:11px;color:#64748B}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+    .kpi{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px;text-align:center}
+    .kv{font-size:24px;font-weight:700}
+    .kl{font-size:9px;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+    .alert{background:#FEF3C7;border:1px solid #FCD34D;border-radius:6px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:#92400E}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th{background:#0D1B3E;color:#fff;padding:7px 10px;text-align:left;font-size:10px;letter-spacing:.04em}
+    td{padding:7px 10px;border-bottom:1px solid #F1F5F9;vertical-align:middle;font-size:11px}
+    tr:nth-child(even) td{background:#F8FAFC}
+    .chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700}
+    .chip-ok{background:#DCFCE7;color:#166534}
+    .chip-warn{background:#FEF3C7;color:#92400E}
+    .chip-bad{background:#FEE2E2;color:#991B1B}
+    .chip-gray{background:#F1F5F9;color:#475569}
+    .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+    .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748B;margin:16px 0 8px;padding-top:12px;border-top:1px solid #E2E8F0}
+    .footer{margin-top:24px;font-size:9px;color:#94A3B8;display:flex;justify-content:space-between;border-top:1px solid #E2E8F0;padding-top:8px}
+    @media print{button{display:none!important}}
+  </style></head><body>
+  <div class="header">
+    <div>
+      <div class="logo">NPD MANAGER</div>
+      <div class="logo-sub">Línea Italia · Gestión de Nuevos Productos</div>
+    </div>
+    <div style="text-align:right">
+      <h1>Calendario de Prototipos</h1>
+      <div class="sub">Taller de Innovación · ${hoy.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="kv">${protos.length}</div><div class="kl">Total prototipos</div></div>
+    <div class="kpi"><div class="kv" style="color:#2563EB">${activos.length}</div><div class="kl">Activos</div></div>
+    <div class="kpi"><div class="kv" style="color:${atrasados.length>0?'#DC2626':'#16A34A'}">${atrasados.length}</div><div class="kl">Atrasados</div></div>
+    <div class="kpi"><div class="kv" style="color:#16A34A">${completados.length}</div><div class="kl">Completados</div></div>
+  </div>
+
+  ${empalmes.length>0?`<div class="alert">⚠ Empalmes detectados en: ${empalmes.map(d=>fmtCorta(d)).join(' · ')}</div>`:''}
+
+  <div class="section-title">Prototipos activos — ordenados por fecha de entrega</div>
+  <table>
+    <thead><tr>
+      <th>Modelo / SKU</th><th>Proyecto</th><th>Responsable</th>
+      <th>Fecha prototipo</th><th>Días</th><th>Estatus</th>
+    </tr></thead>
+    <tbody>
+    ${activos.map(p=>{
+      const dr=diasRest(p.fecha);
+      const atras=dr<0;
+      return`<tr>
+        <td><span class="dot" style="background:${p.color}"></span>${p.nombre}</td>
+        <td>${p.proyecto}</td>
+        <td>${p.engNombre}</td>
+        <td style="font-weight:${atras?'700':'400'};color:${atras?'#DC2626':'inherit'}">${fmtCorta(p.fecha)}</td>
+        <td style="font-weight:700;color:${atras?'#DC2626':'#16A34A'}">${atras?Math.abs(dr)+'d atr.':dr+'d'}</td>
+        <td><span class="chip ${p.estatus==='Completado'?'chip-ok':p.estatus==='En proceso'?'chip-warn':'chip-gray'}">${p.estatus}</span></td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>
+
+  ${completados.length>0?`
+  <div class="section-title">Prototipos completados</div>
+  <table>
+    <thead><tr><th>Modelo / SKU</th><th>Proyecto</th><th>Responsable</th><th>Fecha</th></tr></thead>
+    <tbody>
+    ${completados.map(p=>`<tr>
+      <td><span class="dot" style="background:${p.color}"></span>${p.nombre}</td>
+      <td>${p.proyecto}</td><td>${p.engNombre}</td>
+      <td>${fmtCorta(p.fecha)}</td>
+    </tr>`).join('')}
+    </tbody>
+  </table>`:''}
+
+  <div class="footer">
+    <span>NPD Manager · Línea Italia · Taller de Innovación</span>
+    <span>Confidencial — Solo uso interno</span>
+  </div>
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),600);
+}
+
+// ══ CALENDARIO DE PROTOTIPOS ═══════════════════════════════════════
+let calProtoYear=new Date().getFullYear();
+let calProtoMonth=new Date().getMonth();
+let calProtoModo='calendario'; // 'kpis' o 'calendario'
+
+function rCalPrototipos(c){
+  // Recopilar todos los prototipos (SKUs con fechaProto)
+  const protos=[];
+  PROJ.forEach(p=>{
+    (p.skus||[]).forEach(sk=>{
+      if(sk.fechaProto){
+        protos.push({
+          nombre:sk.nombre||sk.id,
+          proyecto:p.name,
+          projId:p.id,
+          eng:p.eng,
+          engNombre:NOMBRES[p.eng]||p.eng,
+          fecha:sk.fechaProto,
+          estatus:sk.e||'Pendiente',
+          avance:sk.avance||0,
+          color:USERS.find(u=>u.perfil===p.eng)?.color||'#534AB7'
+        });
+      }
+    });
+  });
+
+  const hoy=new Date();
+  const activos=protos.filter(p=>p.estatus!=='Completado');
+  const completados=protos.filter(p=>p.estatus==='Completado');
+  const atrasados=activos.filter(p=>new Date(p.fecha+'T12:00:00')<hoy);
+
+  // Detectar empalmes (misma fecha)
+  const fechaCount={};
+  protos.forEach(p=>{fechaCount[p.fecha]=(fechaCount[p.fecha]||0)+1;});
+  const empalmes=Object.entries(fechaCount).filter(([,v])=>v>1).map(([k])=>k);
+
+  let h='';
+
+  // KPIs
+  h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+    ${[
+      {l:'Total prototipos',v:protos.length,col:'var(--text)'},
+      {l:'Activos',v:activos.length,col:'var(--blue)'},
+      {l:'Atrasados',v:atrasados.length,col:atrasados.length>0?'var(--bad)':'var(--ok)'},
+      {l:'Completados',v:completados.length,col:'var(--ok)'},
+    ].map(k=>`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 14px;text-align:center">
+      <div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:${k.col};line-height:1">${k.v}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.04em">${k.l}</div>
+    </div>`).join('')}
+  </div>`;
+
+  // Alertas de empalme
+  if(empalmes.length>0){
+    h+=`<div style="background:var(--warn-bg);border:1px solid rgba(196,125,10,.3);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--warn)">
+      ⚠ Empalmes detectados en: ${empalmes.map(d=>new Date(d+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'})).join(' · ')}
+    </div>`;
+  }
+
+  // Controles del calendario
+  const mesNombre=new Date(calProtoYear,calProtoMonth,1).toLocaleDateString('es-MX',{month:'long',year:'numeric'});
+  h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="calProtoMonth--;if(calProtoMonth<0){calProtoMonth=11;calProtoYear--;}rCalPrototipos(document.getElementById('vc'))" style="padding:5px 12px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);cursor:pointer;font-size:12px">‹</button>
+      <span style="font-size:14px;font-weight:700;color:var(--text);text-transform:capitalize">${mesNombre}</span>
+      <button onclick="calProtoMonth++;if(calProtoMonth>11){calProtoMonth=0;calProtoYear++;}rCalPrototipos(document.getElementById('vc'))" style="padding:5px 12px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);cursor:pointer;font-size:12px">›</button>
+      <button onclick="calProtoYear=new Date().getFullYear();calProtoMonth=new Date().getMonth();rCalPrototipos(document.getElementById('vc'))" style="padding:5px 12px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:11px">Hoy</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted)">${protos.length>0?protos.length+' prototipos programados':'Sin prototipos programados — agrega fechas en los SKUs de cada proyecto'}</div>
+  </div>`;
+
+  // Calendario mensual
+  const primerDia=new Date(calProtoYear,calProtoMonth,1);
+  const ultimoDia=new Date(calProtoYear,calProtoMonth+1,0);
+  const diasMes=ultimoDia.getDate();
+  const inicioSem=primerDia.getDay();
+  const dias=['D','L','M','X','J','V','S'];
+
+  h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--navy)">
+      ${dias.map(d=>`<div style="text-align:center;padding:8px 4px;font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border2)">`;
+
+  // Celdas vacías antes del primer día
+  for(let i=0;i<inicioSem;i++){
+    h+=`<div style="min-height:80px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);background:var(--surface2)"></div>`;
+  }
+
+  for(let d=1;d<=diasMes;d++){
+    const fecha=`${calProtoYear}-${String(calProtoMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const esHoy=fecha===hoy.toISOString().slice(0,10);
+    const protosDelDia=protos.filter(p=>p.fecha===fecha);
+    const tieneEmpalme=protosDelDia.length>1;
+
+    h+=`<div style="min-height:80px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);padding:4px;background:${tieneEmpalme?'rgba(196,125,10,.05)':esHoy?'rgba(24,95,165,.05)':'var(--surface)'}">
+      <div style="font-size:11px;font-weight:${esHoy?'700':'400'};color:${esHoy?'var(--blue)':tieneEmpalme?'var(--warn)':'var(--muted)'};margin-bottom:3px;display:flex;justify-content:space-between">
+        ${d}${tieneEmpalme?` <span style="font-size:9px;background:var(--warn-bg);color:var(--warn);padding:1px 4px;border-radius:3px">⚠${protosDelDia.length}</span>`:''}
+      </div>
+      ${protosDelDia.map(p=>`<div style="background:${p.color}18;border-left:2px solid ${p.color};border-radius:2px;padding:2px 4px;margin-bottom:2px;cursor:pointer" onclick="oP('${p.projId}')" title="${p.nombre} · ${p.proyecto}">
+        <div style="font-size:9px;font-weight:700;color:${p.color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
+        <div style="font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.proyecto}</div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  // Celdas vacías al final
+  const totalCeldas=inicioSem+diasMes;
+  const restantes=totalCeldas%7===0?0:7-(totalCeldas%7);
+  for(let i=0;i<restantes;i++){
+    h+=`<div style="min-height:80px;border-right:1px solid var(--border2);border-bottom:1px solid var(--border2);background:var(--surface2)"></div>`;
+  }
+
+  h+=`</div></div>`;
+
+  // Lista de prototipos activos
+  if(activos.length>0){
+    h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px;margin-top:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Prototipos activos</div>
+      ${activos.sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(p=>{
+        const dFecha=new Date(p.fecha+'T12:00:00');
+        const diasRest=Math.ceil((dFecha-hoy)/(1000*60*60*24));
+        const atrasado=diasRest<0;
+        return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border2)" onclick="oP('${p.projId}')" style="cursor:pointer">
+          <div style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${p.nombre}</div>
+            <div style="font-size:10px;color:var(--muted)">${p.proyecto} · ${p.engNombre}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;font-weight:700;color:${atrasado?'var(--bad)':'var(--text)'}">${dFecha.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</div>
+            <div style="font-size:9px;color:${atrasado?'var(--bad)':'var(--muted)'}">${atrasado?Math.abs(diasRest)+'d atraso':diasRest+'d'}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  c.innerHTML=h;
+}
+
 
 </script>
 </body>
