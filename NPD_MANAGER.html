@@ -662,25 +662,39 @@ function fbDeleteProj(id){
 // ── Pull completo desde Firebase — todos los nodos ──
 async function fbPull(){
   try{
-    // Cargar proyectos
     const [rProj, rUsers, rDel] = await Promise.allSettled([
       fetch(FB_PROJ+'.json').then(r=>r.json()),
       fetch(FB_USERS+'.json').then(r=>r.json()),
       fetch(FB_DEL+'.json').then(r=>r.json())
     ]);
-    // Guardar proyectos en localStorage
+    // Guardar proyectos — SOLO si Firebase tiene versión más reciente (lu más nuevo)
     if(rProj.status==='fulfilled'&&rProj.value){
       Object.entries(rProj.value).forEach(([id,p])=>{
-        if(p&&p.id){try{localStorage.setItem(VER+id,JSON.stringify(p));}catch(e){}}
+        if(!p||!p.id)return;
+        const local=localStorage.getItem(VER+id);
+        if(local){
+          try{
+            const lp=JSON.parse(local);
+            // Solo sobreescribir si Firebase es más reciente
+            const fbTime=new Date(p.lu||0).getTime();
+            const localTime=new Date(lp.lu||0).getTime();
+            if(fbTime>localTime){localStorage.setItem(VER+id,JSON.stringify(p));}
+          }catch(e){localStorage.setItem(VER+id,JSON.stringify(p));}
+        } else {
+          // No existe en local — agregar desde Firebase
+          try{localStorage.setItem(VER+id,JSON.stringify(p));}catch(e){}
+        }
       });
     }
-    // Guardar usuarios
+    // Usuarios
     if(rUsers.status==='fulfilled'&&Array.isArray(rUsers.value)){
       try{localStorage.setItem(VER+'users',JSON.stringify(rUsers.value));}catch(e){}
     }
-    // Guardar eliminados
+    // Eliminados — merge, nunca reducir
     if(rDel.status==='fulfilled'&&Array.isArray(rDel.value)){
-      try{localStorage.setItem(VER+'__deleted',JSON.stringify(rDel.value));}catch(e){}
+      const localDel=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
+      const merged=[...new Set([...localDel,...rDel.value])];
+      try{localStorage.setItem(VER+'__deleted',JSON.stringify(merged));}catch(e){}
     }
     return true;
   }catch(e){return false;}
