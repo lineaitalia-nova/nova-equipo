@@ -190,7 +190,7 @@ html,body{height:100%;font-family:var(--font-b);font-size:14px;background:var(--
 .ski-si{font-size:11px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;background:var(--surface);color:var(--text);cursor:pointer;width:100%;font-family:var(--font-b)}
 .ski-cb{font-size:10px;padding:3px 7px;border-radius:5px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);width:100%;text-align:center;font-family:var(--font-b)}
 .ski-cb:hover{background:var(--surface2)}
-.ski-del{font-size:11px;cursor:pointer;color:var(--muted);padding:2px 4px;border-radius:3px;text-align:center}
+.ski-del{font-size:11px;cursor:pointer;color:var(--muted);padding:2px 4px;border-radius:3px;text-align:center;align-self:start;margin-top:2px}
 .ski-del:hover{background:var(--bad-bg);color:var(--bad)}
 .ck-d{background:var(--surface2);border-radius:7px;padding:9px 11px;margin:-2px 0 6px}
 .ck-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:5px}
@@ -2986,12 +2986,14 @@ function aSku(pid){const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;p.skus=
 function completarProto(pid,sid){updProtoEstatus(pid,sid,'Completado');}
 
 function updProtoEstatus(pid,sid,estatus){
-  const p=PROJ.find(x=>x.id===pid);if(!p)return;
-  const sk=p.skus.find(s=>s.id===sid);if(!sk)return;
+  console.log('[updProtoEstatus] pid='+pid+' sid='+sid+' estatus='+estatus);
+  const p=PROJ.find(x=>x.id===pid);if(!p){console.warn('Proyecto no encontrado:',pid);return;}
+  const sk=p.skus.find(s=>s.id===sid);if(!sk){console.warn('SKU no encontrado:',sid,'en proyecto',pid,'skus:',p.skus.map(s=>s.id));return;}
+  console.log('[updProtoEstatus] SKU encontrado:',sk.nombre,'codigo:',sk.codigo);
   sk.e=estatus;
   if(estatus==='Completado'){sk.completadoEn=new Date().toISOString().slice(0,10);}
   else{delete sk.completadoEn;}
-  sch(p);
+  saveProj(p);
   toast(estatus==='Completado'?'✓ Prototipo completado':estatus==='En proceso'?'→ En progreso':'○ No iniciado');
   // Refrescar calendario completo incluyendo KPIs
   const vc=document.getElementById('vc');
