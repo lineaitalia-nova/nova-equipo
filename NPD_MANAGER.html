@@ -2986,13 +2986,24 @@ function aSku(pid){const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;p.skus=
 function completarProto(pid,sid){updProtoEstatus(pid,sid,'Completado');}
 
 function updProtoEstatus(pid,sid,estatus,skuCodigo){
-  console.log('[updProtoEstatus] pid='+pid+' sid='+sid+' codigo='+skuCodigo+' estatus='+estatus);
-  const p=PROJ.find(x=>x.id===pid);if(!p){console.warn('Proyecto no encontrado:',pid);return;}
-  // Buscar por código primero (más confiable cuando hay IDs duplicados), luego por ID
+  const p=PROJ.find(x=>x.id===pid);if(!p)return;
   let sk = skuCodigo ? p.skus.find(s=>s.codigo===skuCodigo) : null;
   if(!sk) sk = p.skus.find(s=>s.id===sid);
-  if(!sk){console.warn('SKU no encontrado: codigo='+skuCodigo+' id='+sid);return;}
-  console.log('[updProtoEstatus] SKU encontrado:',sk.nombre,'id:',sk.id,'codigo:',sk.codigo);
+  if(!sk)return;
+  sk.e=estatus;
+  if(estatus==='Completado'){sk.completadoEn=new Date().toISOString().slice(0,10);}
+  else{delete sk.completadoEn;}
+  saveProj(p);
+  toast(estatus==='Completado'?'✓ Prototipo completado':estatus==='En proceso'?'→ En progreso':'○ No iniciado');
+  const vc=document.getElementById('vc');
+  if(vc)rCalPrototipos(vc);
+}
+
+function updProtoEstatusByCodigo(pid,codigo,estatus){
+  const p=PROJ.find(x=>x.id===pid);if(!p)return;
+  const sk=p.skus.find(s=>s.codigo===codigo);
+  if(!sk){console.warn('SKU no encontrado por codigo:',codigo);return;}
+  console.log('[updProtoEstatusByCodigo] SKU:',sk.nombre,'codigo:',sk.codigo,'→',estatus);
   sk.e=estatus;
   if(estatus==='Completado'){sk.completadoEn=new Date().toISOString().slice(0,10);}
   else{delete sk.completadoEn;}
@@ -5353,7 +5364,7 @@ function rCalPrototipos(c){
   if(activosMes.length>0||completados.filter(p=>{const d=new Date(p.fecha+'T12:00:00');return d.getFullYear()===calProtoYear&&d.getMonth()===calProtoMonth;}).length>0){
     const completadosMes=completados.filter(p=>{const d=new Date(p.fecha+'T12:00:00');return d.getFullYear()===calProtoYear&&d.getMonth()===calProtoMonth;});
     const todosMes=[...activosMes,...completadosMes].sort((a,b)=>a.fecha.localeCompare(b.fecha));
-    h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px;margin-top:14px">
+    h+=`<div id="proto-list-mes" style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px;margin-top:14px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Prototipos del mes</div>
       ${todosMes.map(pt=>{
         const dFecha=new Date(pt.fecha+'T12:00:00');
@@ -5370,9 +5381,9 @@ function rCalPrototipos(c){
             <div style="font-size:9px;color:${atrasado?'var(--bad)':'var(--muted)'}">${atrasado?Math.abs(diasRest)+'d atraso':diasRest+'d'}</div>
           </div>
           <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button onclick="updProtoEstatus('${pt.projId}','${pt.skuId}','No iniciado','${pt.skuCodigo}')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--muted);background:${(pt.estatus==='No iniciado'||pt.estatus==='Pendiente')?'var(--muted)':'transparent'};color:${(pt.estatus==='No iniciado'||pt.estatus==='Pendiente')?'#fff':'var(--muted)'};cursor:pointer;white-space:nowrap">○ No iniciado</button>
-            <button onclick="updProtoEstatus('${pt.projId}','${pt.skuId}','En proceso','${pt.skuCodigo}')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--purple);background:${pt.estatus==='En proceso'?'var(--purple)':'transparent'};color:${pt.estatus==='En proceso'?'#fff':'var(--purple)'};cursor:pointer;white-space:nowrap">→ En progreso</button>
-            <button onclick="updProtoEstatus('${pt.projId}','${pt.skuId}','Completado','${pt.skuCodigo}')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--ok);background:${pt.estatus==='Completado'?'var(--ok)':'transparent'};color:${pt.estatus==='Completado'?'#fff':'var(--ok)'};cursor:pointer;white-space:nowrap">✓ Completado</button>
+            <button data-pid="${pt.projId}" data-codigo="${pt.skuCodigo}" data-est="No iniciado" class="proto-est-btn" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--muted);background:${(pt.estatus==='No iniciado'||pt.estatus==='Pendiente')?'var(--muted)':'transparent'};color:${(pt.estatus==='No iniciado'||pt.estatus==='Pendiente')?'#fff':'var(--muted)'};cursor:pointer;white-space:nowrap">○ No iniciado</button>
+            <button data-pid="${pt.projId}" data-codigo="${pt.skuCodigo}" data-est="En proceso" class="proto-est-btn" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--purple);background:${pt.estatus==='En proceso'?'var(--purple)':'transparent'};color:${pt.estatus==='En proceso'?'#fff':'var(--purple)'};cursor:pointer;white-space:nowrap">→ En progreso</button>
+            <button data-pid="${pt.projId}" data-codigo="${pt.skuCodigo}" data-est="Completado" class="proto-est-btn" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--ok);background:${pt.estatus==='Completado'?'var(--ok)':'transparent'};color:${pt.estatus==='Completado'?'#fff':'var(--ok)'};cursor:pointer;white-space:nowrap">✓ Completado</button>
           </div>
         </div>`;
       }).join('')}
@@ -5380,6 +5391,19 @@ function rCalPrototipos(c){
   }
 
   c.innerHTML=h;
+  // Event delegation — lee data-attributes del DOM en tiempo real, no strings interpolados
+  const lista=document.getElementById('proto-list-mes');
+  if(lista){
+    lista.addEventListener('click',function(e){
+      const btn=e.target.closest('.proto-est-btn');
+      if(!btn)return;
+      const pid=btn.getAttribute('data-pid');
+      const codigo=btn.getAttribute('data-codigo');
+      const est=btn.getAttribute('data-est');
+      console.log('[proto-btn] pid='+pid+' codigo='+codigo+' est='+est);
+      updProtoEstatusByCodigo(pid,codigo,est);
+    });
+  }
 }
 
 
