@@ -2268,7 +2268,7 @@ function rModal(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div><div style="font-size:13px;font-weight:700">Modelos / SKUs</div><div style="font-size:11px;color:var(--muted)">${skus.length} modelos · ${sD} completados${sP!==null?' · '+sP+'%':''}</div></div><div style="display:flex;gap:5px">${['Pendiente','En proceso','Completado'].map(s=>{const cl=s==='Completado'?'ok':s==='En proceso'?'purple':'gray';return`<span class="tag ${cl}">${skus.filter(x=>x.e===s).length} ${s}</span>`;}).join('')}</div></div>
     ${skus.length?`<div style="height:4px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:11px"><div style="height:100%;background:${bC(sP)};width:${sP}%;border-radius:2px"></div></div>`:''}
     <div style="display:grid;grid-template-columns:1fr 125px 100px 110px 26px;gap:7px;padding:4px 9px;font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em"><span>Modelo</span><span>Código</span><span>Estatus</span><span>Checklist</span><span></span></div>
-    ${skus.map((sk)=>{const sc=sk.e==='Completado'?'sd':sk.e==='En proceso'?'sp':'';const ckD=CK.filter(c=>sk.checks[c]).length,ckP=Math.round(ckD/CK.length*100);return`<div><div class="ski ${sc}">${ed?`<input class="ski-ni" value="${sk.nombre}" placeholder="Nombre..." onchange="uSF('${p.id}','${sk.id}','nombre',this.value)">`:`<span style="font-size:13px;font-weight:600">${sk.nombre}</span>`}${ed?`<input class="ski-ci" value="${sk.codigo}" placeholder="Código" onchange="uSF('${p.id}','${sk.id}','codigo',this.value)">`:`<span style="font-size:11px;color:var(--muted);font-family:var(--font-m)">${sk.codigo||'—'}</span>`}${ed?`<select class="ski-si" onchange="uSS('${p.id}','${sk.id}',this.value)">${['Pendiente','En proceso','Completado'].map(s=>`<option${sk.e===s?' selected':''}>${s}</option>`).join('')}</select>`:`<span class="tag${sk.e==='Completado'?' ok':sk.e==='En proceso'?' purple':' gray'}">${sk.e}</span>`}<div><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:9px;color:var(--muted)">${ckD}/${CK.length}</span><span style="font-size:9px;font-weight:700;color:${bC(ckP)}">${ckP}%</span></div><div style="height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-bottom:3px"><div style="height:100%;background:${bC(ckP)};width:${ckP}%;border-radius:2px"></div></div><div style="display:flex;gap:4px"><button class="ski-cb" onclick="tSCk('${p.id}','${sk.id}')">${sk.ckOpen?'Cerrar ▲':'Checklist ▼'}</button><span style="font-size:9px;color:var(--muted);margin-left:6px">Proto:</span>${ed?`<input type="date" value="${sk.fechaProto||''}" title="Fecha prototipo" style="font-size:10px;padding:3px 7px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface2);color:var(--text);min-width:130px" onchange="updSkuFechaProto('${p.id}','${sk.id}',this.value)">`:`<span style="font-size:9px;color:${sk.fechaProto?'var(--text)':'var(--muted)'}">${sk.fechaProto?new Date(sk.fechaProto+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'}):'—'}</span>`}${ed&&ckP<100?`<button class="ski-cb" style="background:var(--ok-bg);border-color:var(--ok);color:var(--ok)" onclick="completarChecklist('${p.id}','${sk.id}')">✓ Todo</button>`:''}</div></div>${ed?`<span class="ski-del" onclick="dSku('${p.id}','${sk.id}')">✕</span>`:'<span></span>'}</div>${sk.ckOpen?`<div class="ck-d"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:11px;font-weight:700">${sk.nombre}</span>${ed&&ckP<100?`<button onclick="completarChecklist('${p.id}','${sk.id}')" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;border:1.5px solid var(--ok);background:var(--ok-bg);color:var(--ok);cursor:pointer;font-family:var(--font-b)">✓ Completar todos los entregables</button>`:''}</div><div class="ck-grid">${CK.map(col=>`<div class="ck-i${sk.checks[col]?' done':''}" ${ed?`onclick="tSCI('${p.id}','${sk.id}','${col}')"`:''}><div class="ck-box">${sk.checks[col]?'✓':''}</div><span>${col}</span></div>`).join('')}</div></div>`:''}</div>`;}).join('')}
+    ${skus.map((sk)=>{const sc=sk.e==='Completado'?'sd':sk.e==='En proceso'?'sp':'';const ckD=CK.filter(c=>sk.checks[c]).length,ckP=Math.round(ckD/CK.length*100);return`<div><div class="ski ${sc}">${ed?`<input class="ski-ni" value="${sk.nombre}" placeholder="Nombre..." onchange="uSF('${p.id}','${sk.id}','nombre',this.value)">`:`<span style="font-size:13px;font-weight:600">${sk.nombre}</span>`}${ed?`<input class="ski-ci" value="${sk.codigo}" placeholder="Código" onchange="uSF('${p.id}','${sk.id}','codigo',this.value)">`:`<span style="font-size:11px;color:var(--muted);font-family:var(--font-m)">${sk.codigo||'—'}</span>`}${ed?`<select class="ski-si" onchange="uSS('${p.id}','${sk.id}',this.value)">${['Pendiente','En proceso','Completado'].map(s=>`<option${sk.e===s?' selected':''}>${s}</option>`).join('')}</select>`:`<span class="tag${sk.e==='Completado'?' ok':sk.e==='En proceso'?' purple':' gray'}">${sk.e}</span>`}<div><div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:9px;color:var(--muted)">${ckD}/${CK.length}</span><span style="font-size:9px;font-weight:700;color:${bC(ckP)}">${ckP}%</span></div><div style="height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-bottom:3px"><div style="height:100%;background:${bC(ckP)};width:${ckP}%;border-radius:2px"></div></div><div style="display:flex;gap:4px"><button class="ski-cb" onclick="tSCk('${p.id}','${sk.id}')">${sk.ckOpen?'Cerrar ▲':'Checklist ▼'}</button><span style="font-size:9px;color:var(--muted);margin-left:6px">📅</span>${ed?`<input type="date" value="${sk.fechaProto||''}" title="Fecha prototipo" style="font-size:10px;padding:3px 6px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface2);color:var(--text);width:130px;cursor:pointer" onchange="updSkuFechaProto('${p.id}','${sk.id}',this.value)">`:`<span style="font-size:9px;font-weight:600;color:${sk.fechaProto?'var(--text)':'var(--muted)'};background:${sk.fechaProto?'var(--surface2)':'transparent'};padding:2px 6px;border-radius:3px">${sk.fechaProto?new Date(sk.fechaProto+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}):'Sin fecha'}</span>`}${ed&&ckP<100?`<button class="ski-cb" style="background:var(--ok-bg);border-color:var(--ok);color:var(--ok)" onclick="completarChecklist('${p.id}','${sk.id}')">✓ Todo</button>`:''}</div></div>${ed?`<span class="ski-del" onclick="dSku('${p.id}','${sk.id}')">✕</span>`:'<span></span>'}</div>${sk.ckOpen?`<div class="ck-d"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:11px;font-weight:700">${sk.nombre}</span>${ed&&ckP<100?`<button onclick="completarChecklist('${p.id}','${sk.id}')" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;border:1.5px solid var(--ok);background:var(--ok-bg);color:var(--ok);cursor:pointer;font-family:var(--font-b)">✓ Completar todos los entregables</button>`:''}</div><div class="ck-grid">${CK.map(col=>`<div class="ck-i${sk.checks[col]?' done':''}" ${ed?`onclick="tSCI('${p.id}','${sk.id}','${col}')"`:''}><div class="ck-box">${sk.checks[col]?'✓':''}</div><span>${col}</span></div>`).join('')}</div></div>`:''}</div>`;}).join('')}
     ${ed?`<button class="add-sku" onclick="aSku('${p.id}')">+ Agregar modelo / SKU</button>`:''}
   </div>`;
 
@@ -2975,6 +2975,18 @@ function uT(pid,f,i,k,v){
   }
 }
 function aSku(pid){const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;p.skus=p.skus||[];p.skus.push({id:'s'+Date.now(),nombre:`Modelo ${p.skus.length+1}`,codigo:'',e:'Pendiente',checks:Object.fromEntries(CK.map(c=>[c,false])),ckOpen:false});addAct(p,'tarea','Agregó nuevo SKU');sch(p);rModal();sMT('skus');}
+function completarProto(pid,sid){
+  if(!confirm('¿Marcar este prototipo como completado?'))return;
+  const p=PROJ.find(x=>x.id===pid);if(!p)return;
+  const sk=p.skus.find(s=>s.id===sid);if(!sk)return;
+  sk.e='Completado';
+  sk.completadoEn=new Date().toISOString().slice(0,10);
+  sch(p);
+  toast('✓ Prototipo marcado como completado');
+  // Refrescar el calendario
+  setTimeout(()=>rCalPrototipos(document.getElementById('vc')),300);
+}
+
 function updSkuFechaProto(pid,sid,fecha){const p=PROJ.find(x=>x.id===pid);if(!p)return;const sk=p.skus.find(s=>s.id===sid);if(!sk)return;sk.fechaProto=fecha;sch(p);toast('Fecha de prototipo guardada');}
 
 function dSku(pid,sid){const p=PROJ.find(x=>x.id===pid);if(!p||!cE(p))return;const sk=p.skus.find(s=>s.id===sid);if(!confirm(`¿Eliminar "${sk?.nombre}"?`))return;p.skus=p.skus.filter(s=>s.id!==sid);sch(p);rModal();sMT('skus');}
@@ -5078,6 +5090,7 @@ function exportarPDFPrototipos(){
           nombre:(sk.codigo||'')+((sk.nombre&&!sk.nombre.startsWith('Modelo '))?' · '+sk.nombre:''),
           proyecto:p.name,
           projId:p.id,
+          skuId:sk.id,
           eng:p.eng,
           engNombre:NOMBRES[p.eng]||p.eng,
           fecha:sk.fechaProto,
@@ -5316,16 +5329,17 @@ function rCalPrototipos(c){
         const dFecha=new Date(p.fecha+'T12:00:00');
         const diasRest=Math.ceil((dFecha-hoy)/(1000*60*60*24));
         const atrasado=diasRest<0;
-        return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border2)" onclick="oP('${p.projId}')" style="cursor:pointer">
-          <div style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0"></div>
-          <div style="flex:1;min-width:0">
+        return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">
+          <div style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0;cursor:pointer" onclick="oP('${p.projId}')"></div>
+          <div style="flex:1;min-width:0;cursor:pointer" onclick="oP('${p.projId}')">
             <div style="font-size:12px;font-weight:600;color:var(--text)">${p.nombre}</div>
             <div style="font-size:10px;color:var(--muted)">${p.proyecto} · ${p.engNombre}</div>
           </div>
-          <div style="text-align:right">
+          <div style="text-align:right;margin-right:8px">
             <div style="font-size:11px;font-weight:700;color:${atrasado?'var(--bad)':'var(--text)'}">${dFecha.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</div>
             <div style="font-size:9px;color:${atrasado?'var(--bad)':'var(--muted)'}">${atrasado?Math.abs(diasRest)+'d atraso':diasRest+'d'}</div>
           </div>
+          <button onclick="completarProto('${p.projId}','${p.skuId}')" style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:99px;border:1.5px solid var(--ok);background:var(--ok-bg);color:var(--ok);cursor:pointer;white-space:nowrap;font-family:var(--font-b)">✓ Completar</button>
         </div>`;
       }).join('')}
     </div>`;
