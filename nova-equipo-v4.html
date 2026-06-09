@@ -608,8 +608,45 @@ function gsPush(){
   setSyncTxt('Guardando...');
   const userData={tareas:DB.tareas,reportes:DB.reportes,prototipos:DB.prototipos||[],eval_progreso:DB.eval_progreso||{},_savedAt:Date.now()};
   fetch(FB_URL+'/usuarios/'+SESSION.id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(userData)})
-    .then(()=>setSyncTxt('Guardado'))
+    .then(()=>{
+      setSyncTxt('Guardado');
+      // También propagar tareas reasignadas al nodo del destinatario
+      _pushDelegadas();
+    })
     .catch(()=>setSyncTxt('Sin conexion'));
+}
+
+function _pushDelegadas(){
+  // Tareas donde assignedTo !== SESSION.id — propagar al nodo del destinatario
+  const reasignadas=DB.tareas.filter(t=>t.assignedTo&&t.assignedTo!==SESSION.id&&t.delegatedAt);
+  if(!reasignadas.length)return;
+  // Agrupar por destinatario
+  const porDest={};
+  reasignadas.forEach(t=>{
+    if(!porDest[t.assignedTo])porDest[t.assignedTo]=[];
+    porDest[t.assignedTo].push(t);
+  });
+  // Para cada destinatario, hacer PATCH de sus tareas delegadas
+  Object.entries(porDest).forEach(([destId,tareas])=>{
+    // Leer nodo del destinatario, agregar/actualizar las tareas delegadas
+    fetch(FB_URL+'/usuarios/'+destId+'.json')
+      .then(r=>r.json())
+      .then(ud=>{
+        if(!ud)ud={};
+        const existentes=ud.tareas||[];
+        const map={};
+        existentes.forEach(t=>{if(t&&t.id)map[t.id]=t;});
+        tareas.forEach(t=>{
+          // Solo sobreescribir si la versión delegada es más reciente
+          if(!map[t.id]||((t.delegatedAt||t.updatedAt||0)>=(map[t.id].delegatedAt||map[t.id].updatedAt||0))){
+            map[t.id]=t;
+          }
+        });
+        ud.tareas=Object.values(map);
+        return fetch(FB_URL+'/usuarios/'+destId+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ud)});
+      })
+      .catch(()=>{});
+  });
 }
 
 async function gsPull(){
@@ -630,12 +667,21 @@ async function gsPull(){
         if(ud._savedAt&&ud._savedAt>latestSaved)latestSaved=ud._savedAt;
       }catch(e){}
     });
-    // Dedupe keeping most recent version by updatedAt
+    // Dedupe: la versión con delegatedAt más reciente gana siempre
+    // Si no hay delegatedAt, usa updatedAt como criterio
     const dedupeLatest=(arr)=>{
       const map={};
       arr.forEach(i=>{
         if(!i||!i.id)return;
-        if(!map[i.id]||((i.updatedAt||0)>(map[i.id].updatedAt||0)))map[i.id]=i;
+        if(!map[i.id]){map[i.id]=i;return;}
+        const cur=map[i.id];
+        // Si el nuevo tiene delegatedAt más reciente → gana (reasignación)
+        const newDel=i.delegatedAt||0;
+        const curDel=cur.delegatedAt||0;
+        if(newDel>curDel){map[i.id]=i;return;}
+        if(curDel>newDel){return;} // el actual tiene delegación más reciente
+        // Sin delegatedAt — usar updatedAt
+        if((i.updatedAt||0)>(cur.updatedAt||0))map[i.id]=i;
       });
       return Object.values(map);
     };
@@ -1475,7 +1521,7 @@ function rEval(){
   const pct=tareas.length>0?Math.round(done.length/tareas.length*100):0;
   const avgAv=tareas.length>0?Math.round(tareas.reduce((s,t)=>s+(t.avance||0),0)/tareas.length):0;
   const reportes=DB.reportes.filter(r=>r.userId===u.id&&(!mes||r.semana?.slice(0,7)===mes)).length;
-  const ptScore=Math.min(100,Math.max(0,Math.round(pct*0.55+avgAv*0.35+Math.min(reportes*5,10)-venc.length*3)));
+  const ptScore=Math.min(100,Math.max(0,Math.round(pct*0.7+avgAv*0.3-venc.length*3)));
   const desemp=ptScore>=90?'Excelente':ptScore>=75?'Muy bueno':ptScore>=60?'Bueno':ptScore>=40?'Regular':'Por mejorar';
   const dColor={Excelente:'ok','Muy bueno':'ok',Bueno:'info',Regular:'warn','Por mejorar':'bad'}[desemp];
   const scoreColor=ptScore>=75?'var(--green)':ptScore>=50?'var(--amber)':'var(--red)';
@@ -1539,7 +1585,7 @@ function generarPDFPersonal(){
   const pct=tareas.length>0?Math.round(done.length/tareas.length*100):0;
   const avgAv=tareas.length>0?Math.round(tareas.reduce((s,t)=>s+(t.avance||0),0)/tareas.length):0;
   const reportes=DB.reportes.filter(r=>r.userId===u.id&&(!mes||r.semana?.slice(0,7)===mes)).length;
-  const ptScore=Math.min(100,Math.max(0,Math.round(pct*0.55+avgAv*0.35+Math.min(reportes*5,10)-venc.length*3)));
+  const ptScore=Math.min(100,Math.max(0,Math.round(pct*0.7+avgAv*0.3-venc.length*3)));
   const desemp=ptScore>=90?'Excelente':ptScore>=75?'Muy bueno':ptScore>=60?'Bueno':ptScore>=40?'Regular':'Por mejorar';
 
   const statusLabel={pending:'Pendiente',progress:'En proceso',done:'Completada',blocked:'Bloqueada'};
@@ -2254,7 +2300,12 @@ document.getElementById('btn-save-av').onclick=()=>{
   t.updatedAt=Date.now();
   if(t.status==='done'){t.avance=100;t.completedAt=Date.now();}
   const newAssign=document.getElementById('av-assign')?.value;
-  if(newAssign&&newAssign!==''){t.assignedTo=newAssign;t.updatedAt=Date.now();}
+  if(newAssign&&newAssign!==''){
+    t.assignedTo=newAssign;
+    t.updatedAt=Date.now();
+    t.delegatedAt=Date.now(); // marca que fue reasignada — siempre gana en dedupeLatest
+    t.delegatedBy=SESSION.id;
+  }
   const nota=document.getElementById('av-nota').value.trim();
   if(nota){if(!t.historial)t.historial=[];t.historial.push({fecha:todayStr(),nota,avance:t.avance});}
   const _avT=DB.tareas.find(t=>t.id===avanceTargetId);
