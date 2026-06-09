@@ -5353,8 +5353,8 @@ function rCalPrototipos(c){
   });
   if(activosMes.length>0||completados.filter(p=>{const d=new Date(p.fecha+'T12:00:00');return d.getFullYear()===calProtoYear&&d.getMonth()===calProtoMonth;}).length>0){
     const completadosMes=completados.filter(p=>{const d=new Date(p.fecha+'T12:00:00');return d.getFullYear()===calProtoYear&&d.getMonth()===calProtoMonth;});
-    const todosMes=[...activosMes,...completadosMes].sort((a,b)=>a.fecha.localeCompare(b.fecha));
-    _calProtoMesCache=todosMes; // guardar en cache global ANTES de renderizar
+    const todosMes=[...activosMes,...completadosMes].sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.skuCodigo.localeCompare(b.skuCodigo));
+    _calProtoMesCache=[...todosMes]; // cache con mismo orden que el render
     h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px;margin-top:14px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Prototipos del mes</div>
       ${todosMes.map((pt,idx)=>{
