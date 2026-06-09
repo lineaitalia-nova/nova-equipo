@@ -2992,7 +2992,7 @@ function updProtoEstatus(pid,sid,estatus){
   if(estatus==='Completado'){sk.completadoEn=new Date().toISOString().slice(0,10);}
   else{delete sk.completadoEn;}
   sch(p);
-  toast(estatus==='Completado'?'✓ Prototipo completado':estatus==='En progreso'?'→ En progreso':'○ No iniciado');
+  toast(estatus==='Completado'?'✓ Prototipo completado':estatus==='En proceso'?'→ En progreso':'○ No iniciado');
   // Refrescar calendario completo incluyendo KPIs
   const vc=document.getElementById('vc');
   if(vc)rCalPrototipos(vc);
@@ -5112,7 +5112,7 @@ function exportarPDFPrototipos(){
           eng:p.eng,
           engNombre:NOMBRES[p.eng]||p.eng,
           fecha:sk.fechaProto,
-          estatus:sk.e||'Pendiente',
+          estatus:sk.e||'No iniciado',
           color:USERS.find(u=>u.perfil===p.eng)?.color||'#534AB7'
         });
       }
@@ -5244,7 +5244,7 @@ function rCalPrototipos(c){
           eng:p.eng,
           engNombre:NOMBRES[p.eng]||p.eng,
           fecha:sk.fechaProto,
-          estatus:sk.e||'Pendiente',
+          estatus:sk.e||'No iniciado',
           avance:sk.avance||0,
           color:USERS.find(u=>u.perfil===p.eng)?.color||'#534AB7'
         });
@@ -5365,7 +5365,7 @@ function rCalPrototipos(c){
             <div style="font-size:9px;color:${atrasado?'var(--bad)':'var(--muted)'}">${atrasado?Math.abs(diasRest)+'d atraso':diasRest+'d'}</div>
           </div>
           <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button onclick="updProtoEstatus('${p.projId}','${p.skuId}','Pendiente')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--muted);background:${p.estatus==='Pendiente'?'var(--muted)':'transparent'};color:${p.estatus==='Pendiente'?'#fff':'var(--muted)'};cursor:pointer;white-space:nowrap">○ No iniciado</button>
+            <button onclick="updProtoEstatus('${p.projId}','${p.skuId}','No iniciado')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--muted);background:${(p.estatus==='No iniciado'||p.estatus==='Pendiente')?'var(--muted)':'transparent'};color:${(p.estatus==='No iniciado'||p.estatus==='Pendiente')?'#fff':'var(--muted)'};cursor:pointer;white-space:nowrap">○ No iniciado</button>
             <button onclick="updProtoEstatus('${p.projId}','${p.skuId}','En proceso')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--purple);background:${p.estatus==='En proceso'?'var(--purple)':'transparent'};color:${p.estatus==='En proceso'?'#fff':'var(--purple)'};cursor:pointer;white-space:nowrap">→ En progreso</button>
             <button onclick="updProtoEstatus('${p.projId}','${p.skuId}','Completado')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--ok);background:${p.estatus==='Completado'?'var(--ok)':'transparent'};color:${p.estatus==='Completado'?'#fff':'var(--ok)'};cursor:pointer;white-space:nowrap">✓ Completado</button>
           </div>
