@@ -5237,9 +5237,10 @@ function rCalPrototipos(c){
     (p.skus||[]).forEach(sk=>{
       if(sk.fechaProto){
         protos.push({
-          nombre:sk.nombre||sk.id,
+          nombre:(sk.codigo||'')+((sk.nombre&&!sk.nombre.startsWith('Modelo '))?' · '+sk.nombre:''),
           proyecto:p.name,
           projId:p.id,
+          skuId:sk.id,
           eng:p.eng,
           engNombre:NOMBRES[p.eng]||p.eng,
           fecha:sk.fechaProto,
