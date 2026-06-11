@@ -1791,12 +1791,12 @@ function rReporte(c){
   const projScope = filterEst==='activos' ? baseProj.filter(p=>p.estatus!=='Terminado') : baseProj;
   const actScope = projScope.filter(p=>p.estatus!=='Terminado');
 
-  // ── KPI PANEL ──
-  const term=projScope.filter(p=>p.estatus==='Terminado').length;
-  const enL=actScope.filter(p=>p.estatus==='En linea').length;
-  const fueraL=actScope.filter(p=>p.estatus==='Fuera de linea').length;
-  const enP=actScope.filter(p=>p.estatus==='En pausa').length;
-  const rk=actScope.filter(p=>{
+  // ── KPI PANEL — siempre sobre baseProj (incluye terminados independiente del filtro) ──
+  const term=baseProj.filter(p=>p.estatus==='Terminado').length;
+  const enL=baseProj.filter(p=>p.estatus==='En linea').length;
+  const fueraL=baseProj.filter(p=>p.estatus==='Fuera de linea').length;
+  const enP=baseProj.filter(p=>p.estatus==='En pausa').length;
+  const rk=baseProj.filter(p=>p.estatus!=='Terminado').filter(p=>{
     const fe=p.fechaFinal||p.fe||'';
     if(!fe) return false;
     const fechaFin=pd(fe);
@@ -1804,34 +1804,29 @@ function rReporte(c){
     const d=Math.round((fechaFin-TODAY)/86400000);
     return d<=14;
   }).length;
-  const ef=projScope.length?Math.round(term/projScope.length*100):0;
-  const avgAv=actScope.length?Math.round(actScope.reduce((s,p)=>s+p.avance,0)/actScope.length):0;
+  const ef=baseProj.length?Math.round(term/baseProj.length*100):0;
+  const avgAv=baseProj.filter(p=>p.estatus!=='Terminado').length?Math.round(baseProj.filter(p=>p.estatus!=='Terminado').reduce((s,p)=>s+p.avance,0)/baseProj.filter(p=>p.estatus!=='Terminado').length):0;
 
   h+=`<div style="background:var(--navy);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px">
     <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:flex;align-items:center;gap:6px">
       <span style="font-size:13px">📊</span> Panel de KPIs ${selEng?'del Ingeniero':'del Equipo'}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">
+    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:8px">
       ${[
-        {l:'Total Proyectos',v:projScope.length,s:'proyectos',col:'#fff'},
-        {l:'Terminados',v:term,s:'completados',col:'#4ade80'},
-        {l:'Efectividad',v:ef+'%',s:`${term} de ${projScope.length} terminados`,col:'#fff'},
-        {l:'En Línea',v:enL,s:'activos',col:'#818cf8'},
-        {l:'Fuera de Línea',v:fueraL,s:'con retraso',col:'#f87171'},
-        {l:'En Pausa',v:enP,s:'pausados',col:'#fbbf24'},
-        {l:'⚠ En Riesgo',v:rk,s:'entrega ≤14 días',col:rk>0?'#f87171':'#4ade80'},
+        {l:'Total Proyectos', v:baseProj.length,       s:'en el portafolio',              col:'#fff'},
+        {l:'Activos',         v:enL,                   s:'en línea',                      col:'#818cf8'},
+        {l:'En Pausa',        v:enP,                   s:'pausados',                      col:'#fbbf24'},
+        {l:'Terminados',      v:term,                  s:ef+'% del portafolio',           col:'#4ade80'},
+        {l:'Efectividad',     v:ef+'%',                s:`${term} de ${baseProj.length}`, col:ef>=70?'#4ade80':ef>=40?'#fbbf24':'#f87171'},
+        {l:'Fuera de Línea',  v:fueraL,                s:'con retraso',                   col:'#f87171'},
+        {l:'⚠ En Riesgo',    v:rk,                    s:'entrega ≤14 días',              col:rk>0?'#f87171':'#4ade80'},
+        {l:'Avance Prom.',    v:avgAv+'%',             s:'proyectos activos',             col:'#a78bfa'},
       ].map(k=>`<div style="background:rgba(255,255,255,.07);border-radius:8px;padding:9px 10px;text-align:center">
         <div style="font-size:9px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${k.l}</div>
         <div style="font-size:22px;font-weight:800;font-family:var(--font-d);color:${k.col};line-height:1">${k.v}</div>
         <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">${k.s}</div>
       </div>`).join('')}
     </div>
-    ${rk>0?`<div style="margin-top:10px;font-size:10px;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px">▲ Avance Promedio</div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="flex:1;height:6px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden"><div style="height:100%;background:#818cf8;width:${avgAv}%;border-radius:3px"></div></div>
-      <span style="font-size:14px;font-weight:800;font-family:var(--font-d);color:#fff">${avgAv}%</span>
-      <span style="font-size:10px;color:rgba(255,255,255,.5)">de todos los proyectos</span>
-    </div>`:''}
   </div>`;
 
   // ── TABLA POR INGENIERO — estilo imagen 2 ──
