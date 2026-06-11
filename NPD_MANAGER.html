@@ -626,8 +626,17 @@ async function fbPull(){
     const data=await r.json();
     if(!data)return false;
     Object.entries(data).forEach(([k,v])=>{
-      if(k==='__deleted'){localStorage.setItem(VER+'__deleted',JSON.stringify(v));}
-      else{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+      if(k==='__deleted'){localStorage.setItem(VER+'__deleted',JSON.stringify(v));return;}
+      // Merge inteligente: solo sobreescribir si Firebase tiene versión más reciente
+      try{
+        const local=localStorage.getItem(k);
+        if(!local){localStorage.setItem(k,JSON.stringify(v));return;}
+        const localObj=JSON.parse(local);
+        const fbObj=v;
+        const localTs=localObj.lu?new Date(localObj.lu).getTime():0;
+        const fbTs=fbObj.lu?new Date(fbObj.lu).getTime():0;
+        if(fbTs>localTs){localStorage.setItem(k,JSON.stringify(v));}
+      }catch(e){localStorage.setItem(k,JSON.stringify(v));}
     });
     return true;
   }catch(e){return false;}
@@ -635,6 +644,14 @@ async function fbPull(){
 
 function loadAll(){
   fbPull().then(()=>{_loadFromStorage();}).catch(()=>{_loadFromStorage();});
+  // Auto-sync cada 60s para detectar cambios de otros usuarios
+  if(!window._autoSyncInterval){
+    window._autoSyncInterval=setInterval(()=>{
+      fbPull().then(ok=>{
+        if(ok){_loadFromStorage();render();}
+      });
+    },60000);
+  }
 }
 
 function _loadFromStorage(){
@@ -886,12 +903,12 @@ function rInicio(c){
   // ── TOP KPIs ──
   let h=`<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
     ${[
-      {l:'Total proyectos',  v:filtProj.length,  sub:'en el portafolio',       col:'var(--navy)',   bg:'rgba(26,31,60,.08)', click:"sv2('reporte')"},
-      {l:'En línea',         v:filtEnL.length,   sub:'activos y en tiempo',    col:'var(--ok)',     bg:'var(--ok-bg)',       click:"sv2('reporte')"},
-      {l:'Terminados',       v:filtTerm.length,  sub:filtEf+'% efectividad',   col:'var(--blue)',   bg:'var(--blue-bg)',     click:"sv2('reporte')"},
-      {l:'Vencidos',         v:filtRisk.length,  sub:'fecha de fase pasada',   col:filtRisk.length>0?'var(--bad)':'var(--ok)',  bg:filtRisk.length>0?'var(--bad-bg)':'var(--ok-bg)', click:"sv2('reporte')"},
-      {l:'Por vencer',       v:filtSoon.length,  sub:'entrega ≤ 14 días',      col:filtSoon.length>0?'var(--warn)':'var(--ok)', bg:filtSoon.length>0?'var(--warn-bg)':'var(--ok-bg)', click:"sv2('reporte')"},
-      {l:'Avance promedio',  v:filtAvg+'%',      sub:'de todos los proyectos', col:'var(--purple)', bg:'var(--purple-bg)',   click:"sv2('reporte')"},
+      {l:'Total proyectos',  v:filtProj.length,              sub:'en el portafolio',        col:'var(--text)',   bg:'rgba(26,31,60,.08)', click:"sv2('reporte')"},
+      {l:'Activos',          v:filtEnL.length,               sub:'en línea y en tiempo',    col:'var(--ok)',     bg:'var(--ok-bg)',       click:"sv2('reporte')"},
+      {l:'En pausa',         v:filtEnP.length,               sub:'detenidos temporalmente', col:'var(--warn)',   bg:'var(--warn-bg)',     click:"sv2('reporte')"},
+      {l:'Terminados',       v:filtTerm.length,              sub:`${filtEf}% del portafolio`,col:'var(--blue)',  bg:'var(--blue-bg)',     click:"sv2('reporte')"},
+      {l:'Vencidos',         v:filtRisk.length,              sub:'fecha de fase pasada',    col:filtRisk.length>0?'var(--bad)':'var(--ok)',  bg:filtRisk.length>0?'var(--bad-bg)':'var(--ok-bg)', click:"sv2('reporte')"},
+      {l:'Efectividad',      v:filtEf+'%',                   sub:`${filtTerm.length} de ${filtProj.length} terminados`, col:filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)', bg:filtEf>=70?'var(--ok-bg)':filtEf>=40?'var(--warn-bg)':'var(--bad-bg)', click:"sv2('reporte')"},
     ].map(k=>`
       <div onclick="${k.click}" style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;cursor:pointer;transition:box-shadow .15s;position:relative;overflow:hidden" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow=''">
         <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${k.l}</div>
