@@ -268,152 +268,171 @@ const EC = {
 const GATES = {
   'Gate 1': {
     fase:'Diseño',
-    nombre:'Concepto aprobado',
+    nombre:'Liberación de Concepto',
     color:'#534AB7',
     items:[
-      '¿El brief está claro y completo?',
-      '¿El mercado ya fue revisado?',
-      '¿Los requerimientos del producto están definidos?',
-      '¿Existe un concepto suficientemente sólido para avanzar?',
-      '¿La manufactura ve factibilidad preliminar?',
-      '¿Ya existe BOM preliminar?',
-      '¿El costo objetivo inicial es razonable?',
+      '¿El brief de diseño está completo y fue aprobado por Gerencia?',
+      '¿Se analizaron mínimo 5 referencias del mercado nacional e internacional?',
+      '¿Se generaron y documentaron al menos 3 propuestas de concepto?',
+      '¿El concepto seleccionado es diferenciado vs la competencia actual de Línea Italia?',
+      '¿El concepto es viable de fabricar con la capacidad actual de planta?',
+      '¿El concepto está alineado con el objetivo comercial del proyecto?',
+      '¿Dirección seleccionó y firmó el concepto a desarrollar?',
     ]
   },
   'Gate 2': {
-    fase:'Desarrollo',
-    nombre:'Diseño liberado / Prototipo validado',
-    color:'#185FA5',
+    fase:'Diseño',
+    nombre:'Liberación de Diseño',
+    color:'#534AB7',
     items:[
-      '¿El diseño ya está técnicamente definido?',
-      '¿Los planos ya permiten fabricar prototipo?',
-      '¿La BOM ya está suficientemente aterrizada?',
-      '¿El prototipo cumple dimensionalmente?',
-      '¿El producto funciona y ensambla correctamente?',
-      '¿Superó pruebas clave?',
-      '¿Ya están identificados riesgos de diseño y proceso?',
-      '¿El costo preliminar de ingeniería ya está calculado?',
-      '¿El dictamen técnico aprueba el paso a implementación?',
+      '¿El modelado 3D está completo y refleja el concepto aprobado en Gate 1?',
+      '¿Manufactura validó la factibilidad de producción del diseño?',
+      '¿Los materiales, herrajes y componentes están definidos y son conseguibles?',
+      '¿La Lista de Materiales preliminar está generada?',
+      '¿El costo preliminar es viable vs el precio objetivo del mercado?',
+      '¿El cronograma y Project Plan del proyecto están definidos?',
+      '¿Gerencia de Innovación aprueba el congelamiento del diseño?',
     ]
   },
   'Gate 3': {
-    fase:'Implementacion',
-    nombre:'Proceso implementado',
-    color:'#0F6E56',
+    fase:'Desarrollo',
+    nombre:'Liberación Técnica del Producto',
+    color:'#185FA5',
     items:[
-      '¿Las plantillas ya están fabricadas y validadas?',
-      '¿La ruta de fabricación ya está definida?',
-      '¿Existen instrucciones de trabajo claras?',
-      '¿Ya se confirmó equipo y herramental?',
-      '¿ERP y SKU ya están dados de alta correctamente?',
-      '¿La documentación técnica por SKU ya está completa?',
-      '¿El empaque ya está liberado?',
-      '¿La corrida piloto fue satisfactoria?',
-      '¿Las piezas piloto fueron aprobadas?',
-      '¿El costo final ya está actualizado?',
+      '¿El prototipo cumple con las dimensiones y tolerancias del plano?',
+      '¿El producto ensambla correctamente y en el tiempo estimado?',
+      '¿El producto superó las pruebas de uso, carga y estabilidad?',
+      '¿La estética del prototipo corresponde al diseño aprobado en Gate 2?',
+      '¿Se identificaron y documentaron todos los riesgos de proceso?',
+      '¿Los tiempos de fabricación preliminares son viables para el costo objetivo?',
+      '¿El dictamen técnico fue emitido y firmado por Gerencia de Innovación?',
     ]
   },
   'Gate 4': {
-    fase:'Lanzamiento',
-    nombre:'Lanzamiento autorizado',
-    color:'#854F0B',
+    fase:'Implementacion',
+    nombre:'Liberación Productiva',
+    color:'#0F6E56',
     items:[
-      '¿El precio ya fue autorizado?',
-      '¿El producto ya existe en aplicativo y cotizador?',
-      '¿Los modelos SAT ya fueron enviados?',
-      '¿Ya hay renders y materiales visuales correctos?',
-      '¿Catálogo y web ya tienen contenido listo?',
-      '¿El nombre comercial ya está definido?',
-      '¿El equipo comercial ya fue capacitado?',
-      '¿El equipo operativo ya fue capacitado?',
-      '¿Gerencia liberó oficialmente?',
-      '¿Dirección Comercial autorizó el lanzamiento?',
+      '¿Las plantillas y herramentales fueron fabricados y validados dimensionalmente?',
+      '¿La corrida piloto de mínimo 3 piezas fue ejecutada y aprobada por Calidad?',
+      '¿El flujo de proceso, rutas y tiempos de fabricación están documentados?',
+      '¿Las instrucciones de trabajo y ayudas visuales están disponibles en planta?',
+      '¿El producto está dado de alta en ERP con SKU y costo final liberado?',
+      '¿El empaque está definido y liberado?',
+      '¿Manufactura, Calidad y Costos aprueban la liberación productiva?',
     ]
   },
   'Gate 5': {
-    fase:'Seguimiento',
-    nombre:'Cierre post-lanzamiento',
-    color:'#993C1D',
+    fase:'Lanzamiento',
+    nombre:'Liberación Comercial',
+    color:'#854F0B',
     items:[
-      '¿Las primeras fabricaciones fueron estables?',
-      '¿Se presentaron fallas o reclamos?',
-      '¿El costo real se mantuvo dentro de objetivo?',
-      '¿El tiempo real fue aceptable?',
-      '¿La calidad en primeras entregas fue consistente?',
-      '¿Hubo incidencias de instalación o uso?',
-      '¿Fue necesario actualizar documentación?',
-      '¿El proyecto puede cerrarse formalmente?',
+      '¿El producto tiene nombre comercial y precio de lista definidos?',
+      '¿El producto está dado de alta en el cotizador y aplicativo comercial?',
+      '¿Los renders, product shots y material fotográfico están listos?',
+      '¿El contenido para catálogo, web e infografías está completo?',
+      '¿La fuerza de ventas recibió la capacitación comercial del producto?',
+      '¿Manufactura y operaciones recibieron la capacitación operativa?',
+      '¿El Director Comercial dio la aprobación formal de lanzamiento?',
     ]
   },
 };
 
 const FD = {
-  'Diseño':       {c:'#534AB7',bg:'#EEEDFE',tc:'#3C3489',ab:'D', gate:'Gate 1', tareas:[
-    {n:'Brief de diseño, requerimientos y criterios',dept:'GER. INNOVACIÓN / ING. PRODUCTO',d:2},
-    {n:'Benchmarking del mercado',dept:'ING. PRODUCTO',d:1},
-    {n:'Selección de materiales, herrajes y componentes',dept:'ING. PRODUCTO',d:1},
-    {n:'Modelados 3D preliminares',dept:'ING. PRODUCTO',d:2},
-    {n:'Presentación de concepto y diseño',dept:'ING. PRODUCTO',d:1},
-    {n:'Revisión preliminar de factibilidad de manufactura',dept:'MANUFACTURA / PROCESOS',d:1},
-    {n:'Generar LM y costo preliminar',dept:'ING. PRODUCTO',d:1},
-    {n:'Validación de costo objetivo inicial',dept:'COSTOS',d:1},
-    {n:'Cronograma del proyecto y Project Plan',dept:'ING. PRODUCTO',d:1},
+  'Diseño':       {c:'#534AB7',bg:'#EEEDFE',tc:'#3C3489',ab:'D', gate:'Gate 2', subfases:[
+    {codigo:'D0', nombre:'Liberación de Concepto', gate:'Gate 1', tareas:[
+      {n:'Brief de diseño',dept:'GER. INNOVACIÓN / ING. PRODUCTO'},
+      {n:'Benchmarking',dept:'ING. PRODUCTO'},
+      {n:'Generación de ideas',dept:'ING. PRODUCTO'},
+      {n:'Desarrollo de 3 conceptos',dept:'ING. PRODUCTO'},
+      {n:'Mock-up rápido del concepto',dept:'ING. PRODUCTO'},
+      {n:'Concept Review',dept:'DIRECCIÓN / GER. INNOVACIÓN'},
+    ]},
+    {codigo:'D1', nombre:'Desarrollo de Diseño', gate:'Gate 2', tareas:[
+      {n:'Selección de materiales, herrajes y componentes',dept:'ING. PRODUCTO'},
+      {n:'Modelado 3D completo',dept:'ING. PRODUCTO'},
+      {n:'Revisión de factibilidad de manufactura',dept:'MANUFACTURA / PROCESOS'},
+      {n:'Ajustes de diseño post-revisión',dept:'ING. PRODUCTO'},
+      {n:'Generación de LM y costo preliminar',dept:'ING. PRODUCTO'},
+      {n:'Validación de costo objetivo inicial',dept:'COSTOS'},
+      {n:'Cronograma del proyecto y Project Plan',dept:'ING. PRODUCTO'},
+    ]},
   ]},
-  'Desarrollo':   {c:'#185FA5',bg:'#E6F1FB',tc:'#0C447C',ab:'De', gate:'Gate 2', tareas:[
-    {n:'Desarrollo de planos y especificaciones técnicas',dept:'ING. PRODUCTO',d:2},
-    {n:'Liberación de LM de ingeniería',dept:'ING. PRODUCTO',d:1},
-    {n:'Revisión de BOM y abastecimiento',dept:'COMPRAS',d:1},
-    {n:'Evaluación de alternativas críticas',dept:'ING. PRODUCTO',d:1},
-    {n:'Evaluación de diseño para manufactura y ensamble',dept:'MANUFACTURA / PROCESOS / CALIDAD',d:1},
-    {n:'Preparación de archivos de corte y ensamble',dept:'ING. PRODUCTO',d:1},
-    {n:'Programación de prototipo',dept:'ING. PRODUCTO / PCP',d:1},
-    {n:'Fabricación de prototipos funcionales',dept:'TALLER INNOVACIÓN / MANUFACTURA',d:2},
-    {n:'Validación dimensional, funcional y estética',dept:'CALIDAD',d:1},
-    {n:'Pruebas de uso, resistencia, carga y estabilidad',dept:'ING. PRODUCTO / CALIDAD',d:2},
-    {n:'Definición preliminar de flujo de proceso',dept:'ING. PROCESOS',d:1},
-    {n:'Análisis estructurado de riesgo de proceso',dept:'ING. PROCESOS / CALIDAD',d:1},
-    {n:'Revisión de herramientas, plantillas o dispositivos',dept:'ING. PROCESOS / CALIDAD',d:1},
-    {n:'Validación de tiempos preliminares',dept:'MANUFACTURA / ING. PROCESOS',d:1},
-    {n:'Costo preliminar de ingeniería',dept:'COSTOS',d:1},
-    {n:'Dictamen técnico de prototipo validado',dept:'GER. INNOVACIÓN',d:1},
+  'Desarrollo':   {c:'#185FA5',bg:'#E6F1FB',tc:'#0C447C',ab:'De', gate:'Gate 3', subfases:[
+    {codigo:'V1', nombre:'Ingeniería y Planos', gate:null, tareas:[
+      {n:'Desarrollo de planos y especificaciones técnicas',dept:'ING. PRODUCTO'},
+      {n:'Liberación de LM de ingeniería',dept:'ING. PRODUCTO'},
+      {n:'Revisión de BOM y abastecimiento',dept:'COMPRAS'},
+      {n:'Evaluación de alternativas críticas',dept:'ING. PRODUCTO'},
+      {n:'Evaluación de diseño para manufactura y ensamble',dept:'MANUFACTURA / PROCESOS / CALIDAD'},
+      {n:'Preparación de archivos de corte y ensamble',dept:'ING. PRODUCTO'},
+    ]},
+    {codigo:'V2', nombre:'Prototipado y Validación', gate:'Gate 3', tareas:[
+      {n:'Programación de prototipo',dept:'ING. PRODUCTO / PCP'},
+      {n:'Fabricación de prototipos funcionales',dept:'TALLER INNOVACIÓN / MANUFACTURA'},
+      {n:'Validación dimensional, funcional y estética',dept:'CALIDAD'},
+      {n:'Pruebas de uso, resistencia, carga y estabilidad',dept:'ING. PRODUCTO / CALIDAD'},
+      {n:'Definición preliminar de flujo de proceso',dept:'ING. PROCESOS'},
+      {n:'Análisis estructurado de riesgo de proceso',dept:'ING. PROCESOS / CALIDAD'},
+      {n:'Revisión de herramientas, plantillas o dispositivos',dept:'ING. PROCESOS / CALIDAD'},
+      {n:'Validación de tiempos preliminares',dept:'MANUFACTURA / ING. PROCESOS'},
+      {n:'Costo preliminar de ingeniería',dept:'COSTOS'},
+      {n:'Dictamen técnico de prototipo validado',dept:'GER. INNOVACIÓN'},
+    ]},
   ]},
-  'Implementacion':{c:'#0F6E56',bg:'#E1F5EE',tc:'#085041',ab:'Im', gate:'Gate 3', tareas:[
-    {n:'Fabricación de plantillas',dept:'ING. PROCESOS / HERRAMENTALES',d:3},
-    {n:'Liberación dimensional de plantillas',dept:'CALIDAD / ING. PROCESOS',d:1},
-    {n:'Flujo de proceso y ruta de fabricación',dept:'ING. PROCESOS',d:1},
-    {n:'Instrucciones de trabajo y ayudas visuales',dept:'ING. PROCESOS',d:1},
-    {n:'Alta en ERP y asignación de SKU',dept:'COSTOS',d:1},
-    {n:'Paquete de documentación técnica',dept:'ING. PRODUCTO',d:2},
-    {n:'Liberación de empaque',dept:'ING. PRODUCTO / MANUFACTURA',d:1},
-    {n:'Corrida piloto controlada mínimo 3 pzas.',dept:'MANUFACTURA / ING. PROCESOS',d:3},
-    {n:'Liberación de piezas de corrida piloto',dept:'CALIDAD',d:1},
-    {n:'Validación de plantillas post-piloto',dept:'MANUFACTURA / CALIDAD / ING. PROCESOS',d:1},
-    {n:'Ajustes en ERP y costo final liberado',dept:'COSTOS',d:1},
-    {n:'Liberación de producción y procesos',dept:'GER. INNOVACIÓN / MANUFACTURA',d:1},
+  'Implementacion':{c:'#0F6E56',bg:'#E1F5EE',tc:'#085041',ab:'Im', gate:'Gate 4', subfases:[
+    {codigo:'I1', nombre:'Herramentales y Proceso', gate:null, tareas:[
+      {n:'Fabricación de plantillas',dept:'ING. PROCESOS / HERRAMENTALES'},
+      {n:'Liberación dimensional de plantillas',dept:'CALIDAD / ING. PROCESOS'},
+      {n:'Flujo de proceso y ruta de fabricación',dept:'ING. PROCESOS'},
+      {n:'Instrucciones de trabajo y ayudas visuales',dept:'ING. PROCESOS'},
+    ]},
+    {codigo:'I2', nombre:'Piloto y ERP', gate:'Gate 4', tareas:[
+      {n:'Alta en ERP y asignación de SKU',dept:'COSTOS'},
+      {n:'Paquete de documentación técnica',dept:'ING. PRODUCTO'},
+      {n:'Liberación de empaque',dept:'ING. PRODUCTO / MANUFACTURA'},
+      {n:'Corrida piloto controlada mínimo 3 pzas.',dept:'MANUFACTURA / ING. PROCESOS'},
+      {n:'Liberación de piezas de corrida piloto',dept:'CALIDAD'},
+      {n:'Validación de plantillas post-piloto',dept:'MANUFACTURA / CALIDAD / ING. PROCESOS'},
+      {n:'Ajustes en ERP y costo final liberado',dept:'COSTOS'},
+      {n:'Liberación de producción y procesos',dept:'GER. INNOVACIÓN / MANUFACTURA'},
+    ]},
   ]},
-  'Lanzamiento':  {c:'#854F0B',bg:'#FAEEDA',tc:'#633806',ab:'La', gate:'Gate 4', tareas:[
-    {n:'Definición de nombre comercial',dept:'COMERCIAL / MARKETING',d:1},
-    {n:'Definición de precios de lista',dept:'COMERCIAL / COSTOS',d:1},
-    {n:'Alta en aplicativo y cotizador',dept:'COMERCIAL / ERP',d:1},
-    {n:'Enviar modelos SAT para proyectistas',dept:'ING. PRODUCTO',d:1},
-    {n:'Render y product shots',dept:'MARKETING',d:2},
-    {n:'Contenido para catálogo y web',dept:'MARKETING',d:2},
-    {n:'Material especial (fotos, folletos, infografías)',dept:'MARKETING',d:1},
-    {n:'Presentación de capacitación comercial',dept:'ING. PRODUCTO',d:1},
-    {n:'Presentación de capacitación operativa / manufactura',dept:'ING. PRODUCTO',d:1},
-    {n:'Liberación oficial por Gerencia',dept:'GER. INNOVACIÓN',d:1},
-    {n:'Aprobación final del Director Comercial',dept:'DIRECCIÓN COMERCIAL',d:1},
+  'Lanzamiento':  {c:'#854F0B',bg:'#FAEEDA',tc:'#633806',ab:'La', gate:'Gate 5', subfases:[
+    {codigo:'L1', nombre:'Comercialización', gate:null, tareas:[
+      {n:'Definición de nombre comercial',dept:'COMERCIAL / MARKETING'},
+      {n:'Definición de precios de lista',dept:'COMERCIAL / COSTOS'},
+      {n:'Alta en aplicativo y cotizador',dept:'COMERCIAL / ERP'},
+      {n:'Enviar modelos SAT para proyectistas',dept:'ING. PRODUCTO'},
+      {n:'Render y product shots',dept:'MARKETING'},
+      {n:'Contenido para catálogo y web',dept:'MARKETING'},
+      {n:'Material especial (fotos, folletos, infografías)',dept:'MARKETING'},
+    ]},
+    {codigo:'L2', nombre:'Capacitación y Liberación', gate:'Gate 5', tareas:[
+      {n:'Presentación de capacitación comercial',dept:'ING. PRODUCTO'},
+      {n:'Presentación de capacitación operativa / manufactura',dept:'ING. PRODUCTO'},
+      {n:'Liberación oficial por Gerencia',dept:'GER. INNOVACIÓN'},
+      {n:'Aprobación final del Director Comercial',dept:'DIRECCIÓN COMERCIAL'},
+    ]},
   ]},
-  'Seguimiento':  {c:'#993C1D',bg:'#FAECE7',tc:'#712B13',ab:'Sg', gate:'Gate 5', tareas:[
-    {n:'Seguimiento de primeras fabricaciones',dept:'MANUFACTURA / GER. INNOVACIÓN',d:0},
-    {n:'Seguimiento a reclamos, fallas o incidencias',dept:'CALIDAD / GER. INNOVACIÓN',d:0},
-    {n:'Validar costo real vs. objetivo',dept:'COSTOS',d:0},
-    {n:'Validar tiempo real vs. objetivo',dept:'MANUFACTURA / ING. PROCESOS',d:0},
-    {n:'Revisar calidad en primeras entregas',dept:'CALIDAD',d:0},
-    {n:'Revisión de incidencias en instalación y uso',dept:'SERVICIO / CALIDAD',d:0},
-    {n:'Ajuste de documentación si aplica',dept:'ING. PRODUCTO',d:0},
-    {n:'Evaluación final de éxito',dept:'GER. INNOVACIÓN',d:0},
-    {n:'Cierre formal del expediente',dept:'GER. INNOVACIÓN',d:0},
+  'Seguimiento':  {c:'#993C1D',bg:'#FAECE7',tc:'#712B13',ab:'Sg', gate:null, subfases:[
+    {codigo:'S1', nombre:'Seguimiento Comercial', gate:null, tareas:[
+      {n:'Monitoreo de primeras cotizaciones y pedidos',dept:'COMERCIAL / GER. INNOVACIÓN'},
+      {n:'Retroalimentación de fuerza de ventas',dept:'COMERCIAL'},
+      {n:'Registro de objeciones y ajustes de argumentario',dept:'GER. INNOVACIÓN / COMERCIAL'},
+      {n:'Primera revisión de precios vs mercado',dept:'COMERCIAL / COSTOS'},
+    ]},
+    {codigo:'S2', nombre:'Seguimiento Operativo', gate:null, tareas:[
+      {n:'Revisión de primeras órdenes — problemas de ensamble',dept:'MANUFACTURA / CALIDAD'},
+      {n:'Registro de no conformidades y ajustes',dept:'CALIDAD / ING. PROCESOS'},
+      {n:'Validación de tiempos reales vs estimados',dept:'MANUFACTURA / COSTOS'},
+      {n:'Ajuste de costo real vs costo objetivo',dept:'COSTOS / GER. INNOVACIÓN'},
+    ]},
+    {codigo:'S3', nombre:'Cierre y Lecciones Aprendidas', gate:null, tareas:[
+      {n:'Evaluación de resultados vs objetivos iniciales',dept:'GER. INNOVACIÓN'},
+      {n:'Documentación de lecciones aprendidas',dept:'EQUIPO NPD'},
+      {n:'Cierre formal del expediente',dept:'GER. INNOVACIÓN'},
+    ]},
   ]},
 };
 const FK = Object.keys(FD);
@@ -543,7 +562,30 @@ const fT   = f => {const d=FD[f];return d?`<span class="tag" style="background:$
 const dChip= (s,e) => {if(e==='Terminado')return`<span class="dc ok">✓ Terminado</span>`;const d=dN(s,e);if(d===null)return'—';if(d>14)return`<span class="dc ok">+${d}d</span>`;if(d>=0)return`<span class="dc warn">${d}d</span>`;return`<span class="dc bad">Vencida ${Math.abs(d)}d</span>`;};
 const ecOf = perfil => EC[perfil]||{bg:'#eee',tc:'#333',dot:'#888',init:'?'};
 
-function mkTareas(f){return FD[f].tareas.map((t,i)=>({...t,e:'No iniciado',ini:'',fin:'',id:i}));}
+function mkTareas(f){
+  const fd=FD[f];
+  if(!fd.subfases) return [];
+  const tareas=[];
+  fd.subfases.forEach(sf=>{
+    sf.tareas.forEach((t,i)=>{
+      tareas.push({...t, e:'No iniciado', subfase:sf.codigo, subfaseNombre:sf.nombre, id:`${sf.codigo}-${i}`});
+    });
+  });
+  return tareas;
+}
+function mkFechasFase(){
+  const ff={};
+  FK.forEach(f=>{
+    if(f!=='Seguimiento') ff[f]={inicio:'',fin:'',confirmadas:false};
+  });
+  return ff;
+}
+// Helper: obtener array plano de tareas de una fase (compatible con nueva estructura subfases)
+function getFDTareas(f){
+  const fd=FD[f];if(!fd) return [];
+  if(fd.subfases) return fd.subfases.flatMap(sf=>sf.tareas.flat());
+  return (fd.tareas||[]).flat();
+}
 function mkProj(r){
   const tp={};
   FK.forEach(f=>{
@@ -553,7 +595,8 @@ function mkProj(r){
     tp[f]=t;
   });
   const gates={};Object.keys(GATES).forEach(gk=>{gates[gk]={items:new Array(GATES[gk].items.length).fill(false),aprobado:false,f:''};});
-  return{...r,tp,skus:r.skus||[],notas:[],aprob:{g:{s:'pendiente',f:''}},gates,act:[],tareasSemana:[],lu:new Date().toISOString()};
+  const fechasFase=mkFechasFase();
+  return{...r,tp,skus:r.skus||[],notas:[],aprob:{g:{s:'pendiente',f:''}},gates,fechasFase,historialFechas:[],act:[],tareasSemana:[],lu:new Date().toISOString()};
 }
 function fpct(p,f){const t=p.tp[f]||[];return t.length?Math.round(t.filter(x=>x.e==='Completado').length/t.length*100):0;}
 function ckpct(sk){return Math.round(CK.filter(c=>sk.checks[c]).length/CK.length*100);}
@@ -583,8 +626,13 @@ function rcAvance(p){
 
 // Auto-fechas por fase basadas en project plan
 function getFaseDates(p, f){
+  // Primero intentar con fechasFase (nueva arquitectura)
+  const ff=p.fechasFase?.[f];
+  if(ff?.inicio&&ff?.fin){
+    return{ini:pd(ff.inicio),fin:pd(ff.fin)};
+  }
+  // Fallback: leer de tareas individuales (proyectos legacy)
   const ts = p.tp[f]||[];
-  // Read new fi/ff fields first, fallback to legacy ini/fin
   const inis = ts.map(t=>t.fi||t.ini).filter(Boolean).map(s=>typeof s==='string'?pd(s):s).filter(Boolean);
   const fins = ts.map(t=>t.ff||t.fin).filter(Boolean).map(s=>typeof s==='string'?pd(s):s).filter(Boolean);
   if(!inis.length && !fins.length) return {ini:null, fin:null};
@@ -692,7 +740,7 @@ function _loadFromStorage(){
     let migrated=false;
     FK.forEach(f=>{
       const currentTasks=p.tp[f]||[];
-      const fdTasks=FD[f].tareas;
+      const fdTasks=getFDTareas(f);
       if(currentTasks.length!==fdTasks.length){
         // Crear mapa de estatus por nombre de tarea (para preservar avance)
         const statusMap={};
@@ -712,6 +760,24 @@ function _loadFromStorage(){
       }
     });
     if(migrated) addAct(p,'status','Tareas actualizadas al proceso NPD v2 (57 tareas)');
+
+    // ── MIGRACIÓN: recuperar fechasFase desde fechas de tareas legacy ──
+    if(!p.fechasFase) p.fechasFase=mkFechasFase();
+    FK.forEach(f=>{
+      if(f==='Seguimiento') return;
+      const ff=p.fechasFase[f];
+      // Solo migrar si no tiene fechas aún
+      if(!ff||(!ff.inicio&&!ff.fin)){
+        const ts=p.tp[f]||[];
+        const fechasIni=ts.map(t=>t.fi||t.ini).filter(d=>d&&d.length===10&&d>='2020-01-01');
+        const fechasFin=ts.map(t=>t.ff||t.fin).filter(d=>d&&d.length===10&&d>='2020-01-01');
+        if(fechasIni.length&&fechasFin.length){
+          if(!p.fechasFase[f]) p.fechasFase[f]={inicio:'',fin:'',confirmadas:false};
+          p.fechasFase[f].inicio=fechasIni.sort()[0];
+          p.fechasFase[f].fin=fechasFin.sort().reverse()[0];
+        }
+      }
+    });
 
     const all=Object.values(p.tp).flat();
     if(!all.length) return;
@@ -796,7 +862,7 @@ function rSB(){
       {id:'diagrama',i:'◈',l:'Diagrama de proceso',b:0},
       {id:'usuarios',i:'⊙',l:'Gestión de usuarios',b:0},
       {id:'backup',i:'↓',l:'Respaldo de datos',b:0},
-      {id:'glosario',i:'📖',l:'Glosario SMART',b:0},
+      {id:'glosario',i:'📖',l:'Biblioteca NPD',b:0},
       {id:'mis-tareas-area',i:'🔑',l:'Override de área',b:0},
     ];
   } else if(isArea()){
@@ -815,7 +881,7 @@ function rSB(){
       {id:'calendario',i:'📅',l:'Calendario',b:0},
       {id:'cal-prototipos',i:'🔬',l:'Cal. Prototipos',b:0},
       {id:'diagrama',i:'◈',l:'Diagrama de proceso',b:0},
-      {id:'glosario',i:'📖',l:'Glosario SMART',b:0},
+      {id:'glosario',i:'📖',l:'Biblioteca NPD',b:0},
     ];
   }
   document.getElementById('sb').innerHTML=`
@@ -1339,17 +1405,21 @@ function rMiDashboard(c){
   const metasParciales=metasHist.filter(t=>t.estatus==='Parcial').length;
   const cumplMetas=metasHist.length?Math.round((metasLogradas+metasParciales*0.5)/metasHist.length*100):null;
 
-  // Siguiente milestone de un proyecto
+  // Siguiente milestone de un proyecto — muestra el próximo Gate pendiente
   function getSigMS(p){
-    for(const fk of FK){
-      const{fin}=getFaseDates(p,fk);
-      if(p.fase===fk){
-        const pend=(p.tp[fk]||[]).find(t=>t.e!=='Completado'&&(t.ff||t.fin));
-        if(pend) return{fase:fk,tarea:pend.n,fecha:pend.ff||pend.fin};
-        if(fin) return{fase:fk,tarea:'Entrega '+fk,fecha:toISO(fin)};
+    // Buscar el próximo gate no aprobado en orden
+    const gateOrder=['Gate 1','Gate 2','Gate 3','Gate 4','Gate 5'];
+    for(const gk of gateOrder){
+      const gData=p.gates?.[gk];
+      if(!gData?.aprobado){
+        const gInfo=GATES[gk];
+        if(!gInfo) continue;
+        // Obtener fecha fin de la fase correspondiente
+        const faseFin=getFaseDates(p,gInfo.fase);
+        const fechaGate=faseFin.fin?toISO(faseFin.fin):p.fechasFase?.[gInfo.fase]?.fin||'';
+        return{fase:gInfo.fase, tarea:gInfo.nombre, fecha:fechaGate, esGate:true, gateNombre:gInfo.nombre, gateKey:gk};
       }
     }
-    if(p.fechaFase) return{fase:p.fase,tarea:'Entrega '+p.fase,fecha:p.fechaFase};
     return null;
   }
 
@@ -1777,7 +1847,7 @@ function rReporte(c){
         ${engU.map(u=>`<option value="${u.perfil}" style="color:#1a2233;background:#fff" ${filterVal===u.perfil?'selected':''}>${u.nombre}</option>`).join('')}
       </select>
       <select id="rep-est-sel" style="font-size:12px;padding:5px 9px;border:none;border-radius:var(--r);background:rgba(255,255,255,.15);color:#fff;font-family:var(--font-b);outline:none;cursor:pointer" onchange="_repFiltEst=this.value;rReporte(document.getElementById('vc'))">
-        <option value="activos" style="color:#1a2233;background:#fff" ${filterEst==='activos'?'selected':''}>Solo activos</option>
+        <option value="activos" style="color:#1a2233;background:#fff" ${filterEst==='activos'?'selected':''}>Solo En línea</option>
         <option value="todos" style="color:#1a2233;background:#fff" ${filterEst==='todos'?'selected':''}>Todos los proyectos</option>
       </select>
       <button onclick="imprimirReporteEjecutivo()" style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:var(--r);border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;cursor:pointer;font-family:var(--font-b)">🖨 Imprimir reporte</button>
@@ -1788,7 +1858,7 @@ function rReporte(c){
   // Determine scope
   const selEng = filterVal==='todos'?null:filterVal;
   const baseProj = selEng ? PROJ.filter(p=>p.eng===selEng) : PROJ;
-  const projScope = filterEst==='activos' ? baseProj.filter(p=>p.estatus!=='Terminado') : baseProj;
+  const projScope = filterEst==='activos' ? baseProj.filter(p=>p.estatus==='En linea') : baseProj;
   const actScope = projScope.filter(p=>p.estatus!=='Terminado');
 
   // ── KPI PANEL — siempre sobre baseProj (incluye terminados independiente del filtro) ──
@@ -1851,15 +1921,18 @@ function rReporte(c){
     return{ico:'🟢',col:'#16a34a',lbl:`${d}d restantes`};
   }
   function getSigMS(p){
-    for(const fk of FK){
-      const{fin}=getFaseDates(p,fk);
-      if(p.fase===fk){
-        const pend=(p.tp[fk]||[]).find(t=>t.e!=='Completado'&&(t.ff||t.fin));
-        if(pend) return{fase:fk,tarea:pend.n,fecha:pend.ff||pend.fin,tipo:'tarea'};
-        if(fin) return{fase:fk,tarea:'Entrega '+fk,fecha:toISO(fin),tipo:'fase'};
+    // Buscar el próximo gate no aprobado en orden
+    const gateOrder=['Gate 1','Gate 2','Gate 3','Gate 4','Gate 5'];
+    for(const gk of gateOrder){
+      const gData=p.gates?.[gk];
+      if(!gData?.aprobado){
+        const gInfo=GATES[gk];
+        if(!gInfo) continue;
+        const faseFin=getFaseDates(p,gInfo.fase);
+        const fechaGate=faseFin.fin?toISO(faseFin.fin):p.fechasFase?.[gInfo.fase]?.fin||'';
+        return{fase:gInfo.fase, tarea:gInfo.nombre, fecha:fechaGate, esGate:true, tipo:'gate', gateKey:gk};
       }
     }
-    if(p.fechaFase) return{fase:p.fase,tarea:'Entrega '+p.fase,fecha:p.fechaFase,tipo:'fase'};
     return null;
   }
 
@@ -1954,7 +2027,7 @@ function rReporte(c){
           <!-- Milestone -->
           <div style="padding:0 8px;min-width:0">
             ${ms
-              ?`<div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:1px">${ms.fase} · ${ms.tipo==='fase'?'Entrega':'Tarea'}</div>
+              ?`<div style="font-size:9px;font-weight:700;text-transform:uppercase;margin-bottom:1px;color:${ms.tipo==='gate'?'#534AB7':'var(--muted)'}">${ms.fase} · ${ms.tipo==='gate'?'GATE':'Milestone'}</div>
                 <div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${ms.tarea}">${ms.tarea}</div>`
               :'<span style="font-size:10px;color:var(--muted)">—</span>'
             }
@@ -2305,207 +2378,152 @@ function rModal(){
   const diasRestSeg = ''; // Seguimiento es variable
 
   h+=`<div class="mpg" id="mp-tareas">
-  <!-- BANNER ESTÁNDAR CON MODO HACIA ATRÁS -->
+  <!-- BANNER ENCABEZADO PROJECT PLAN -->
   <div style="background:var(--navy);border-radius:var(--r2);padding:14px 16px;margin-bottom:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:${ed?'12':'0'}px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <div>
         <div style="font-size:11px;font-weight:700;color:${GOLD};text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Estándar Línea Italia · Brief → Lanzamiento</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.7)">Estandar Linea Italia · Brief → Lanzamiento</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6)">Define la fecha inicio y fin de cada fase. El sistema distribuye las tareas automáticamente en días hábiles.</div>
       </div>
-      ${ed?`<div style="display:flex;gap:6px">
-      </div>`:''}
+      ${(ed||isG())&&!p.fechasConfirmadas?`<button onclick="confirmarFechas('${p.id}')" id="btn-confirmar-${p.id}"
+        style="font-size:11px;font-weight:700;padding:7px 16px;border-radius:var(--r);border:2px solid ${GOLD};background:${GOLD};color:#1a1f3c;cursor:pointer;font-family:var(--font-b);opacity:.5;pointer-events:none" 
+        title="Disponible cuando las 4 fases tengan fechas">🔒 Confirmar fechas</button>`
+      :p.fechasConfirmadas?'<div style="font-size:11px;color:#4ade80;font-weight:700">✓ Fechas confirmadas'+(isG()?` · <button onclick="desbloquearFechas('${p.id}')" style="font-size:10px;background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.7);padding:3px 8px;border-radius:var(--r);cursor:pointer">Modificar (Gerente)</button>`:'')+'</div>':''}
     </div>
-    ${ed?`
-    <!-- MODO HACIA ADELANTE: desde Brief -->
-    <div id="panel-adelante-${p.id}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <div style="font-size:11px;color:rgba(255,255,255,.6)">📅 Fecha del Brief:</div>
-      <input type="date" id="brief-date-input" value="${hasBrief||''}"
-        style="font-size:12px;padding:5px 8px;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-family:var(--font-b);outline:none"/>
-      <button class="btn sm" style="background:${GOLD};border-color:${GOLD};color:#1a1f3c;font-weight:700"
-        onclick="aplicarFechasEstandar('${p.id}',document.getElementById('brief-date-input').value)">
-        ⚡ Autocompletar fechas
-      </button>
-    </div>
-    <!-- MODO HACIA ATRÁS: desde Lanzamiento -->
-    <div id="panel-atras-${p.id}" style="display:none">
-      <div style="font-size:11px;color:rgba(255,255,255,.75);margin-bottom:10px">
-        📋 <b>Modo histórico:</b> Ingresa la fecha de lanzamiento y los días reales por fase. El sistema calculará las fechas hacia atrás.
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div>
-          <div style="font-size:10px;color:rgba(255,255,255,.5);margin-bottom:3px">📅 Fecha de lanzamiento (fin real)</div>
-          <input type="date" id="launch-date-${p.id}"
-            style="font-size:12px;padding:5px 8px;border-radius:var(--r);border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-family:var(--font-b);outline:none;width:100%"/>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
-        ${['Diseño','Desarrollo','Implementacion','Lanzamiento'].map((f,idx)=>{
-          const fd2=FD[f];
-          const dEst=FD[f].tareas.reduce((s,t)=>s+(t.d||1),0);
-          return`<div style="background:rgba(255,255,255,.08);border-radius:var(--r);padding:8px 10px">
-            <div style="font-size:9px;font-weight:700;color:${fd2.c};margin-bottom:4px">${f}</div>
-            <div style="display:flex;align-items:center;gap:4px">
-              <input type="number" id="dias-retro-${f}-${p.id}" value="${dEst}" min="1" max="200"
-                style="font-size:12px;font-weight:700;padding:3px 6px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;width:52px;font-family:var(--font-b)"/>
-              <span style="font-size:10px;color:rgba(255,255,255,.5)">días</span>
-            </div>
-            <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">est: ${dEst}d</div>
-          </div>`;
-        }).join('')}
-      </div>
-      <button class="btn sm" style="background:#534AB7;border-color:#534AB7;color:#fff;font-weight:700"
-        onclick="aplicarFechasHaciaAtras('${p.id}')">
-        ◀ Calcular fechas hacia atrás
-      </button>
-    </div>`:''}
   </div>
-  <!-- RESUMEN POR FASE -->
+  <!-- TARJETAS RESUMEN POR FASE -->
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px">
     ${FK.map(f=>{
-      const fd=FD[f],ts=p.tp[f]||[];
-      const tareas_def=FD[f].tareas;
-      const totalDias=f==='Seguimiento'?'var.':tareas_def.reduce((s,t)=>s+(t.d||1),0)+'d';
-      const firstFi=ts.find(t=>t.fi)?.fi;
-      const lastFf=[...ts].reverse().find(t=>t.ff)?.ff;
+      const fd=FD[f];
+      const ts=p.tp[f]||[];
       const dn=ts.filter(t=>t.e==='Completado').length;
       const pt=ts.length?Math.round(dn/ts.length*100):0;
-      const hasDates=firstFi&&lastFf;
+      const ff=p.fechasFase?.[f];
+      const hasDates=ff?.inicio&&ff?.fin;
+      const isSeg=f==='Seguimiento';
+      const dias=hasDates?diasHabiles(pd(ff.inicio),pd(ff.fin)):null;
+      const canEdit=(ed||isG())&&!p.fechasConfirmadas&&!isSeg;
+      const ffInicio=ff?.inicio&&ff.inicio.length===10&&ff.inicio.match(/^\d{4}-\d{2}-\d{2}$/)&&ff.inicio>='2020-01-01'?ff.inicio:'';
+      const ffFin=ff?.fin&&ff.fin.length===10&&ff.fin.match(/^\d{4}-\d{2}-\d{2}$/)&&ff.fin>='2020-01-01'?ff.fin:'';
       return`<div style="background:${fd.bg};border:1px solid ${fd.c}33;border-radius:var(--r);padding:8px 10px;text-align:center">
-        <div style="font-size:10px;font-weight:700;color:${fd.tc};margin-bottom:3px">${f}</div>
-        <div style="font-size:16px;font-weight:800;font-family:var(--font-d);color:${fd.c}">${totalDias}</div>
-        ${hasDates?`<div style="font-size:9px;color:${fd.tc};opacity:.7;margin-top:2px">${fmtD(firstFi)} → ${fmtD(lastFf)}</div>`:'<div style="font-size:9px;color:var(--muted);margin-top:2px">sin fechas</div>'}
+        <div style="font-size:10px;font-weight:700;color:${fd.tc};margin-bottom:4px">${f}</div>
+        ${canEdit?`
+          <input type="date" value="${ffInicio}" min="2020-01-01" max="2035-12-31" title="Fecha inicio" 
+            onclick="try{this.showPicker()}catch(e){}"
+            onchange="updFechaFase('${p.id}','${f}','inicio',this.value)"
+            style="font-size:9px;padding:2px 4px;border:1px solid ${fd.c}55;border-radius:3px;background:white;color:var(--navy);width:100%;margin-bottom:3px;font-family:var(--font-b);cursor:pointer"/>
+          <input type="date" value="${ffFin}" min="2020-01-01" max="2035-12-31" title="Fecha fin"
+            onclick="try{this.showPicker()}catch(e){}"
+            onchange="updFechaFase('${p.id}','${f}','fin',this.value)"
+            style="font-size:9px;padding:2px 4px;border:1px solid ${fd.c}55;border-radius:3px;background:white;color:var(--navy);width:100%;margin-bottom:4px;font-family:var(--font-b);cursor:pointer"/>
+        `:hasDates?`<div style="font-size:9px;color:${fd.tc};margin-bottom:4px">${fmtD(ff.inicio)}<br/>→ ${fmtD(ff.fin)}</div>`
+        :isSeg?`<div style="font-size:9px;color:var(--muted);margin-bottom:4px">continuo</div>`
+        :`<div style="font-size:9px;color:var(--muted);margin-bottom:4px">sin fechas</div>`}
+        ${dias?`<div style="font-size:13px;font-weight:800;font-family:var(--font-d);color:${fd.c}">${dias}d hábiles</div>`:''}
         <div style="height:3px;background:rgba(0,0,0,.08);border-radius:2px;margin-top:4px;overflow:hidden"><div style="height:100%;background:${fd.c};width:${pt}%;border-radius:2px"></div></div>
         <div style="font-size:9px;color:${fd.tc};margin-top:2px">${pt}%</div>
       </div>`;
     }).join('')}
   </div>
-  <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
-    ${ed?'<b style="color:var(--navy)">Cómo usar:</b> Ingresa la fecha del Brief y pulsa "Autocompletar fechas" para llenar todas las fechas estándar. Después ajusta manualmente las tareas que tarden más o menos — el resto se recalcula en cascada automáticamente.':'Solo lectura.'}
-    ${!ed?'':' <span style="color:var(--warn);font-weight:600">⚠ Fecha final del proyecto solo la puede modificar el Gerente.</span>'}
-  </div>
-  <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;font-size:11px;flex-wrap:wrap">
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:var(--ok-bg);border:1px solid rgba(30,158,94,.3);display:inline-block"></span>Completado</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#faf9ff;border:1px solid rgba(83,74,183,.25);display:inline-block"></span>En progreso</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#fff5f5;border:1px solid rgba(217,53,53,.25);display:inline-block"></span>Bloqueado</span>
-    <span style="display:flex;align-items:center;gap:5px;background:rgba(0,0,255,.07);padding:2px 7px;border-radius:99px"><b style="color:#0000FF;font-size:12px">${totalEstDias}</b>&nbsp;días hábiles totales estándar</span>
-  </div>`;
+  ${p.fechasConfirmadas?'':ed||isG()?`<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Define las fechas de las 4 fases principales para habilitar el botón <b>Confirmar fechas</b>. Una vez confirmadas, solo el Gerente podrá modificarlas. <span style="color:var(--warn);font-weight:600">⚠ Las fechas determinan el bono del ingeniero.</span></div>`:''}`;
 
-  // ── Resumen de desviación global ──
-  const _allT=Object.values(p.tp).flat();
-  const _conDesv=_allT.filter(t=>t.e==='Completado'&&t.fi&&t.ff&&t._diasEst&&workdaysBetween(t.fi,t.ff)+1>t._diasEst);
-  const _diasTotalesExtra=_conDesv.reduce((s,t)=>{const real=workdaysBetween(t.fi,t.ff)+1;return s+(real-(t._diasEst||real));},0);
-  if(_diasTotalesExtra>0){
-    h+=`<div style="background:rgba(217,53,53,.06);border:1px solid rgba(217,53,53,.2);border-radius:var(--r2);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
-      <span style="font-size:18px">📊</span>
-      <div>
-        <div style="font-size:12px;font-weight:700;color:var(--bad)">El proyecto lleva <strong>+${_diasTotalesExtra} días hábiles</strong> de desviación acumulada</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">${_conDesv.length} tarea${_conDesv.length>1?'s con':'con'} tiempo real mayor al estándar</div>
-      </div>
-    </div>`;
-  }
-
-  // ── TABLA POR FASE ──
+  // ── TABLA POR FASE CON SUBFASES ──
   FK.forEach(f=>{
-    const fd=FD[f],ts=p.tp[f]||[],dn=ts.filter(t=>t.e==='Completado').length,pt=ts.length?Math.round(dn/ts.length*100):0;
-    const tareas_def=FD[f].tareas;
+    const fd=FD[f];
+    const ts=p.tp[f]||[];
+    const dn=ts.filter(t=>t.e==='Completado').length;
+    const pt=ts.length?Math.round(dn/ts.length*100):0;
     const isSeg=f==='Seguimiento';
-    const firstFi=ts.find(t=>t.fi)?.fi;
-    const lastFf=[...ts].reverse().find(t=>t.ff)?.ff;
-    const phaseEstDias=ts.reduce((s,t,j)=>s+(FD[f]?.tareas[j]?.d||1),0);
-    const phaseRealDias=firstFi&&lastFf?workdaysBetween(firstFi,lastFf)+1:null;
-    const phaseDesv=phaseRealDias&&phaseRealDias>phaseEstDias?phaseRealDias-phaseEstDias:0;
-    const _phaseOD=ts.filter(t=>t.e!=='Completado'&&t.ff&&pd(t.ff)<TODAY).length;
+    const ff=p.fechasFase?.[f];
+    const hasDates=ff?.inicio&&ff?.fin;
+
     h+=`<div style="margin-bottom:16px">
       <div class="fb-h" style="background:${fd.bg};color:${fd.tc}">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-weight:700">${f}</span>
-          ${isSeg?`<span style="font-size:10px;background:rgba(153,60,29,.15);color:#993C1D;padding:1px 7px;border-radius:99px">fechas variables</span>`:''}
-
+          ${isSeg?`<span style="font-size:10px;background:rgba(153,60,29,.15);color:#993C1D;padding:1px 7px;border-radius:99px">continuo</span>`:''}
+          ${hasDates?`<span style="font-size:10px;opacity:.8">${fmtD(ff.inicio)} → ${fmtD(ff.fin)}</span>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          ${firstFi&&lastFf?`<span style="font-size:10px;opacity:.8">${fmtD(firstFi)} → ${fmtD(lastFf)}</span>`:''}
-          ${(ed||isG())&&pt<100?`<button onclick="completarFase('${p.id}','${f}')" title="Completar todas las tareas de esta fase" style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;border:1.5px solid ${fd.c};background:transparent;color:${fd.tc};cursor:pointer;font-family:var(--font-b)">✓ Completar fase</button>`:''}
+          ${(ed||isG())&&pt<100?`<button onclick="completarFase('${p.id}','${f}')" style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;border:1.5px solid ${fd.c};background:transparent;color:${fd.tc};cursor:pointer;font-family:var(--font-b)">✓ Completar fase</button>`:''}
           <span style="font-size:14px;font-weight:800;font-family:var(--font-d);padding:2px 9px;border-radius:7px;background:rgba(255,255,255,.5);color:${fd.c}">${pt}%</span>
         </div>
       </div>
-      <div class="fb-bar" style="background:rgba(0,0,0,.06)"><div style="height:100%;background:${fd.c};width:${pt}%;border-radius:2px"></div></div>
-      <div style="display:grid;grid-template-columns:18px 1fr 140px 52px 88px 88px 96px;gap:3px;padding:4px 9px;font-size:10px;color:var(--muted);font-weight:700;background:var(--surface2);border-radius:4px;margin:3px 0">
-        <span>#</span><span>Tarea</span><span style="text-align:center">Área responsable</span><span style="text-align:center">Días</span><span>Inicio</span><span>Fin</span><span>Estatus</span>
-      </div>`;
+      <div class="fb-bar" style="background:rgba(0,0,0,.06)"><div style="height:100%;background:${fd.c};width:${pt}%;border-radius:2px"></div></div>`;
 
-    ts.forEach((t,i)=>{
-      const trCls=t.e==='Completado'?'done':t.e==='En progreso'?'in-prog':t.e==='Bloqueado'?'blocked':'idle';
-      const statColor=t.e==='Completado'?'#1e9e5e':t.e==='En progreso'?'#534AB7':t.e==='Bloqueado'?'#d93535':'var(--muted)';
-      const dEst=tareas_def[i]?.d||1;
-      const diasDiff=t.fi&&t.ff?workdaysBetween(t.fi,t.ff)+1:null;
-      const overBudget=diasDiff&&diasDiff>dEst;
-      const diasExtra=overBudget?diasDiff-dEst:0;
-      // Guardar días estándar para trazabilidad
-      if(!t._diasEst) t._diasEst=dEst;
+    // Agrupar tareas por subfase
+    const subfases=fd.subfases||[];
+    // Migrar tareas legacy que no tienen campo subfase
+    const hasSfField=ts.some(t=>t.subfase);
+    if(!hasSfField&&ts.length&&subfases.length){
+      // Distribuir tareas por posición entre subfases
+      let idx=0;
+      subfases.forEach(sf=>{
+        sf.tareas.flat().forEach(td=>{
+          if(ts[idx]) ts[idx].subfase=sf.codigo;
+          idx++;
+        });
+      });
+    }
+    subfases.forEach(sf=>{
+      const sfTareas=ts.filter(t=>t.subfase===sf.codigo);
+      const sfDn=sfTareas.filter(t=>t.e==='Completado').length;
+      const sfPt=sfTareas.length?Math.round(sfDn/sfTareas.length*100):0;
+      const gateInfo=sf.gate?GATES[sf.gate]:null;
 
-      // Desviación real vs estándar — solo visible cuando hay diferencia
-      const desvTag=overBudget
-        ?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
-            <span style="font-size:10px;font-weight:700;color:var(--bad)">${diasDiff}d real</span>
-            <span style="font-size:9px;font-weight:800;color:#fff;background:#d93535;padding:0px 5px;border-radius:3px">+${diasExtra}d</span>
-          </div>`
-        :`<span style="font-size:10px;font-weight:700;color:${fd.c}">${dEst}d</span>`;
-      const diasCell=isSeg?'—':desvTag;
-      const showComment=overBudget||t.e==='Bloqueado';
-      const commentRow=showComment&&(ed||canEditTask(p,t.n))?`
-        <div style="grid-column:2/-1;padding:4px 0 6px 2px;display:flex;align-items:flex-start;gap:6px">
-          <div style="flex-shrink:0;margin-top:4px"><span style="font-size:9px;font-weight:700;color:${t.e==='Bloqueado'?'var(--bad)':'var(--warn)'};background:${t.e==='Bloqueado'?'rgba(217,53,53,.1)':'rgba(196,125,10,.1)'};padding:2px 6px;border-radius:3px;white-space:nowrap">${t.e==='Bloqueado'?'🔴 ¿Qué la bloquea?':'⚠ ¿Por qué se extendió?'}</span></div>
-          <div style="flex:1">
-            <input class="inp" style="font-size:10px;padding:3px 8px;height:auto;border-color:${t.comentarioDesv?'var(--warn)':'var(--border)'};width:100%;border-radius:4px" placeholder="Razón del retraso — queda registrado como evidencia..." value="${(t.comentarioDesv||'').replace(/"/g,'&quot;')}" onchange="guardarComentarioDesv('${p.id}','${f}',${i},this.value)"/>
-            ${t.comentarioDesv?`<div style="font-size:9px;color:var(--warn);margin-top:2px;font-style:italic">✎ ${t.comentarioDesv}</div>`:`<div style="font-size:9px;color:var(--muted);margin-top:2px">Sin razón registrada aún</div>`}
+      h+=`<div style="margin:6px 0 3px 0">
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 9px;background:${fd.c}18;border-left:3px solid ${fd.c};border-radius:0 4px 4px 0;margin-bottom:3px">
+          <span style="font-size:10px;font-weight:800;color:${fd.c}">${sf.codigo}</span>
+          <span style="font-size:11px;font-weight:700;color:${fd.tc}">${sf.nombre}</span>
+          <span style="font-size:10px;color:${fd.tc};opacity:.7;margin-left:auto">${sfPt}%</span>
+        </div>
+        <div style="display:grid;grid-template-columns:18px 1fr 160px 96px;gap:3px;padding:3px 9px;font-size:10px;color:var(--muted);font-weight:700;background:var(--surface2);border-radius:4px;margin:3px 0">
+          <span>#</span><span>Tarea</span><span style="text-align:center">Área responsable</span><span>Estatus</span>
+        </div>`;
+
+      sfTareas.forEach((t,i)=>{
+        const statColor=t.e==='Completado'?'#1e9e5e':t.e==='En progreso'?'#534AB7':t.e==='Bloqueado'?'#d93535':'var(--muted)';
+        const trCls=t.e==='Completado'?'done':t.e==='En progreso'?'in-prog':t.e==='Bloqueado'?'blocked':'idle';
+        const tIdx=ts.findIndex(x=>x.id===t.id);
+        h+=`<div class="tr ${trCls}" style="grid-template-columns:18px 1fr 160px 96px">
+          <span style="font-size:10px;color:var(--muted);text-align:center">${i+1}</span>
+          <span class="tr-n" style="font-size:11px">${t.n}</span>
+          <span class="dept">${t.dept||''}</span>
+          ${ed||canEditTask(p,t.n)?`<select class="tr-sel" onchange="uT('${p.id}','${f}',${tIdx},'e',this.value)">${['No iniciado','En progreso','Completado','Bloqueado'].map(s=>`<option${t.e===s?' selected':''}>${s}</option>`).join('')}</select>`
+          :`<span style="font-size:10px;font-weight:700;color:${statColor}">${t.e}</span>`}
+        </div>`;
+      });
+
+      // Gate de la subfase
+      if(gateInfo){
+        const gk=sf.gate;
+        const gData=p.gates?.[gk];
+        const gAprobado=gData?.aprobado;
+        h+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 9px;background:${gAprobado?fd.bg:'rgba(255,255,255,.5)'};border:1.5px solid ${fd.c}55;border-radius:var(--r);margin:6px 0 2px 0">
+          <span style="font-size:14px">${gAprobado?'✅':'🔷'}</span>
+          <div>
+            <div style="font-size:10px;font-weight:800;color:${fd.c}">${gk} · ${gateInfo.nombre}</div>
+            ${gAprobado?`<div style="font-size:9px;color:var(--ok)">Aprobado ${gData.f||''}</div>`:`<div style="font-size:9px;color:var(--muted)">Pendiente de aprobación</div>`}
           </div>
-        </div>`:showComment&&t.comentarioDesv?`<div style="grid-column:2/-1;padding:3px 0 5px 2px"><span style="font-size:9px;color:var(--warn);font-style:italic">✎ Razón: ${t.comentarioDesv}</span></div>`:'';
-      h+=`<div class="tr ${trCls}" style="grid-template-columns:18px 1fr 140px 52px 88px 88px 96px;${showComment?'padding-bottom:4px':''}">
-        <span style="font-size:10px;color:var(--muted);text-align:center">${i+1}</span>
-        <span class="tr-n" style="font-size:11px">${t.n}</span>
-        <span class="dept">${t.dept||''}</span>
-        <span style="display:flex;align-items:center;justify-content:center">${diasCell}</span>
-        ${ed||canEditTask(p,t.n)?`
-          <input type="date" class="tr-date" value="${t.fi||''}" title="Fecha inicio" onchange="uTFecha('${p.id}','${f}',${i},'fi',this.value)" style="${!t.fi?'border-color:var(--border2);opacity:.5':''}"/>
-          <input type="date" class="tr-date" value="${t.ff||''}" title="Fecha fin" onchange="uTFecha('${p.id}','${f}',${i},'ff',this.value)" style="${!t.ff?'border-color:var(--border2);opacity:.5':''}"/>
-          <select class="tr-sel" onchange="uT('${p.id}','${f}',${i},'e',this.value)">${['No iniciado','En progreso','Completado','Bloqueado'].map(s=>`<option${t.e===s?' selected':''}>${s}</option>`).join('')}</select>`
-        :`<span style="font-size:10px;color:var(--muted)">${t.fi?fmtD(t.fi):'—'}</span>
-          <span style="font-size:10px;color:var(--muted)">${t.ff?fmtD(t.ff):'—'}</span>
-          <span style="font-size:10px;font-weight:700;color:${statColor}">${t.e}</span>`}
-        ${commentRow}
-      </div>`;
+          ${!gAprobado&&isG()?`<button onclick="sMT('gates')" style="margin-left:auto;font-size:9px;font-weight:700;padding:3px 8px;border-radius:var(--r);border:1px solid ${fd.c};background:transparent;color:${fd.tc};cursor:pointer">Ir a Gates →</button>`:''}
+        </div>`;
+      }
+      h+=`</div>`;
     });
-
-    // Subtotal de fase
-    const totalDiasEst=isSeg?'—':tareas_def.reduce((s,t)=>s+(t.d||1),0);
-    const totalDiasReal=firstFi&&lastFf?workdaysBetween(firstFi,lastFf)+1:null;
-    const totalDesv=totalDiasReal&&typeof totalDiasEst==='number'&&totalDiasReal>totalDiasEst?totalDiasReal-totalDiasEst:0;
-    h+=`<div style="display:grid;grid-template-columns:18px 1fr 140px 52px 88px 88px 96px;gap:3px;padding:5px 9px;background:${fd.bg};border-radius:4px;margin-top:3px;font-size:10px">
-      <span></span>
-      <span style="font-weight:700;color:${fd.tc}">Subtotal ${f}</span>
-      <span></span>
-      <span style="text-align:center">
-        <span style="font-weight:700;color:${fd.c}">${totalDiasEst}${typeof totalDiasEst==='number'?'d est.':''}</span>
-        ${totalDesv>0?`<span style="display:block;font-size:9px;font-weight:800;color:#fff;background:#d93535;border-radius:3px;padding:0 4px;margin-top:1px">+${totalDesv}d</span>`:''}
-      </span>
-      <span style="color:${fd.tc}">${firstFi?fmtD(firstFi):'—'}</span>
-      <span style="color:${fd.tc}">${lastFf?fmtD(lastFf):'—'}</span>
-      ${totalDiasReal?`<span style="font-weight:700;color:${totalDesv>0?'var(--bad)':'var(--ok)'}">${totalDiasReal}d real ${totalDesv>0?'⚠':'✓'}</span>`:'<span></span>'}
-    </div>
-    </div>`;
+    h+=`</div>`;
   });
   h+=`</div>`;
 
   // ── CRONOGRAMA ACTUALIZADO ──
   h+=`<div class="mpg" id="mp-cronograma">
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Generado automáticamente desde las fechas del Project Plan. Verde = en tiempo · Rojo = con retraso vs estándar.</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Generado automáticamente desde las fechas definidas por fase. Verde = en tiempo · Rojo = con retraso.</div>
     <div style="margin-bottom:16px;overflow-x:auto">
       <table>
         <thead><tr><th>Fase</th><th>Inicio real</th><th>Fin real</th><th>Días real</th><th>Días est.</th><th>Diferencia</th><th>Estado</th></tr></thead>
         <tbody>
         ${FK.map(f=>{
           const fd=FD[f];const ts=p.tp[f]||[];
-          const tareas_def=FD[f].tareas;
+          const tareas_def=getFDTareas(f);
           const firstFi=ts.find(t=>t.fi)?.fi;
           const lastFf=[...ts].reverse().find(t=>t.ff)?.ff;
           const dn=ts.filter(t=>t.e==='Completado').length;const pt=ts.length?Math.round(dn/ts.length*100):0;
@@ -3092,6 +3110,15 @@ function addTareaS(pid){
   const semKey=lunes.toISOString().slice(0,10);
   const viernes=new Date(lunes);viernes.setDate(lunes.getDate()+4);
   const viernesStr=viernes.toLocaleDateString('es-MX',{day:'numeric',month:'long'});
+  // Obtener milestone pendiente del proyecto para prellenar
+  const gateOrder=['Gate 1','Gate 2','Gate 3','Gate 4','Gate 5'];
+  const milestoneOpts=gateOrder.map(gk=>{
+    const gInfo=GATES[gk];
+    const aprobado=p.gates?.[gk]?.aprobado;
+    return{gk,nombre:gInfo?.nombre||gk,aprobado};
+  });
+  const proximoMS=milestoneOpts.find(m=>!m.aprobado);
+
   openModal2(`<div class="mh"><div><h3 class="mh-title">Nueva Meta SMART</h3><div style="font-size:11px;color:var(--muted);margin-top:2px">${p.name} &nbsp;·&nbsp; Semana del ${lunes.toLocaleDateString('es-MX',{day:'numeric',month:'long'})} al ${viernesStr}</div></div><button class="mh-x" onclick="cM2()">✕</button></div>
   <div class="mbody">
     <div style="background:rgba(26,31,60,.06);border-radius:var(--r);padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:1.6">
@@ -3099,6 +3126,13 @@ function addTareaS(pid){
       Especifica · Medible · Alcanzable · Relevante · Con fecha clara<br>
       <em>Ejemplo: "Entregar 2 modelados 3D del escritorio basico con vista explosionada para revision de gerencia el viernes."</em>
     </div>
+    <label class="lbl">Milestone que persigue <span style="font-size:10px;color:var(--muted)">(¿a qué gate apunta esta meta?)</span></label>
+    <select class="inp" id="nts-milestone" style="margin-bottom:10px;font-weight:600">
+      <option value="">— Sin milestone asignado —</option>
+      ${milestoneOpts.map(m=>`<option value="${m.nombre}" ${proximoMS?.nombre===m.nombre?'selected':''} ${m.aprobado?'style="color:var(--ok)"':''}>
+        ${m.aprobado?'✓ ':''} ${m.nombre} ${m.aprobado?'(aprobado)':''}
+      </option>`).join('')}
+    </select>
     <label class="lbl">Meta SMART <span style="color:var(--bad)">*</span></label>
     <textarea class="inp" id="nts-tarea" placeholder="Describe claramente que vas a lograr esta semana y como sabras que lo lograste..." style="margin-bottom:10px;min-height:72px;resize:vertical"></textarea>
     <label class="lbl">Criterio de exito</label>
@@ -3123,9 +3157,10 @@ function guardarTareaS(pid){
   const prioridad=document.getElementById('nts-prior').value;
   const fechaLimite=document.getElementById('nts-fecha').value;
   const semKey=document.getElementById('nts-semkey')?.value||'';
+  const milestone=document.getElementById('nts-milestone')?.value||'';
   if(!tarea){toast('Escribe la meta SMART');return;}
   p.tareasSemana=p.tareasSemana||[];
-  p.tareasSemana.push({tarea,criterio,prioridad,fechaLimite,estatus:'Pendiente',autor:cu?.nombre||'?',proyecto:p.name,semana:semKey,creadoEn:Date.now()});
+  p.tareasSemana.push({tarea,criterio,prioridad,fechaLimite,estatus:'Pendiente',autor:cu?.nombre||'?',proyecto:p.name,semana:semKey,milestone,creadoEn:Date.now()});
   sch(p);cM2();rModal();sMT('semana');toast('Meta SMART agregada ✓');
 }
 function delTareaS(pid,idx){
@@ -3211,16 +3246,31 @@ function rDiagrama(c){
   };
 
   const DESCS={
-    // DISEÑO
-    'Brief de diseño, requerimientos y criterios':'Documento inicial que define el alcance, objetivos comerciales, requerimientos técnicos y criterios de éxito del producto. Es el punto de partida de todo el desarrollo.',
-    'Benchmarking del mercado':'Análisis comparativo de productos similares de la competencia nacional e internacional para identificar oportunidades de diferenciación y referencias de diseño.',
-    'Selección de materiales, herrajes y componentes':'Definición de los materiales, herrajes y componentes clave que conformarán el producto, considerando costo, disponibilidad y proceso de manufactura.',
-    'Modelados 3D preliminares':'Primeras representaciones digitales del producto para visualizar forma, proporción, ensamble y verificar la viabilidad del concepto antes de avanzar.',
-    'Presentación de concepto y diseño':'Revisión formal del concepto con la gerencia para validar la dirección de diseño. Sin aprobación aquí, no se avanza al desarrollo.',
+    // DISEÑO — D0 Liberación de Concepto (nombres nuevos)
+    'Brief de diseño':'Documento inicial que define el alcance, objetivos comerciales, requerimientos técnicos y criterios de éxito del producto. Es el punto de partida de todo el desarrollo.',
+    'Benchmarking':'Análisis comparativo de mínimo 5 referencias del mercado nacional e internacional para identificar oportunidades de diferenciación y guiar las decisiones de diseño.',
+    'Generación de ideas':'Sesión de ideación donde el ingeniero genera 20 propuestas de concepto sin filtro. Cantidad sobre calidad para explorar el mayor rango de posibilidades.',
+    'Desarrollo de 3 conceptos':'Sketch detallado de las 3 propuestas más prometedoras, con proporciones, materiales y configuración definidos para presentar a dirección.',
+    'Mock-up rápido del concepto':'Representación visual rápida mediante render del concepto más prometedor para validar forma, proporción y estética antes de modelado completo.',
+    'Concept Review':'Revisión formal con Dirección donde se presentan las 3 propuestas y se selecciona y aprueba el concepto a desarrollar. Sin aprobación aquí, no se avanza.',
+    // DISEÑO — D1 Desarrollo de Diseño (nombres nuevos)
+    'Selección de materiales, herrajes y componentes':'Definición definitiva de los materiales, herrajes y componentes clave del concepto aprobado, considerando costo, disponibilidad y proceso de manufactura.',
+    'Modelado 3D completo':'Modelado digital completo del concepto aprobado con todos los detalles de geometría, ensamble y componentes necesarios para fabricar el prototipo.',
+    'Revisión de factibilidad de manufactura':'Evaluación conjunta con Manufactura y Procesos para validar que el diseño puede fabricarse con los equipos y capacidad disponible en planta.',
+    'Ajustes de diseño post-revisión':'Correcciones y ajustes al diseño derivados de la revisión de factibilidad de manufactura. Garantiza que el diseño final sea producible.',
+    'Generación de LM y costo preliminar':'Primera versión de la lista de materiales con estimación de costo para validar viabilidad económica del concepto aprobado.',
+    'Validación de costo objetivo inicial':'Verificación formal de que el costo estimado cumple con el objetivo comercial definido en el brief. Si no cierra, se ajusta el diseño.',
+    'Cronograma del proyecto y Project Plan':'Plan maestro del proyecto con todas las fases, fechas de inicio y fin por fase, responsables y gates. Es la guía de control del desarrollo.',
+    // DISEÑO — nombres legacy (compatibilidad)
+    'Brief de diseño, requerimientos y criterios':'Documento inicial que define el alcance, objetivos comerciales, requerimientos técnicos y criterios de éxito del producto.',
+    'Benchmarking del mercado':'Análisis comparativo de productos similares de la competencia nacional e internacional para identificar oportunidades de diferenciación.',
+    'Selección de materiales, herrajes y componentes legacy':'Definición de los materiales, herrajes y componentes clave que conformarán el producto.',
+    'Modelados 3D preliminares':'Primeras representaciones digitales del producto para visualizar forma, proporción, ensamble y verificar la viabilidad del concepto.',
+    'Presentación de concepto y diseño':'Revisión formal del concepto con la gerencia para validar la dirección de diseño.',
     'Revisión preliminar de factibilidad de manufactura':'Evaluación temprana de si el diseño puede fabricarse con los equipos, procesos y capacidad disponible en planta.',
-    'Generar LM y costo preliminar':'Primera versión de la lista de materiales del producto con estimación de costo para validar viabilidad económica desde el diseño.',
-    'Validación de costo objetivo inicial':'Verificación formal de que el costo estimado del producto cumple con el objetivo comercial definido en el brief.',
-    'Cronograma del proyecto y Project Plan':'Plan maestro del proyecto con todas las fases, fechas clave, responsables y hitos. Es la guía de control del desarrollo.',
+    'Generar LM y costo preliminar':'Primera versión de la lista de materiales del producto con estimación de costo para validar viabilidad económica.',
+    'Validación de costo objetivo inicial legacy':'Verificación formal de que el costo estimado del producto cumple con el objetivo comercial definido en el brief.',
+    'Cronograma del proyecto y Project Plan legacy':'Plan maestro del proyecto con todas las fases, fechas clave, responsables y hitos.',
     // DESARROLLO
     'Desarrollo de planos y especificaciones técnicas':'Elaboración de planos dimensionales completos y especificaciones técnicas detalladas para que manufactura pueda producir el producto.',
     'Liberación de LM de ingeniería':'Lista de materiales definitiva con todos los componentes, cantidades y especificaciones confirmadas para producción.',
@@ -3278,16 +3328,26 @@ function rDiagrama(c){
   const FASES_D=[
     {id:'D',num:1,nombre:'DISEÑO',color:'#534AB7',bg:'#EEEDFE',tc:'#3C3489',icono:'💡',
      desc:'Definir un concepto viable, alineado al mercado y a la estrategia de Línea Italia.',
-     gate:{n:'GATE 1',sub:'Concepto aprobado',q:'¿El concepto es viable, diferenciado y alineado con los objetivos comerciales?'},
-     tareas:[
-       ['Brief de diseño, requerimientos y criterios','Benchmarking del mercado','Selección de materiales, herrajes y componentes'],
-       ['Modelados 3D preliminares','Presentación de concepto y diseño','Revisión preliminar de factibilidad de manufactura'],
-       ['Generar LM y costo preliminar','Validación de costo objetivo inicial','Cronograma del proyecto y Project Plan'],
+     subfases:[
+       {codigo:'D0',nombre:'Liberación de Concepto',
+        gate:{n:'GATE 1',sub:'Liberación de Concepto',q:'¿El concepto es viable, diferenciado y alineado con los objetivos comerciales?'},
+        tareas:[
+          ['Brief de diseño','Benchmarking','Generación de ideas'],
+          ['Desarrollo de 3 conceptos','Mock-up rápido del concepto','Concept Review'],
+        ]
+       },
+       {codigo:'D1',nombre:'Desarrollo de Diseño',
+        gate:{n:'GATE 2',sub:'Liberación de Diseño',q:'¿El diseño está completo, congelado y aprobado para iniciar Desarrollo?'},
+        tareas:[
+          ['Selección de materiales, herrajes y componentes','Modelado 3D completo','Revisión de factibilidad de manufactura'],
+          ['Ajustes de diseño post-revisión','Generación de LM y costo preliminar','Validación de costo objetivo inicial','Cronograma del proyecto y Project Plan'],
+        ]
+       },
      ]
     },
     {id:'De',num:2,nombre:'DESARROLLO',color:'#185FA5',bg:'#E6F1FB',tc:'#0C447C',icono:'🔧',
      desc:'Convertir el concepto en un producto técnicamente definido, probado y validado mediante prototipo.',
-     gate:{n:'GATE 2',sub:'Diseño liberado',q:'¿El diseño está técnicamente completo y el prototipo validado para pasar a implementación?'},
+     gate:{n:'GATE 3',sub:'Liberación Técnica del Producto',q:'¿El prototipo cumple todos los criterios técnicos y está autorizado para Implementación?'},
      tareas:[
        ['Desarrollo de planos y especificaciones técnicas','Liberación de LM de ingeniería','Revisión de BOM y abastecimiento','Evaluación de alternativas críticas'],
        ['Evaluación de diseño para manufactura y ensamble','Preparación de archivos de corte y ensamble','Programación de prototipo','Fabricación de prototipos funcionales'],
@@ -3298,7 +3358,7 @@ function rDiagrama(c){
     },
     {id:'Im',num:3,nombre:'IMPLEMENTACIÓN',color:'#0F6E56',bg:'#E1F5EE',tc:'#085041',icono:'🏭',
      desc:'Asegurar que el producto pueda fabricarse de manera repetible, estable y documentada.',
-     gate:{n:'GATE 3',sub:'Proceso implementado',q:'¿El proceso está implementado, documentado y el piloto validado para producción en serie?'},
+     gate:{n:'GATE 4',sub:'Liberación Productiva',q:'¿La operación está lista para producir en serie con calidad y proceso validados?'},
      tareas:[
        ['Fabricación de plantillas','Liberación dimensional de plantillas','Flujo de proceso y ruta de fabricación','Instrucciones de trabajo y ayudas visuales'],
        ['Alta en ERP y asignación de SKU','Paquete de documentación técnica','Liberación de empaque'],
@@ -3372,37 +3432,80 @@ function rDiagrama(c){
       </div>
       <div class="diag-fase-body" id="df-${f.id}">`;
 
-    f.tareas.forEach((row,ri)=>{
-      h+=`<div class="diag-row">`;
-      row.forEach((t,ti)=>{
-        taskCounter++;
-        const dept=TASK_DEPT[t]||'ING. PRODUCTO';
-        const desc=DESCS[t]||'';
-        const safeT=t.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-        const safeDept=dept.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-        const safeDesc=desc.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-        h+=`<div class="diag-task" style="border-color:${f.color}55" onmouseenter="showTT2(event,'${f.nombre}','${safeT}','${f.color}','${safeDept}','${safeDesc}')" onmouseleave="hideTT()">
-          <div class="diag-task-num" style="background:${f.color}">${taskCounter}</div>
-          ${t}
+    // Si tiene subfases (Diseño), renderizar D0 y D1
+    if(f.subfases){
+      f.subfases.forEach((sf,sfi)=>{
+        h+=`<div style="margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px;padding:4px 0;margin-bottom:6px">
+            <span style="font-size:10px;font-weight:800;color:${f.color};background:${f.color}20;padding:2px 8px;border-radius:99px">${sf.codigo}</span>
+            <span style="font-size:12px;font-weight:700;color:${f.tc}">${sf.nombre}</span>
+          </div>`;
+        sf.tareas.forEach((row,ri)=>{
+          h+=`<div class="diag-row">`;
+          row.forEach((t,ti)=>{
+            taskCounter++;
+            const dept=TASK_DEPT[t]||'ING. PRODUCTO';
+            const desc=DESCS[t]||'';
+            const safeT=t.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+            const safeDept=dept.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+            const safeDesc=desc.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+            h+=`<div class="diag-task" style="border-color:${f.color}55" onmouseenter="showTT2(event,'${f.nombre}','${safeT}','${f.color}','${safeDept}','${safeDesc}')" onmouseleave="hideTT()">
+              <div class="diag-task-num" style="background:${f.color}">${taskCounter}</div>
+              ${t}
+            </div>`;
+            if(ti<row.length-1) h+=arrowH(f.color);
+          });
+          h+=`</div>`;
+          if(ri<sf.tareas.length-1) h+=arrowTurn(f.color);
+        });
+        // Gate de subfase
+        h+=`<div class="diag-gate" style="background:${f.color}12;border-color:${f.color}40" onmouseenter="showGateTT(event,'${sf.gate.n}','${sf.gate.q.replace(/'/g,"\\'")}','${f.color}')" onmouseleave="hideTT()">
+          <div class="diag-diamond" style="background:${f.color}">
+            <div class="diag-diamond-inner" style="color:#fff">${sf.gate.n}</div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:${f.color}">${sf.gate.n} · ${sf.gate.sub}</div>
+            <div style="font-size:11px;color:${f.tc};margin-top:2px">${sf.gate.q}</div>
+          </div>
+          <div style="margin-left:auto;font-size:20px">🔐</div>
         </div>`;
-        if(ti<row.length-1) h+=arrowH(f.color);
+        h+=`</div>`;
+        if(sfi<f.subfases.length-1) h+=`<div style="height:8px;border-left:2px dashed ${f.color}44;margin:0 0 8px 20px"></div>`;
       });
-      h+=`</div>`;
-      if(ri<f.tareas.length-1) h+=arrowTurn(f.color);
-    });
+    } else {
+      // Fases sin subfases — render normal
+      f.tareas.forEach((row,ri)=>{
+        h+=`<div class="diag-row">`;
+        row.forEach((t,ti)=>{
+          taskCounter++;
+          const dept=TASK_DEPT[t]||'ING. PRODUCTO';
+          const desc=DESCS[t]||'';
+          const safeT=t.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+          const safeDept=dept.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+          const safeDesc=desc.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+          h+=`<div class="diag-task" style="border-color:${f.color}55" onmouseenter="showTT2(event,'${f.nombre}','${safeT}','${f.color}','${safeDept}','${safeDesc}')" onmouseleave="hideTT()">
+            <div class="diag-task-num" style="background:${f.color}">${taskCounter}</div>
+            ${t}
+          </div>`;
+          if(ti<row.length-1) h+=arrowH(f.color);
+        });
+        h+=`</div>`;
+        if(ri<f.tareas.length-1) h+=arrowTurn(f.color);
+      });
+      // Gate normal
+      h+=`<div class="diag-gate" style="background:${f.color}12;border-color:${f.color}40" onmouseenter="showGateTT(event,'${f.gate.n}','${f.gate.q.replace(/'/g,"\\'")}','${f.color}')" onmouseleave="hideTT()">
+        <div class="diag-diamond" style="background:${f.color}">
+          <div class="diag-diamond-inner" style="color:#fff">${f.gate.n}</div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:${f.color}">${f.gate.n} · ${f.gate.sub}</div>
+          <div style="font-size:11px;color:${f.tc};margin-top:2px">${f.gate.q}</div>
+        </div>
+        <div style="margin-left:auto;font-size:20px">🔐</div>
+      </div>`;
+    }
 
-    // Gate
-    h+=`<div class="diag-gate" style="background:${f.color}12;border-color:${f.color}40" onmouseenter="showGateTT(event,'${f.gate.n}','${f.gate.q.replace(/'/g,"\\'")}','${f.color}')" onmouseleave="hideTT()">
-      <div class="diag-diamond" style="background:${f.color}">
-        <div class="diag-diamond-inner" style="color:#fff">${f.gate.n}</div>
-      </div>
-      <div>
-        <div style="font-size:13px;font-weight:700;color:${f.color}">${f.gate.n} · ${f.gate.sub}</div>
-        <div style="font-size:11px;color:${f.tc};margin-top:2px">${f.gate.q}</div>
-      </div>
-      <div style="margin-left:auto;font-size:20px">🔐</div>
-    </div>
-    </div></div>`;
+    h+=`</div></div>`;
   });
 
   h+=`</div>`;
@@ -3411,7 +3514,7 @@ function rDiagrama(c){
   const totalT=Object.keys(DESCS).length;
   h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 18px;margin-top:8px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
     <div style="font-size:11px;color:var(--muted)">Proceso NPD · Línea Italia</div>
-    ${FASES_D.map(f=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px"><span style="width:10px;height:10px;border-radius:2px;background:${f.color};display:inline-block"></span><span style="color:var(--muted)">${f.nombre}</span><strong style="color:${f.color}">${f.tareas.flat().length}t</strong></div>`).join('')}
+    ${FASES_D.map(f=>{const cnt=f.subfases?f.subfases.flatMap(sf=>sf.tareas).flat().length:(f.tareas||[]).flat().length;return`<div style="display:flex;align-items:center;gap:5px;font-size:11px"><span style="width:10px;height:10px;border-radius:2px;background:${f.color};display:inline-block"></span><span style="color:var(--muted)">${f.nombre}</span><strong style="color:${f.color}">${cnt}t</strong></div>`;}).join('')}
     <div style="margin-left:auto;font-size:11px;color:var(--muted)"><strong style="color:var(--text)">${totalT}</strong> tareas totales · <strong style="color:var(--text)">5</strong> fases · <strong style="color:var(--text)">5</strong> gates</div>
   </div>`;
 
@@ -3651,7 +3754,7 @@ function aplicarFechasHaciaAtras(pid){
   const diasPorFase={};
   fases.forEach(f=>{
     const inp=document.getElementById(`dias-retro-${f}-${pid}`);
-    const dEst=FD[f].tareas.reduce((s,t)=>s+(t.d||1),0);
+    const dEst=getFDTareas(f).reduce((s,t)=>s+(t.d||1),0);
     diasPorFase[f]=parseInt(inp?.value)||dEst;
   });
 
@@ -3663,7 +3766,7 @@ function aplicarFechasHaciaAtras(pid){
   let finFase=launchDate; // la fecha fin de la fase actual que estamos calculando
 
   fasesRev.forEach(fase=>{
-    const tareas=FD[fase].tareas;
+    const tareas=getFDTareas(fase);
     const tps=p.tp[fase]||[];
     const nTareas=tareas.length;
 
@@ -3721,20 +3824,114 @@ function aplicarFechasEstandar(pid, briefDate){
   let cur=briefDate;
   FK.forEach(fk=>{
     if(fk==='Seguimiento') return;
-    const tareas=FD[fk].tareas;
+    const subfases=FD[fk].subfases||[];
+    const tareas=subfases.flatMap(sf=>sf.tareas);
     (p.tp[fk]||[]).forEach((t,i)=>{
-      const dias=tareas[i]?.d||1;
       t.fi=cur;
-      t.ff=addWorkdays(cur,dias-1);
-      t.diasReal=dias;
+      t.ff=addWorkdays(cur,0);
       cur=addWorkdays(t.ff,1);
     });
   });
-  // Guardar y refrescar
   saveProj(p);
   rModalKeepScroll('tareas');
-  toast('Fechas estándar aplicadas ✓ — ajusta las que cambien');
+  toast('Fechas aplicadas ✓');
 }
+
+// ─── NUEVA FUNCIÓN: Actualizar fecha de fase y distribuir tareas ──────────
+function updFechaFase(pid, fase, campo, val){
+  const p=PROJ.find(x=>x.id===pid);
+  if(!p) return;
+  if(p.fechasConfirmadas&&!isG()){toast('⚠ Fechas confirmadas — solo el Gerente puede modificarlas');rModalKeepScroll('tareas');return;}
+  if(!p.fechasFase) p.fechasFase=mkFechasFase();
+  if(!p.fechasFase[fase]) p.fechasFase[fase]={inicio:'',fin:'',confirmadas:false};
+  // Validar que la fecha sea válida y >= 2020
+  if(val&&(!val.match(/^\d{4}-\d{2}-\d{2}$/)||val<'2020-01-01')){toast('⚠ Fecha inválida');return;}
+  p.fechasFase[fase][campo]=val;
+  // Si tiene inicio y fin, distribuir tareas en días hábiles
+  if(p.fechasFase[fase].inicio&&p.fechasFase[fase].fin){
+    distribuirTareasPorFase(p, fase);
+  }
+  // Verificar si todas las 4 fases tienen fechas para habilitar botón confirmar
+  verificarFechasCompletas(pid);
+  saveProj(p);
+  rModalKeepScroll('tareas');
+}
+
+function distribuirTareasPorFase(p, fase){
+  const ff=p.fechasFase?.[fase];
+  if(!ff?.inicio||!ff?.fin) return;
+  const tareas=p.tp[fase]||[];
+  if(!tareas.length) return;
+  const inicio=pd(ff.inicio);
+  const fin=pd(ff.fin);
+  if(!inicio||!fin||fin<inicio) return;
+  // Calcular días hábiles totales disponibles
+  const diasTotales=diasHabiles(inicio, fin);
+  if(diasTotales<=0) return;
+  // Distribuir equitativamente — cada tarea recibe diasTotales/n días
+  const n=tareas.length;
+  let cur=ff.inicio;
+  tareas.forEach((t,i)=>{
+    const diasT=i<n-1?Math.floor(diasTotales/n):diasTotales-Math.floor(diasTotales/n)*(n-1);
+    t.fi=cur;
+    t.ff=addWorkdays(cur, Math.max(0, diasT-1));
+    cur=addWorkdays(t.ff, 1);
+  });
+  // Actualizar fecha final del proyecto = fin de Lanzamiento
+  if(fase==='Lanzamiento') p.fechaFinal=ff.fin;
+}
+
+function verificarFechasCompletas(pid){
+  const p=PROJ.find(x=>x.id===pid);if(!p) return;
+  const fases4=['Diseño','Desarrollo','Implementacion','Lanzamiento'];
+  const completas=fases4.every(f=>p.fechasFase?.[f]?.inicio&&p.fechasFase?.[f]?.fin);
+  const btn=document.getElementById(`btn-confirmar-${pid}`);
+  if(btn){
+    btn.style.opacity=completas?'1':'0.5';
+    btn.style.pointerEvents=completas?'auto':'none';
+  }
+}
+
+function confirmarFechas(pid){
+  const p=PROJ.find(x=>x.id===pid);if(!p) return;
+  const fases4=['Diseño','Desarrollo','Implementacion','Lanzamiento'];
+  const completas=fases4.every(f=>p.fechasFase?.[f]?.inicio&&p.fechasFase?.[f]?.fin);
+  if(!completas){toast('⚠ Define las fechas de las 4 fases primero');return;}
+  if(!confirm('¿Confirmar fechas del proyecto? Una vez confirmadas, solo el Gerente podrá modificarlas. Las fechas determinan el cálculo del bono.')){return;}
+  p.fechasConfirmadas=true;
+  p.fechaFinal=p.fechasFase['Lanzamiento'].fin;
+  if(!p.historialFechas) p.historialFechas=[];
+  p.historialFechas.push({
+    tipo:'confirmacion',
+    fecha:new Date().toISOString(),
+    usuario:cu?.nombre||'?',
+    detalle:`Fechas confirmadas por ${cu?.nombre||'?'}. Fecha final: ${p.fechaFinal}`
+  });
+  addAct(p,'fechas','Fechas del proyecto confirmadas y bloqueadas');
+  saveProj(p);
+  rModalKeepScroll('tareas');
+  toast('✓ Fechas confirmadas y bloqueadas');
+}
+
+function desbloquearFechas(pid){
+  if(!isG()){toast('Solo el Gerente puede desbloquear fechas');return;}
+  const p=PROJ.find(x=>x.id===pid);if(!p) return;
+  const nueva=prompt('¿Razón del cambio de fechas? (queda registrado en historial)');
+  if(!nueva) return;
+  if(!p.historialFechas) p.historialFechas=[];
+  p.historialFechas.push({
+    tipo:'desbloqueo',
+    fecha:new Date().toISOString(),
+    usuario:cu?.nombre||'?',
+    detalle:`Fechas desbloqueadas por ${cu?.nombre||'?'}. Razón: ${nueva}`
+  });
+  p.fechasConfirmadas=false;
+  addAct(p,'fechas',`Gerente desbloqueó fechas: ${nueva}`);
+  saveProj(p);
+  rModalKeepScroll('tareas');
+  toast('Fechas desbloqueadas — puedes modificarlas');
+}
+
 
 // ─── ACTUALIZAR FECHA CON CASCADA ─────────────────────────────────────
 function uTFecha(pid,f,i,campo,val){
@@ -3752,7 +3949,7 @@ function uTFecha(pid,f,i,campo,val){
   t._manual=true; // proteger de futuras cascadas
 
   if(campo==='ff'&&val){
-    const dias=t.fi&&t.ff?workdaysBetween(t.fi,t.ff)+1:FD[f]?.tareas[i]?.d||1;
+    const dias=t.fi&&t.ff?workdaysBetween(t.fi,t.ff)+1:getFDTareas(f)[i]?.d||1;
     t.diasReal=dias;
     let cur=addWorkdays(val,1);
     let pastThis=false;
@@ -3762,14 +3959,14 @@ function uTFecha(pid,f,i,campo,val){
         if(fk===f&&j===i){pastThis=true;return;}
         if(!pastThis) return;
         if(tk._manual){if(tk.ff) cur=addWorkdays(tk.ff,1);}
-        else{const dEst=FD[fk]?.tareas[j]?.d||1;tk.fi=cur;tk.ff=addWorkdays(cur,dEst-1);tk.diasReal=dEst;cur=addWorkdays(tk.ff,1);}
+        else{const dEst=getFDTareas(fk)[j]?.d||1;tk.fi=cur;tk.ff=addWorkdays(cur,dEst-1);tk.diasReal=dEst;cur=addWorkdays(tk.ff,1);}
       });
     });
     addAct(p,'fecha',`Fecha ajustada: ${f} tarea ${i+1}`);
   }
 
   if(campo==='fi'&&val&&!t.ff){
-    const dEst=FD[f]?.tareas[i]?.d||1;
+    const dEst=getFDTareas(f)[i]?.d||1;
     t.ff=addWorkdays(val,dEst-1);
   }
 
@@ -3920,7 +4117,7 @@ function recalcularPendientes(pid){
         return;
       } else {
         // Tarea pendiente: recalcular desde cursor actual
-        const dEst=FD[fk]?.tareas[j]?.d||1;
+        const dEst=getFDTareas(fk)[j]?.d||1;
         t.fi=cur;
         t.ff=addWorkdays(cur,dEst-1);
         t.diasReal=dEst;
@@ -3966,14 +4163,14 @@ function actualizarFechaFinal(pid, nuevaFecha){
 
   // Distribuir tareas pendientes en el rango [hoy → nuevaFecha]
   // Si la nueva fecha es menor que hoy, varias pueden quedar el mismo día
-  const totalDiasPendientes=pendientes.reduce((s,{fk,j})=>s+(FD[fk]?.tareas[j]?.d||1),0);
+  const totalDiasPendientes=pendientes.reduce((s,{fk,j})=>s+(getFDTareas(fk)[j]?.d||1),0);
   const diasDisponibles=Math.max(workdaysBetween(hoyISO,nuevaFecha),1);
 
   // Factor de compresión (puede ser <1 si hay más días estándar que días disponibles)
   // En ese caso varias tareas compartirán el mismo día
   let cur=hoyISO;
   pendientes.forEach(({fk,j,t})=>{
-    const dEst=FD[fk]?.tareas[j]?.d||1;
+    const dEst=getFDTareas(fk)[j]?.d||1;
     // Días proporcionales: al menos 0 (misma fecha inicio y fin)
     const dProp=Math.max(Math.round(dEst/totalDiasPendientes*diasDisponibles)-1,0);
     t.fi=cur;
@@ -4060,7 +4257,7 @@ function autoFechasDesde(p, briefDate, forceAll=false){
   let curDate = briefDate;
   FK.forEach(fk=>{
     if(fk==='Seguimiento') return; // punto 4 — seguimiento siempre libre
-    const tareas = FD[fk].tareas;
+    const tareas = getFDTareas(fk);
     (p.tp[fk]||[]).forEach((t,i)=>{
       const dias = tareas[i]?.d||1;
       const finEst = addWorkdays(curDate, dias);
@@ -4097,7 +4294,7 @@ function recalcCascada(p, fromFase, fromIdx){
     (p.tp[fk]||[]).forEach((t,i)=>{
       if(fk===fromFase && i===fromIdx){ pastFrom=true; prevFin=t.ff||null; return; }
       if(pastFrom && (!fk==='Seguimiento')){
-        const dias = t.diasReal || FD[fk]?.tareas[i]?.d || 1;
+        const dias = t.diasReal || getFDTareas(fk)[i]?.d || 1;
         if(prevFin){
           t.fi = addWorkdays(prevFin,1);
           t.ff = addWorkdays(t.fi, dias-1>0?dias-1:dias);
@@ -5008,6 +5205,7 @@ function buildMetasSmart(p, ed){
       h += '<div style="background:var(--surface);border:1px solid '+(venc?'rgba(217,53,53,.3)':'var(--border2)')+';border-radius:var(--r2);margin-bottom:8px;padding:12px 14px;border-left:3px solid '+priCol+'">';
       h += '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">';
       h += '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--text);line-height:1.4">'+t.tarea+'</div>';
+      if(t.milestone) h += '<div style="font-size:10px;font-weight:700;color:#534AB7;background:#EEEDFE;padding:3px 8px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;margin-top:5px">🎯 '+t.milestone+'</div>';
       if(t.criterio) h += '<div style="font-size:10px;color:var(--muted);margin-top:4px;padding:5px 8px;background:var(--surface2);border-radius:var(--r)">Criterio de exito: '+t.criterio+'</div>';
       h += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">';
       h += '<span style="font-size:9px;color:'+priCol+';font-weight:700;background:'+priCol.replace(')',',0.12)').replace('var(','rgba(').replace('--bad','217,53,53').replace('--warn','196,125,10').replace('--ok','30,158,94')+'">'+t.prioridad+'</span>';
@@ -5060,63 +5258,270 @@ function buildMetasSmart(p, ed){
 
 // GLOSARIO SMART
 function rGlosario(c){
-  c.innerHTML = '<div style="max-width:760px;margin:0 auto">'
-  + '<div style="background:var(--navy);border-radius:var(--r2);padding:18px 22px;margin-bottom:20px">'
-  + '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:4px">METODOLOGIA</div>'
-  + '<div style="font-size:22px;font-weight:900;color:#fff;font-family:var(--font-d)">Metas SMART</div>'
-  + '<div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:4px">Creado por George T. Doran en 1981 · Management Review</div>'
+  c.innerHTML = '<div style="max-width:800px;margin:0 auto;padding-bottom:40px">'
+
+  // ── HEADER ──
+  + '<div style="background:var(--navy);border-radius:var(--r2);padding:20px 24px;margin-bottom:24px">'
+  + '<div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:rgba(255,255,255,.45);margin-bottom:6px">BASE DE CONOCIMIENTO</div>'
+  + '<div style="font-size:24px;font-weight:900;color:#fff;font-family:var(--font-d);margin-bottom:4px">Biblioteca NPD</div>'
+  + '<div style="font-size:12px;color:rgba(255,255,255,.55)">Milestones · Gates · Metas SMART · Proceso NPD de Línea Italia · Basado en Cooper (1986), Doran (1981), Stage-Gate International</div>'
   + '</div>'
 
-  + '<div style="background:var(--surface2);border-radius:var(--r2);padding:14px 18px;margin-bottom:18px;border-left:4px solid var(--purple)">'
-  + '<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">Por que usamos Metas SMART?</div>'
-  + '<div style="font-size:12px;color:var(--muted);line-height:1.7">Una tarea generica como "avanzar en el proyecto" no es medible ni comprometible. Una Meta SMART convierte esa tarea en un compromiso claro que cualquier persona puede verificar al final de la semana. En Linea Italia las usamos para que cada ingeniero defina exactamente que va a lograr esa semana y pueda rendir cuentas de ello.</div>'
+  // ── ÍNDICE ──
+  + '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 18px;margin-bottom:24px">'
+  + '<div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">CONTENIDO</div>'
+  + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;color:var(--muted)">'
+  + '<span>1. ¿Qué es un Milestone / Gate?</span><span>2. ¿Qué son las Metas SMART?</span>'
+  + '<span>3. Los 5 criterios SMART</span><span>4. Diferencia: Tarea vs Meta vs Milestone</span>'
+  + '<span>5. La secuencia Gate → Metas SMART</span><span>6. Los 5 Gates de Línea Italia</span>'
+  + '<span>7. Cómo funciona en el NPD Manager</span><span>8. Ejemplos reales</span>'
+  + '</div></div>'
+
+  // ══════════════════════════════════════════
+  // SECCIÓN 1: MILESTONES / GATES
+  // ══════════════════════════════════════════
+  + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+  + '<div style="width:32px;height:32px;border-radius:50%;background:#0F6E56;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0">1</div>'
+  + '<div style="font-size:16px;font-weight:800;color:var(--navy)">¿Qué es un Milestone / Gate?</div>'
   + '</div>'
 
-  + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">'
+  + '<div style="background:var(--surface2);border-radius:var(--r2);padding:14px 18px;margin-bottom:10px;border-left:4px solid #0F6E56">'
+  + '<div style="font-size:12px;color:var(--text);line-height:1.8">'
+  + 'El concepto de <strong>Gate</strong> (puerta de control) fue desarrollado por <strong>Robert G. Cooper en 1986</strong> como parte del proceso <em>Stage-Gate®</em>, '
+  + 'publicado en su libro <em>"Winning at New Products"</em> (1993). Es el estándar global para gestión de desarrollo de nuevos productos adoptado por empresas como '
+  + 'Steelcase, Herman Miller, 3M, P&G y más de 1,000 compañías Fortune 500.'
+  + '</div></div>'
+
+  + '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px 18px;margin-bottom:10px">'
+  + '<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:10px">Definición formal</div>'
+  + '<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:12px">'
+  + 'Un <strong>Milestone</strong> es un punto específico en el tiempo que marca que una etapa importante quedó <strong>completada y validada formalmente</strong>. '
+  + 'No es una actividad — es una <em>confirmación de que se llegó a un resultado clave</em>. '
+  + 'En el proceso Stage-Gate de Línea Italia, los Milestones son los <strong>Gates de Liberación</strong>: puntos formales donde la Gerencia valida que el trabajo cumple los criterios para avanzar.'
+  + '</div>'
+  + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
   + [
-    {l:'S — Especifica',c:'#534AB7',d:'La meta describe exactamente QUE se va a lograr, no de manera vaga. Incluye el entregable concreto.',e:'Mal: "Avanzar en los planos". Bien: "Entregar planos dimensionales del escritorio L 160cm con tolerancias definidas."'},
-    {l:'M — Medible',c:'#185FA5',d:'Existe un criterio claro para saber si se logro o no. Puede ser un entregable fisico, una aprobacion, un porcentaje o una fecha.',e:'Mal: "Hacer el prototipo". Bien: "Tener prototipo fisico ensamblado listo para pruebas de carga el viernes."'},
-    {l:'A — Alcanzable',c:'#0F6E56',d:'La meta es realista para una semana con los recursos disponibles. No es aspiracional — es comprometible.',e:'Mal: "Terminar todo el proyecto". Bien: "Completar la fase de disenio del modulo de tablero esta semana."'},
-    {l:'R — Relevante',c:'#854F0B',d:'La meta contribuye directamente al avance del proyecto NPD. No es una actividad de soporte sin impacto en el resultado.',e:'Mal: "Organizar archivos del servidor". Bien: "Validar el costo final del herraje con proveedor para cerrar BOM."'},
-    {l:'T — Con tiempo',c:'#993C1D',d:'Tiene una fecha limite clara. En nuestro caso siempre es dentro de la semana — el viernes a mas tardar.',e:'Mal: "Pronto". Bien: "Para el viernes 30 de mayo de 2026."'}
+    {t:'Binario',i:'✓ / ✕',d:'Se cumplió o no se cumplió. No existe "50% de milestone". El gate está aprobado o no está aprobado.'},
+    {t:'Validado externamente',i:'👤',d:'Lo aprueba alguien con autoridad — Gerencia, Dirección. No el mismo equipo que hizo el trabajo.'},
+    {t:'Bloqueante',i:'🔒',d:'Sin aprobación del gate, el proyecto no avanza a la siguiente fase. Es una puerta real, no un checkmark.'}
+  ].map(function(x){
+    return '<div style="background:rgba(15,110,86,.06);border:1px solid rgba(15,110,86,.2);border-radius:var(--r);padding:10px 12px;text-align:center">'
+    + '<div style="font-size:18px;margin-bottom:4px">'+x.i+'</div>'
+    + '<div style="font-size:11px;font-weight:700;color:#0F6E56;margin-bottom:4px">'+x.t+'</div>'
+    + '<div style="font-size:10px;color:var(--muted);line-height:1.5">'+x.d+'</div>'
+    + '</div>';
+  }).join('')
+  + '</div></div>'
+
+  + '<div style="background:var(--surface2);border-radius:var(--r2);padding:14px 18px;margin-bottom:24px;border-left:4px solid #0F6E56">'
+  + '<div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:6px">¿Por qué son críticos los Gates en NPD?</div>'
+  + '<div style="font-size:12px;color:var(--muted);line-height:1.8">'
+  + 'Sin gates formales, los proyectos tienden a avanzar sin validación — el equipo sigue trabajando aunque el diseño tenga problemas o el costo no cierre. '
+  + 'Según Cooper (2017), <strong>el 60% del tiempo perdido en NPD ocurre por no detectar problemas a tiempo</strong>. '
+  + 'Los gates fuerzan esa conversación temprana: ¿estamos listos para avanzar o necesitamos corregir antes?'
+  + '</div></div>'
+
+  // ══════════════════════════════════════════
+  // SECCIÓN 2: METAS SMART
+  // ══════════════════════════════════════════
+  + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+  + '<div style="width:32px;height:32px;border-radius:50%;background:#534AB7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0">2</div>'
+  + '<div style="font-size:16px;font-weight:800;color:var(--navy)">¿Qué son las Metas SMART?</div>'
+  + '</div>'
+
+  + '<div style="background:var(--surface2);border-radius:var(--r2);padding:14px 18px;margin-bottom:8px;border-left:4px solid #534AB7">'
+  + '<div style="font-size:12px;color:var(--text);line-height:1.8">'
+  + 'El acrónimo SMART fue definido por <strong>George T. Doran en 1981</strong> en su artículo <em>"There\'s a S.M.A.R.T. way to write management\'s goals and objectives"</em> '
+  + 'publicado en Management Review. Su premisa es simple: <strong>un objetivo vago no se puede lograr</strong> porque nadie sabe exactamente qué significa "terminarlo".'
+  + '</div></div>'
+
+  + '<div style="background:var(--surface2);border-radius:var(--r2);padding:14px 18px;margin-bottom:24px;border-left:4px solid var(--ok)">'
+  + '<div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:6px">¿Por qué las usamos en Línea Italia?</div>'
+  + '<div style="font-size:12px;color:var(--muted);line-height:1.8">'
+  + 'Una tarea genérica como <em>"avanzar en el proyecto"</em> no es medible ni comprometible. Una Meta SMART convierte esa intención en un compromiso claro que cualquier persona '
+  + 'puede verificar al final de la semana. Cada ingeniero define exactamente qué va a lograr esa semana y puede rendir cuentas de ello. '
+  + 'Esto crea una <strong>cultura de resultados</strong>, no de actividad.'
+  + '</div></div>'
+
+  // ── SECCIÓN 3: 5 CRITERIOS SMART ──
+  + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+  + '<div style="width:32px;height:32px;border-radius:50%;background:#534AB7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0">3</div>'
+  + '<div style="font-size:16px;font-weight:800;color:var(--navy)">Los 5 criterios SMART</div>'
+  + '</div>'
+
+  + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">'
+  + [
+    {l:'S — Específica',c:'#534AB7',
+     d:'La meta describe exactamente QUÉ se va a lograr, no de manera vaga. Incluye el entregable concreto, el producto al que aplica y el resultado esperado.',
+     e:'❌ "Avanzar en los planos"<br>✅ "Entregar planos dimensionales del escritorio L 160cm con tolerancias definidas para revisión de manufactura."'},
+    {l:'M — Medible',c:'#185FA5',
+     d:'Existe un criterio claro para saber si se logró o no. Puede ser un entregable físico, una aprobación documentada, un porcentaje específico o una fecha confirmada.',
+     e:'❌ "Hacer el prototipo"<br>✅ "Tener prototipo físico ensamblado, validado dimensionalmente y listo para pruebas de carga el viernes."'},
+    {l:'A — Alcanzable',c:'#0F6E56',
+     d:'La meta es realista para una semana con los recursos disponibles. Considera la carga actual del ingeniero, dependencias externas y tiempos de respuesta de otras áreas.',
+     e:'❌ "Terminar todo el proyecto esta semana"<br>✅ "Completar el modelado 3D del módulo de tablero con 3 opciones de configuración."'},
+    {l:'R — Relevante',c:'#854F0B',
+     d:'La meta contribuye directamente al avance del proyecto NPD hacia el próximo milestone. No es una actividad de soporte sin impacto en el resultado del gate.',
+     e:'❌ "Organizar archivos del servidor"<br>✅ "Validar el costo final del herraje con proveedor para cerrar BOM y avanzar al Gate 2."'},
+    {l:'T — Con tiempo',c:'#993C1D',
+     d:'Tiene una fecha límite clara y explícita. En Línea Italia siempre es dentro de la semana — el viernes a más tardar. Sin fecha, no hay urgencia ni compromiso real.',
+     e:'❌ "Pronto" / "Esta semana"<br>✅ "Para el viernes 30 de mayo de 2026 a las 6 pm."'}
   ].map(function(k){
     return '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;border-top:3px solid '+k.c+'">'
     + '<div style="font-size:13px;font-weight:800;color:'+k.c+';margin-bottom:6px">'+k.l+'</div>'
-    + '<div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:8px">'+k.d+'</div>'
-    + '<div style="font-size:10px;color:var(--muted);background:var(--surface2);padding:7px 10px;border-radius:var(--r);line-height:1.6">'+k.e+'</div>'
+    + '<div style="font-size:11px;color:var(--text);line-height:1.6;margin-bottom:8px">'+k.d+'</div>'
+    + '<div style="font-size:10px;color:var(--muted);background:var(--surface2);padding:8px 10px;border-radius:var(--r);line-height:1.8">'+k.e+'</div>'
     + '</div>';
   }).join('')
   + '</div>'
 
-  + '<div style="background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--r2);padding:16px 18px;margin-bottom:14px">'
-  + '<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:10px">Como funciona en el NPD Manager</div>'
-  + '<div style="display:flex;flex-direction:column;gap:8px">'
+  // SECCIÓN 4: DIFERENCIA TAREA VS META VS MILESTONE
+  + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+  + '<div style="width:32px;height:32px;border-radius:50%;background:#185FA5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0">4</div>'
+  + '<div style="font-size:16px;font-weight:800;color:var(--navy)">Diferencia: Tarea vs Meta SMART vs Milestone</div>'
+  + '</div>'
+
+  + '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;margin-bottom:24px">'
+  + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--navy)">'
+  + '<div style="padding:10px 14px;font-size:11px;font-weight:700;color:#fff">TAREA</div>'
+  + '<div style="padding:10px 14px;font-size:11px;font-weight:700;color:#818cf8;border-left:1px solid rgba(255,255,255,.1)">META SMART</div>'
+  + '<div style="padding:10px 14px;font-size:11px;font-weight:700;color:#4ade80;border-left:1px solid rgba(255,255,255,.1)">MILESTONE / GATE</div>'
+  + '</div>'
   + [
-    {d:'LUNES',t:'El ingeniero define sus 3 a 5 Metas SMART de la semana dentro de cada proyecto. Las escribe de forma especifica con criterio de exito claro.',c:'var(--purple)'},
-    {d:'DURANTE LA SEMANA',t:'Actualiza el estatus de cada meta: Pendiente o En progreso. Si se bloquea, lo registra con un comentario.',c:'var(--warn)'},
-    {d:'VIERNES',t:'Cierra cada meta con: Lograda / Parcial / No lograda. El historial queda guardado automaticamente.',c:'var(--ok)'},
-    {d:'REPORTE EJECUTIVO',t:'Fernando ve las Metas SMART de cada ingeniero y su indice de cumplimiento historico para tomar decisiones.',c:'var(--navy)'}
+    ['Lo que haces','Lo que te comprometes a lograr esta semana','El punto de no retorno de la fase'],
+    ['Tiene duración','Tiene fecha límite semanal','Tiene fecha objetivo de fase'],
+    ['La define el proceso','La define el ingeniero','La aprueba la Gerencia'],
+    ['Se ejecuta','Se verifica el viernes','Se aprueba formalmente'],
+    ['"Hacer modelado 3D"','"Entregar 3 modelados 3D del escritorio el viernes"','"Liberación de Diseño — diseño congelado"'],
+    ['Actividad operativa','Compromiso semanal medible','Hito estratégico de proyecto']
+  ].map(function(r,i){
+    var bg=i%2===0?'var(--surface)':'var(--surface2)';
+    return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:'+bg+';border-top:1px solid var(--border2)">'
+    + '<div style="padding:9px 14px;font-size:11px;color:var(--muted)">'+r[0]+'</div>'
+    + '<div style="padding:9px 14px;font-size:11px;color:#534AB7;font-weight:600;border-left:1px solid var(--border2)">'+r[1]+'</div>'
+    + '<div style="padding:9px 14px;font-size:11px;color:#0F6E56;font-weight:600;border-left:1px solid var(--border2)">'+r[2]+'</div>'
+    + '</div>';
+  }).join('')
+  + '</div>'
+
+  // SECCIÓN 5: LA SECUENCIA
+  + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+  + '<div style="width:32px;height:32px;border-radius:50%;background:#854F0B;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0">5</div>'
+  + '<div style="font-size:16px;font-weight:800;color:var(--navy)">La secuencia: Gate → Metas SMART semanales</div>'
+  + '</div>'
+
+  + '<div style="background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--r2);padding:16px 18px;margin-bottom:10px">'
+  + '<div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:14px">'
+  + 'La conexión entre los Gates y las Metas SMART semanales es la <strong>dinámica central</strong> del sistema NPD de Línea Italia. '
+  + 'El Gate define el destino. Las Metas SMART son el camino semana a semana para llegar ahí. '
+  + 'Inspirado en el método <em>OKR (Objectives and Key Results)</em> de Intel y Google, adaptado al contexto de manufactura de producto.'
+  + '</div>'
+  + '<div style="display:flex;flex-direction:column;gap:0">'
+  + [
+    {n:'GATE PENDIENTE',t:'El milestone define el destino',d:'El sistema muestra el próximo Gate no aprobado del proyecto. Es el norte visible para el ingeniero y para la Gerencia.',c:'#0F6E56',i:'🏁'},
+    {n:'PROJECT PLAN',t:'Tareas del proceso',d:'Las tareas del Project Plan son el mapa de actividades necesarias para llegar al gate. El ingeniero sabe qué debe completarse.',c:'#185FA5',i:'📋'},
+    {n:'LUNES',t:'Metas SMART de la semana',d:'El ingeniero define 3-5 metas vinculadas al Gate que persigue. Cada meta tiene criterio de éxito claro y fecha límite.',c:'#534AB7',i:'🎯'},
+    {n:'VIERNES',t:'Cierre y rendición de cuentas',d:'Se cierra cada meta: Lograda / Parcial / No lograda. El historial alimenta el índice de cumplimiento y el NPD Score.',c:'#854F0B',i:'📊'},
+    {n:'SEMANAS SIGUIENTES',t:'Nueva ronda de metas',d:'El ingeniero define sus próximas metas apuntando al mismo gate hasta que todas las tareas estén completas y el gate pueda aprobarse.',c:'#993C1D',i:'🔄'},
+    {n:'GATE APROBADO',t:'El Gerente aprueba formalmente',d:'Cuando todas las tareas están completas y los criterios del gate se cumplen, el Gerente aprueba y el proyecto avanza a la siguiente fase.',c:'#0F6E56',i:'✅'}
+  ].map(function(s,i){
+    var isLast=i===5;
+    return '<div style="display:flex;gap:0">'
+    + '<div style="display:flex;flex-direction:column;align-items:center;margin-right:12px">'
+    + '<div style="width:36px;height:36px;border-radius:50%;background:'+s.c+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">'+s.i+'</div>'
+    + (!isLast?'<div style="width:2px;flex:1;background:'+s.c+'33;min-height:20px;margin:2px 0"></div>':'')
+    + '</div>'
+    + '<div style="padding-bottom:'+(isLast?'0':'14')+'px;flex:1">'
+    + '<div style="font-size:9px;font-weight:700;color:'+s.c+';letter-spacing:.08em;margin-bottom:2px">'+s.n+'</div>'
+    + '<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:3px">'+s.t+'</div>'
+    + '<div style="font-size:11px;color:var(--muted);line-height:1.5">'+s.d+'</div>'
+    + '</div></div>';
+  }).join('')
+  + '</div></div>'
+
+  // SECCIÓN 6: GATES EN LÍNEA ITALIA
+  + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;margin-top:20px">'
+  + '<div style="width:32px;height:32px;border-radius:50%;background:#993C1D;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0">6</div>'
+  + '<div style="font-size:16px;font-weight:800;color:var(--navy)">Los 5 Gates de Línea Italia</div>'
+  + '</div>'
+
+  + '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">'
+  + Object.entries(GATES).map(function(entry){
+    var gk=entry[0], gd=entry[1];
+    return '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 16px;border-left:4px solid '+gd.color+'">'
+    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+    + '<div style="font-size:10px;font-weight:800;color:'+gd.color+';background:'+gd.color+'18;padding:2px 8px;border-radius:99px">'+gk+'</div>'
+    + '<div style="font-size:13px;font-weight:700;color:var(--navy)">'+gd.nombre+'</div>'
+    + '<div style="font-size:10px;color:var(--muted);margin-left:auto">Fase: '+gd.fase+'</div>'
+    + '</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:4px">'
+    + gd.items.map(function(item){
+      return '<span style="font-size:10px;color:var(--muted);background:var(--surface2);padding:3px 8px;border-radius:99px">✓ '+item+'</span>';
+    }).join('')
+    + '</div></div>';
+  }).join('')
+  + '</div>'
+
+  // SECCIÓN 7: CÓMO FUNCIONA EN NPD MANAGER
+  + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+  + '<div style="width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0">7</div>'
+  + '<div style="font-size:16px;font-weight:800;color:var(--navy)">Cómo funciona en el NPD Manager</div>'
+  + '</div>'
+
+  + '<div style="background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--r2);padding:16px 18px;margin-bottom:24px">'
+  + '<div style="display:flex;flex-direction:column;gap:10px">'
+  + [
+    {d:'LUNES',t:'El ingeniero abre su proyecto, identifica el Gate pendiente (visible en "Siguiente Milestone") y define 3 a 5 Metas SMART de la semana vinculadas a ese gate.',c:'#534AB7'},
+    {d:'DURANTE LA SEMANA',t:'Actualiza el estatus de cada meta. Si se bloquea, lo registra con un comentario. El Gerente puede ver el avance en tiempo real desde el Reporte Ejecutivo.',c:'var(--warn)'},
+    {d:'VIERNES',t:'Cierra cada meta con: Lograda / Parcial / No lograda. El sistema registra el historial y calcula el índice de cumplimiento del ingeniero.',c:'var(--ok)'},
+    {d:'REPORTE EJECUTIVO',t:'La columna "Siguiente Milestone" muestra el próximo Gate pendiente de cada proyecto. Fernando ve de un vistazo qué está persiguiendo cada ingeniero.',c:'#0F6E56'},
+    {d:'APROBACIÓN DE GATE',t:'Cuando todas las tareas de la subfase están completas, el Gerente revisa el checklist del Gate y lo aprueba. El proyecto avanza a la siguiente fase.',c:'var(--navy)'}
   ].map(function(s,i){
     return '<div style="display:flex;gap:12px;align-items:flex-start">'
     + '<div style="width:28px;height:28px;border-radius:50%;background:'+s.c+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">'+(i+1)+'</div>'
-    + '<div><div style="font-size:10px;font-weight:700;color:'+s.c+';letter-spacing:.06em">'+s.d+'</div>'
+    + '<div><div style="font-size:10px;font-weight:700;color:'+s.c+';letter-spacing:.06em;margin-bottom:2px">'+s.d+'</div>'
     + '<div style="font-size:12px;color:var(--muted);line-height:1.5">'+s.t+'</div></div>'
     + '</div>';
   }).join('')
   + '</div></div>'
 
+  // SECCIÓN 8: EJEMPLOS REALES
+  + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+  + '<div style="width:32px;height:32px;border-radius:50%;background:#534AB7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0">8</div>'
+  + '<div style="font-size:16px;font-weight:800;color:var(--navy)">Ejemplos reales de Metas SMART para Línea Italia</div>'
+  + '</div>'
+
+  + '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">'
+  + [
+    {ms:'Liberación de Concepto',gate:'Gate 1',meta:'"Presentar 3 propuestas de concepto del escritorio ejecutivo con render básico y ficha de materiales a Gerencia el jueves 26 de junio para selección y aprobación."',criterio:'Gerencia selecciona y aprueba una propuesta por escrito.',c:'#534AB7'},
+    {ms:'Liberación de Diseño',gate:'Gate 2',meta:'"Entregar modelado 3D completo del escritorio Serena con 2 opciones de herrajes, vista explosionada y lista de materiales preliminar para revisión de manufactura el viernes."',criterio:'Manufactura firma la revisión de factibilidad sin observaciones mayores.',c:'#534AB7'},
+    {ms:'Liberación Técnica del Producto',gate:'Gate 3',meta:'"Completar corrida piloto de 3 piezas del sillón Attese con hoja de inspección dimensional firmada por Calidad y registro fotográfico antes del miércoles."',criterio:'Calidad aprueba las 3 piezas sin no conformidades críticas.',c:'#185FA5'},
+    {ms:'Liberación Productiva',gate:'Gate 4',meta:'"Validar que el costo real del módulo básico Vetta no supera el objetivo definido en el brief — hoja de costos actualizada con tiempos reales del piloto para el viernes."',criterio:'Costos confirma que el costo final es viable para el precio de lista objetivo.',c:'#0F6E56'},
+    {ms:'Liberación Comercial',gate:'Gate 5',meta:'"Entregar presentación de capacitación comercial del nuevo escritorio Lincoln con argumentos de venta, configuraciones disponibles y precios de lista al equipo comercial el jueves."',criterio:'El equipo comercial confirma haber recibido y revisado la presentación.',c:'#854F0B'}
+  ].map(function(e){
+    return '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:13px 16px;border-left:3px solid '+e.c+'">'
+    + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
+    + '<span style="font-size:9px;font-weight:700;color:'+e.c+';background:'+e.c+'18;padding:2px 7px;border-radius:99px">🎯 '+e.ms+'</span>'
+    + '</div>'
+    + '<div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:6px;font-style:italic">'+e.meta+'</div>'
+    + '<div style="font-size:10px;color:var(--ok);background:rgba(30,158,94,.08);padding:5px 9px;border-radius:var(--r)">✓ Criterio de éxito: '+e.criterio+'</div>'
+    + '</div>';
+  }).join('')
+  + '</div>'
+
+  // REFERENCIAS
   + '<div style="background:rgba(26,31,60,.04);border-radius:var(--r2);padding:14px 18px;border:1px solid rgba(26,31,60,.1)">'
-  + '<div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">Ejemplos de Metas SMART para Linea Italia</div>'
-  + '<div style="font-size:11px;color:var(--muted);line-height:1.8">'
-  + '"Entregar 3 modelados 3D del escritorio ejecutivo con opciones de cajones y sin cajones para revision de gerencia el viernes 30 de mayo."<br>'
-  + '"Obtener aprobacion de BOM del proveedor de herrajes para el proyecto Lincoln antes del jueves — confirmacion por escrito."<br>'
-  + '"Completar corrida piloto de 3 piezas del sillon Attese con firma de calidad y hoja de inspeccion dimensional."<br>'
-  + '"Validar que el costo real del modulo basico Vetta no supera $X definido en el objetivo del proyecto — hoja de costos actualizada."'
+  + '<div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">📚 Referencias y fuentes</div>'
+  + '<div style="font-size:10px;color:var(--muted);line-height:2">'
+  + '· Cooper, R. G. (2017). <em>Winning at New Products: Creating Value Through Innovation.</em> 5th ed. Basic Books.<br>'
+  + '· Doran, G. T. (1981). <em>There\'s a S.M.A.R.T. way to write management\'s goals and objectives.</em> Management Review, 70(11), 35-36.<br>'
+  + '· Kerzner, H. (2017). <em>Project Management: A Systems Approach to Planning, Scheduling, and Controlling.</em> 12th ed. Wiley.<br>'
+  + '· Stage-Gate International. (2024). <em>The Stage-Gate® Model for New Product Development.</em> stagegate.com<br>'
+  + '· Doerr, J. (2018). <em>Measure What Matters: OKRs — The Simple Idea That Drives 10x Growth.</em> Portfolio/Penguin.'
   + '</div></div>'
 
   + '</div>';
 }
-
 function exportarPDFPrototipos(){
   const protos=[];
   PROJ.forEach(p=>{
