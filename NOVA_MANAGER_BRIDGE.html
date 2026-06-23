@@ -1201,6 +1201,57 @@ function tick(){
 }
 setInterval(tick,1000);tick();
 
+// ══════════════════════════════════════════════════════════════
+//  SISTEMA DE ALERTAS — NOTIFICACIONES 5 MIN ANTES
+// ══════════════════════════════════════════════════════════════
+(function initAlertas(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission==='default') Notification.requestPermission();
+
+  const diasSemana=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+  let alertasFired={};
+
+  function parseHora(str){
+    // "8:00–8:30" => inicio en minutos
+    const part=str.split('–')[0].trim();
+    const [h,m]=part.split(':').map(Number);
+    return h*60+(m||0);
+  }
+
+  function checkAlertas(){
+    if(Notification.permission!=='granted') return;
+    const now=new Date();
+    const diaNom=diasSemana[now.getDay()];
+    if(diaNom==='sabado'||diaNom==='domingo') return;
+    const minActual=now.getHours()*60+now.getMinutes();
+
+    BLOQUES.forEach((b,i)=>{
+      const inicioMin=parseHora(b.hora);
+      const alertaMin=inicioMin-5;
+      const key=`${diaNom}_${i}_${now.toDateString()}`;
+      const texto=b[diaNom]||'';
+      if(!texto) return;
+      if(minActual===alertaMin && !alertasFired[key]){
+        alertasFired[key]=true;
+        const titulo=`⏰ En 5 min: ${b.hora}`;
+        const cuerpo=texto.replace(/[🎯📌🔒📧🍽💡🚀⚙️📋👥📝🔄]/gu,'').trim();
+        const n=new Notification(titulo,{
+          body: cuerpo,
+          icon: 'https://lineaitalia-nova.github.io/nova-equipo/favicon.ico',
+          badge: 'https://lineaitalia-nova.github.io/nova-equipo/favicon.ico',
+          tag: key,
+          requireInteraction: false
+        });
+        setTimeout(()=>n.close(),8000);
+      }
+    });
+  }
+
+  setInterval(checkAlertas, 15000);
+  checkAlertas();
+})();
+
+
 var VIEW_TITLES={dashboard:"Dashboard Ejecutivo",tareas:"Central de Tareas",eisenhower:"Matriz de Eisenhower",ivy:"Método Ivy Lee",bloques:"Bloques de Tiempo",carga:"Carga por Persona",semana:"Mi Semana",horizonte:"Horizonte 30/60/90",rocas:"Rocas Trimestrales — Q2 2026",organigrama:"Organigrama — Gerencia de Innovación y Diseño",adn:"Mi ADN Gerencial",biblioteca:"Biblioteca Gerencial",evaluacion:"Mi Evaluación"};
 
 function goView(v){
@@ -1512,7 +1563,17 @@ function rBloques(){
     const cells=dias.map(d=>{
       const key=`${ri}_${d}`,logged=blockLogs[key],isFixed=(b[d]||'').includes('FIJO')||(b[d]||'').includes('CIERRE');
       const isCierre=(b[d]||'').includes('CIERRE DEL DÍA')||(b[d]||'').includes('CIERRE SEMANAL');
-      return`<td style="background:${DIA_BG[d]};border-right:1px solid ${DIA_BD[d]}18"><div class="bcell ${logged?'blogged':''} ${isCierre?'blogged':''}" style="border-left-color:${b.color};background:${isCierre?'rgba(37,99,235,.06)':'transparent'};cursor:${isCierre?'pointer':'text'}" contenteditable="${isFixed?'false':'true'}" onblur="saveBlkEdit('${key}',this.textContent)" ${isCierre?`onclick="openCierre()" title="Abrir ritual de Cierre del Día"`:''}>${b[d]||''}</div><div style="text-align:right;padding:0 3px 2px">${isCierre?`<button class="blog-btn" onclick="openCierre()" title="Abrir Cierre del Día" style="color:var(--blue);font-weight:700">🎯</button>`:`<button class="blog-btn" onclick="openBlog('${key}','${b.hora}','${d}')" title="${logged?'Ver registro':'Registrar uso'}">${logged?'📋':'📝'}</button>`}</div></td>`;
+      const txt=b[d]||'';
+      let cc=b.color;
+      if(txt.includes('FIJO'))cc='#DC2626';
+      else if(txt.includes('Trabajo Profundo')||txt.includes('Trabajo profundo'))cc='#7C3AED';
+      else if(txt.includes('Revisión')||txt.includes('1:1')||txt.includes('Cierre semanal')||txt.includes('seguimiento'))cc='#16A34A';
+      else if(txt.includes('Ivy Lee'))cc='#7C3AED';
+      else if(txt.includes('Atención')||txt.includes('Delegaciones')||txt.includes('Seguimiento Pulso'))cc='#D97706';
+      else if(txt.includes('Comida'))cc='#9CA3AF';
+      else if(txt.includes('Planear')||txt.includes('Correos'))cc='#2563EB';
+      else if(txt.includes('CIERRE'))cc='#2563EB';
+      return`<td style="background:${cc}14;border-right:1px solid ${cc}30"><div class="bcell ${logged?'blogged':''} ${isCierre?'blogged':''}" style="border-left-color:${cc};background:${isCierre?'rgba(37,99,235,.06)':'transparent'};cursor:${isCierre?'pointer':'text'}" contenteditable="${isFixed?'false':'true'}" onblur="saveBlkEdit('${key}',this.textContent)" ${isCierre?`onclick="openCierre()" title="Abrir ritual de Cierre del Día"`:''}>${b[d]||''}</div><div style="text-align:right;padding:0 3px 2px">${isCierre?`<button class="blog-btn" onclick="openCierre()" title="Abrir Cierre del Día" style="color:var(--blue);font-weight:700">🎯</button>`:`<button class="blog-btn" onclick="openBlog('${key}','${b.hora}','${d}')" title="${logged?'Ver registro':'Registrar uso'}">${logged?'📋':'📝'}</button>`}</div></td>`;
     }).join('');
     return`<tr><td class="hora-td">${b.hora}</td>${cells}<td style="padding:8px 10px;vertical-align:middle">${bdg(b.tipo,b.color)}</td><td></td></tr>`;
   }).join('');
