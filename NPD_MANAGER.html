@@ -5689,13 +5689,16 @@ function rCalPrototipos(c){
 
   let h='';
 
+  const enFecha=activos.filter(p=>new Date(p.fecha+'T12:00:00')>=hoy);
+
   // KPIs
-  h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+  h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
     ${[
-      {l:'Total prototipos',v:protos.length,col:'var(--text)'},
-      {l:'Activos',v:activos.length,col:'var(--blue)'},
-      {l:'Atrasados',v:atrasados.length,col:atrasados.length>0?'var(--bad)':'var(--ok)'},
-      {l:'Completados',v:completados.length,col:'var(--ok)'},
+      {l:'Total prototipos', v:protos.length,    col:'var(--text)'},
+      {l:'Activos',          v:activos.length,   col:'var(--blue)'},
+      {l:'En fecha',         v:enFecha.length,   col:'var(--ok)'},
+      {l:'Atrasados',        v:atrasados.length, col:atrasados.length>0?'var(--bad)':'var(--ok)'},
+      {l:'Completados',      v:completados.length,col:'var(--ok)'},
     ].map(k=>`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 14px;text-align:center">
       <div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:${k.col};line-height:1">${k.v}</div>
       <div style="font-size:10px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.04em">${k.l}</div>
@@ -5749,10 +5752,18 @@ function rCalPrototipos(c){
       <div style="font-size:11px;font-weight:${esHoy?'700':'400'};color:${esHoy?'var(--blue)':tieneEmpalme?'var(--warn)':'var(--muted)'};margin-bottom:3px;display:flex;justify-content:space-between">
         ${d}${tieneEmpalme?` <span style="font-size:9px;background:var(--warn-bg);color:var(--warn);padding:1px 4px;border-radius:3px">⚠${protosDelDia.length}</span>`:''}
       </div>
-      ${protosDelDia.map(p=>`<div style="background:${p.color}18;border-left:2px solid ${p.color};border-radius:2px;padding:2px 4px;margin-bottom:2px;cursor:pointer" onclick="oP('${p.projId}')" title="${p.nombre} · ${p.proyecto}">
-        <div style="font-size:9px;font-weight:700;color:${p.color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
-        <div style="font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.proyecto}</div>
-      </div>`).join('')}
+      ${protosDelDia.map(p=>{
+        const fechaDia=new Date(p.fecha+'T12:00:00');
+        const atrasado=p.estatus!=='Completado'&&fechaDia<hoy;
+        const completado=p.estatus==='Completado';
+        const bgColor=completado?'rgba(22,163,74,.12)':atrasado?'rgba(220,38,38,.12)':'rgba(107,114,128,.1)';
+        const borderColor=completado?'#16a34a':atrasado?'#dc2626':'#9ca3af';
+        const textColor=completado?'#16a34a':atrasado?'#dc2626':'#6b7280';
+        return`<div style="background:${bgColor};border-left:2px solid ${borderColor};border-radius:2px;padding:2px 4px;margin-bottom:2px;cursor:pointer" onclick="oP('${p.projId}')" title="${p.nombre} · ${p.proyecto}">
+          <div style="font-size:9px;font-weight:700;color:${textColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
+          <div style="font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.proyecto}</div>
+        </div>`;
+      }).join('')}
     </div>`;
   }
 
