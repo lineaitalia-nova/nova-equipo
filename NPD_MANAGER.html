@@ -263,6 +263,7 @@ const EC = {
   'AE': {bg:'#E1F5EE',tc:'#085041',dot:'#0F6E56',init:'AE',role:'Ingeniero de Producto'},
   'PR': {bg:'#FAEEDA',tc:'#633806',dot:'#854F0B',init:'PR',role:'Ingeniero de Producto'},
   'RE': {bg:'#FAECE7',tc:'#712B13',dot:'#993C1D',init:'RE',role:'Ingeniero de Producto'},
+  'DIR':{bg:'#1a2233',tc:'#fff',   dot:'#534AB7',init:'D',  role:'Vista Directivos'},
 };
 
 const GATES = {
@@ -517,6 +518,7 @@ let cpid=null, amt='resumen';
 // ─── UTILS ──────────────────────────────────────────────────────────
 const toast = m => {const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)};
 const isG  = () => cu?.perfil === 'GI';
+const isDir = () => cu?.perfil === 'DIR';
 const isArea = () => ['CAL','COS','PRO'].includes(cu?.perfil);
 const getArea = () => cu?.area || null;
 // An area user can edit tasks in their area across ALL projects
@@ -525,7 +527,7 @@ const canEditTask = (p, taskName) => {
   if(isArea()) return (AREA_TAREAS[cu.area]||[]).includes(taskName);
   return p.eng === cu?.perfil;
 };
-const cE = p => isG() || p.eng === cu?.perfil || isArea();
+const cE = p => !isDir() && (isG() || p.eng === cu?.perfil || isArea());
 const fmtD = s => {if(!s)return'—';const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})};
 const pd   = s => {if(!s)return null;const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d)};
 const dN   = (s,e) => {if(e==='Terminado')return null;const d=pd(s);return d?Math.round((d-TODAY)/86400000):null};
@@ -826,6 +828,9 @@ function rLogin(){
     <input class="inp" id="l-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
     <div class="l-err" id="l-err">Usuario o contraseña incorrectos</div>
     <button class="btn primary" style="width:100%;margin-top:16px;justify-content:center;padding:10px" onclick="doLogin()">Ingresar →</button>
+    <div style="margin-top:12px;border-top:1px solid var(--border2);padding-top:12px;text-align:center">
+      <button onclick="entrarDirectivo()" style="font-size:12px;color:var(--muted);background:transparent;border:1px solid var(--border2);border-radius:var(--r);padding:8px 20px;cursor:pointer;width:100%;font-family:var(--font-b)">Acceso Directivos →</button>
+    </div>
   </div>`;
   setTimeout(()=>document.getElementById('l-user')?.focus(),100);
 }
@@ -843,6 +848,14 @@ function doLogin(){
 }
 function logout(){cu=null;av='inicio';rLogin();}
 
+function entrarDirectivo(){
+  cu={uid:'directivo',nombre:'Directivo',perfil:'DIR',role:'Vista Directivos'};
+  document.getElementById('ls').style.display='none';
+  document.getElementById('shell').style.display='flex';
+  rSB();
+  sv2('inicio');
+}
+
 // ─── SIDEBAR ────────────────────────────────────────────────────────
 function rSB(){
   const ec=ecOf(cu?.perfil);
@@ -850,7 +863,14 @@ function rSB(){
   const risk=act.filter(p=>dNF(p)!==null&&dNF(p)<=7).length;
   const pAp=PROJ.filter(p=>p.avance>=80&&p.aprob?.g?.s==='pendiente').length;
   let nav=[];
-  if(isG()){
+  if(isDir()){
+    nav=[
+      {id:'inicio',        i:'⊞', l:'Dashboard',          b:0},
+      {id:'proyectos',     i:'▤', l:'Todos los proyectos', b:0},
+      {id:'cal-prototipos',i:'🔬',l:'Cal. Prototipos',     b:0},
+      {id:'diagrama',      i:'◈', l:'Diagrama de proceso', b:0},
+    ];
+  } else if(isG()){
     nav=[
       {id:'inicio',i:'⊞',l:isG()?'Dashboard':'Inicio',b:risk,bc:risk>0?'':'ok'},
       {id:'proyectos',i:'▤',l:'Todos los proyectos',b:0},
@@ -5802,9 +5822,10 @@ function rCalPrototipos(c){
             <div style="font-size:9px;color:${atrasado?'var(--bad)':'var(--muted)'}">${atrasado?Math.abs(diasRest)+'d atraso':diasRest+'d'}</div>
           </div>
           <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button onclick="updProtoByIdx(${idx},'No iniciado')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--muted);background:${(pt.estatus==='No iniciado'||pt.estatus==='Pendiente')?'var(--muted)':'transparent'};color:${(pt.estatus==='No iniciado'||pt.estatus==='Pendiente')?'#fff':'var(--muted)'};cursor:pointer;white-space:nowrap">○ No iniciado</button>
+            ${!isDir()?`<button onclick="updProtoByIdx(${idx},'No iniciado')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--muted);background:${(pt.estatus==='No iniciado'||pt.estatus==='Pendiente')?'var(--muted)':'transparent'};color:${(pt.estatus==='No iniciado'||pt.estatus==='Pendiente')?'#fff':'var(--muted)'};cursor:pointer;white-space:nowrap">○ No iniciado</button>
             <button onclick="updProtoByIdx(${idx},'En proceso')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--purple);background:${pt.estatus==='En proceso'?'var(--purple)':'transparent'};color:${pt.estatus==='En proceso'?'#fff':'var(--purple)'};cursor:pointer;white-space:nowrap">→ En progreso</button>
-            <button onclick="updProtoByIdx(${idx},'Completado')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--ok);background:${pt.estatus==='Completado'?'var(--ok)':'transparent'};color:${pt.estatus==='Completado'?'#fff':'var(--ok)'};cursor:pointer;white-space:nowrap">✓ Completado</button>
+            <button onclick="updProtoByIdx(${idx},'Completado')" style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;border:1.5px solid var(--ok);background:${pt.estatus==='Completado'?'var(--ok)':'transparent'};color:${pt.estatus==='Completado'?'#fff':'var(--ok)'};cursor:pointer;white-space:nowrap">✓ Completado</button>`
+            :`<span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:${pt.estatus==='Completado'?'var(--ok)':pt.estatus==='En proceso'?'var(--purple)':'var(--muted)'};color:#fff">${pt.estatus==='Completado'?'✓ Completado':pt.estatus==='En proceso'?'→ En progreso':'○ No iniciado'}</span>`}
           </div>
         </div>`;
       }).join('')}
