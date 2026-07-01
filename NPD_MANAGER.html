@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Linea Italia · NPD Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=EB+Garamond:wght@500;600&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -810,15 +810,12 @@ function rLogin(){
   document.getElementById('ls').innerHTML=`
   <div class="lbox">
     <div style="margin-bottom:18px;display:flex;flex-direction:column;align-items:center;gap:8px">
-      <svg viewBox="0 0 200 58" width="190" height="55" xmlns="http://www.w3.org/2000/svg">
-        <!-- Bordered square LI -->
-        <rect x="1" y="6" width="42" height="42" rx="4" fill="none" stroke="#1a1f3c" stroke-width="2.5"/>
-        <text x="22" y="30" text-anchor="middle" dominant-baseline="middle" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#1a1f3c" letter-spacing="2">LI</text>
-        <!-- línea italia -->
-        <text x="54" y="26" font-family="Georgia,'Times New Roman',serif" font-size="19" font-weight="400" fill="#1a1f3c" letter-spacing="0.3">línea italia</text>
-        <text x="186" y="14" font-family="Georgia,serif" font-size="9" fill="#9ca3af">®</text>
-        <!-- ECCELLENZA IN MOBILE -->
-        <text x="54" y="41" font-family="Arial,Helvetica,sans-serif" font-size="7.5" font-weight="400" fill="#9ca3af" letter-spacing="2.8">ECCELLENZA IN MOBILE</text>
+      <svg viewBox="0 0 212 58" width="200" height="55" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="6" width="42" height="42" rx="4" fill="none" stroke="#141824" stroke-width="2.5"/>
+        <text x="22" y="28" text-anchor="middle" dominant-baseline="central" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700" fill="#141824" letter-spacing="0.5">LI</text>
+        <text x="54" y="33" font-family="'EB Garamond',Georgia,serif" font-size="27" font-weight="500" fill="#141824" letter-spacing="0.2">línea italia</text>
+        <text x="192" y="16" font-family="Georgia,serif" font-size="9" fill="#9ca3af">®</text>
+        <text x="55" y="47" font-family="Arial,Helvetica,sans-serif" font-size="7.5" font-weight="400" fill="#9ca3af" letter-spacing="2.8">ECCELLENZA IN MOBILE</text>
       </svg>
       <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#9ca3af;font-weight:600">NPD Manager · Gestión de Innovación</div>
     </div>
@@ -883,7 +880,7 @@ function rSB(){
       {id:'usuarios',i:'⊙',l:'Gestión de usuarios',b:0},
       {id:'backup',i:'↓',l:'Respaldo de datos',b:0},
       {id:'glosario',i:'📖',l:'Biblioteca NPD',b:0},
-      {id:'mis-tareas-area',i:'🔑',l:'Override de área',b:0},
+      {id:'compensacion',i:'💰',l:'Compensación',b:0},
     ];
   } else if(isArea()){
     const u=cu;
@@ -906,15 +903,12 @@ function rSB(){
   }
   document.getElementById('sb').innerHTML=`
   <div class="brand" style="padding:14px 14px 12px;gap:0;flex-direction:column;align-items:flex-start">
-    <svg viewBox="0 0 192 48" width="172" height="43" xmlns="http://www.w3.org/2000/svg">
-      <!-- Bordered square LI - matches original logo -->
+    <svg viewBox="0 0 200 48" width="182" height="44" xmlns="http://www.w3.org/2000/svg">
       <rect x="1" y="5" width="36" height="36" rx="3" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2"/>
-      <text x="19" y="28" text-anchor="middle" dominant-baseline="middle" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" fill="#fff" letter-spacing="1.5">LI</text>
-      <!-- línea italia — thin serif matching original -->
-      <text x="46" y="22" font-family="Georgia,'Times New Roman',serif" font-size="15.5" font-weight="400" fill="#fff" letter-spacing="0.3">línea italia</text>
-      <text x="163" y="14" font-family="Georgia,serif" font-size="7" fill="rgba(255,255,255,0.6)">®</text>
-      <!-- ECCELLENZA IN MOBILE -->
-      <text x="47" y="35" font-family="Arial,Helvetica,sans-serif" font-size="6.5" font-weight="400" fill="rgba(255,255,255,0.55)" letter-spacing="2.4">ECCELLENZA IN MOBILE</text>
+      <text x="19" y="24" text-anchor="middle" dominant-baseline="central" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700" fill="#fff" letter-spacing="0.5">LI</text>
+      <text x="46" y="28" font-family="'EB Garamond',Georgia,serif" font-size="22" font-weight="500" fill="#fff" letter-spacing="0.2">línea italia</text>
+      <text x="172" y="17" font-family="Georgia,serif" font-size="7.5" fill="rgba(255,255,255,0.6)">®</text>
+      <text x="47" y="39" font-family="Arial,Helvetica,sans-serif" font-size="6.3" font-weight="400" fill="rgba(255,255,255,0.55)" letter-spacing="2.2">ECCELLENZA IN MOBILE</text>
     </svg>
     <div style="font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.14em;text-transform:uppercase;margin-top:5px;padding-left:2px;font-family:'DM Sans',sans-serif">NPD Manager</div>
   </div>
@@ -932,8 +926,8 @@ function rSB(){
 function sv2(v){
   av=v;rSB();
   const m=document.getElementById('main');
-  const titles={inicio:'Inicio','mi-dashboard':'Mi Dashboard',proyectos:'Proyectos',reporte:'Reporte ejecutivo',aprobaciones:'Aprobaciones','mis-proyectos':'Mis proyectos',usuarios:'Gestión de usuarios',diagrama:'Diagrama del proceso NPD',backup:'Respaldo de datos','mis-tareas-area':`Tareas pendientes · ${cu?.nombre||''}`,calendario:'Calendario de proyectos','cal-prototipos':'Calendario de Prototipos'};
-  const subs={inicio:TODAY.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),'mi-dashboard':cu?.nombre||'',proyectos:`${PROJ.length} proyectos en total`,reporte:'Vista filtrable por ingeniero',aprobaciones:'Revisión y liberación','mis-proyectos':cu?.nombre||'',usuarios:'Administrar accesos al sistema',diagrama:'Proceso de Desarrollo de Nuevos Productos · Línea Italia',backup:'Exporta, importa y respalda toda la información de tus proyectos','mis-tareas-area':cu?.role||'',calendario:'Visualiza tareas por proyecto en vista mensual · Detecta empalmes','cal-prototipos':'Prototipos programados · Carga semanal del taller · Empalmes'};
+  const titles={inicio:'Inicio','mi-dashboard':'Mi Dashboard',proyectos:'Proyectos',reporte:'Reporte ejecutivo',aprobaciones:'Aprobaciones','mis-proyectos':'Mis proyectos',usuarios:'Gestión de usuarios',diagrama:'Diagrama del proceso NPD',backup:'Respaldo de datos','mis-tareas-area':`Tareas pendientes · ${cu?.nombre||''}`,calendario:'Calendario de proyectos','cal-prototipos':'Calendario de Prototipos',compensacion:'Compensación · Bono por Proyecto'};
+  const subs={inicio:TODAY.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),'mi-dashboard':cu?.nombre||'',proyectos:`${PROJ.length} proyectos en total`,reporte:'Vista filtrable por ingeniero',aprobaciones:'Revisión y liberación','mis-proyectos':cu?.nombre||'',usuarios:'Administrar accesos al sistema',diagrama:'Proceso de Desarrollo de Nuevos Productos · Línea Italia',backup:'Exporta, importa y respalda toda la información de tus proyectos','mis-tareas-area':cu?.role||'',calendario:'Visualiza tareas por proyecto en vista mensual · Detecta empalmes','cal-prototipos':'Prototipos programados · Carga semanal del taller · Empalmes',compensacion:'Bono por proyecto · Vista exclusiva del Gerente'};
   m.innerHTML=`<div class="ph"><div class="ph-inner">
     <div><div class="ph-h2">${titles[v]}</div><p class="ph-sub">${subs[v]||''}</p></div>
     <div class="ph-acts">
@@ -956,6 +950,7 @@ function sv2(v){
   else if(v==='mis-tareas-area') rMisTareasArea(c);
   else if(v==='calendario') rCalendario(c);
   else if(v==='cal-prototipos') rCalPrototipos(c);
+  else if(v==='compensacion') rCompensacion(c);
   // Live clock — top right, DM Mono, updates every second
   if(window._clockTmr) clearInterval(window._clockTmr);
   function tickClock(){
@@ -968,7 +963,519 @@ function sv2(v){
   window._clockTmr=setInterval(tickClock,1000);
 }
 
-// ─── INICIO GERENTE ─────────────────────────────────────────────────
+// ─── COMPENSACIÓN (Gerente) ─────────────────────────────────────────
+// ─── COMPENSACIÓN (Gerente) ─────────────────────────────────────────
+function compSetEng(v){window._compEng=v;sv2('compensacion');}
+function compSetAnio(v){window._compAnio=v;sv2('compensacion');}
+function anioProyecto(p){const f=p.fechaFinal||p.fechasFase?.['Lanzamiento']?.fin||p.fechasFase?.['Diseño']?.inicio||'';return f?String(f).slice(0,4):'';}
+function marcarPagadoManual(pid){
+  const ex=(window._bonosData||{})[pid]||{};
+  const sug = ex.bonoRealizado!==undefined?ex.bonoRealizado:'';
+  const val=prompt('Monto pagado a este proyecto (MXN):', sug);
+  if(val===null) return;
+  const monto=Math.round(parseFloat(String(val).replace(/[^0-9.]/g,''))||0);
+  if(monto<=0){toast('⚠ Monto inválido');return;}
+  window._bonosData=window._bonosData||{};
+  window._bonosData[pid]={...(window._bonosData[pid]||{}),bonoRealizado:monto,pagoManual:true,pagado:true,fechaPago:new Date().toISOString()};
+  delete window._bonosData[pid].noAplica;
+  bonosPush();
+  toast('✓ Pago directo registrado: $'+monto.toLocaleString('es-MX'));
+  if(av==='compensacion') sv2('compensacion');
+}
+function marcarPagado(pid){
+  window._bonosData=window._bonosData||{};
+  if(!window._bonosData[pid]||window._bonosData[pid].bonoRealizado===undefined){toast('Primero evalúa el bono');return;}
+  window._bonosData[pid]={...window._bonosData[pid],pagado:true,fechaPago:new Date().toISOString()};
+  bonosPush();
+  toast('✓ Marcado como pagado');
+  if(av==='compensacion') sv2('compensacion');
+}
+function desmarcarPagado(pid){
+  window._bonosData=window._bonosData||{};
+  if(window._bonosData[pid]){delete window._bonosData[pid].pagado;delete window._bonosData[pid].fechaPago;}
+  bonosPush();
+  toast('Pagado quitado');
+  if(av==='compensacion') sv2('compensacion');
+}
+
+// Nodo /bonos — HERMANO de /npd, aparte. Solo lo lee/escribe la pestaña del Gerente.
+const FB_BONOS = FB_NPD.replace(/\/npd$/,'/bonos');
+async function bonosPull(){
+  try{const r=await fetch(FB_BONOS+'.json');const d=await r.json();window._bonosData=(d&&typeof d==='object')?d:{};}catch(e){window._bonosData={};}
+}
+function bonosPush(){
+  try{fetch(FB_BONOS+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._bonosData||{})}).catch(()=>{});}catch(e){}
+}
+function bonoOf(pid){return (window._bonosData||{})[pid]||null;}
+
+const BONO_BASE_COMP={simple:3000,medio:6000,complejo:10000};
+const NIVEL_NOM={simple:'Simple',medio:'Medio',complejo:'Complejo'};
+const CRITERIOS_COMP=[
+  'Más de 5 modelos (SKUs únicos)',
+  'Combinación de materiales distintos',
+  'Sistema técnico integrado',
+  'Concepto nuevo para Línea Italia',
+  'Geometría no convencional'
+];
+function nivelPorCount(n){return n<=1?'simple':n<=3?'medio':'complejo';}
+
+// Estado y rumbo REAL de un proyecto (sin simular)
+function compEstado(p){
+  const liberado=!!p.gates?.['Gate 1']?.aprobado;
+  const confirmadas=!!p.fechasConfirmadas;
+  if(!liberado){
+    return {fase:'pendiente',badge:'⏳ Pendiente Gate 1',badgeBg:'var(--surface2)',badgeCol:'var(--muted)',
+      inicio:null,fin:null,rumboLbl:'—',rumboCol:'var(--muted)',rumboBg:'var(--surface2)',dias:null};
+  }
+  const ini=p.fechasFase?.['Diseño']?.inicio||p.fechasFase?.['Desarrollo']?.inicio||'';
+  const fin=p.fechaFinal||p.fechasFase?.['Lanzamiento']?.fin||'';
+  if(!confirmadas){
+    return {fase:'liberado-sin-confirmar',badge:'Liberado · fechas sin confirmar',badgeBg:'var(--warn-bg)',badgeCol:'var(--warn)',
+      inicio:ini,fin:fin,rumboLbl:'Pendiente confirmar fechas',rumboCol:'var(--warn)',rumboBg:'var(--warn-bg)',dias:null};
+  }
+  const dias=dNF(p);
+  const prorroga=(p.historialFechas||[]).some(h=>h.tipo==='prorroga');
+  let rumboLbl,rumboCol,rumboBg;
+  if(dias===null){ rumboLbl='—'; rumboCol='var(--muted)'; rumboBg='var(--surface2)'; }
+  else if(dias>=0){ rumboLbl='🟢 En rumbo · 100%'; rumboCol='var(--ok)'; rumboBg='var(--ok-bg)'; }
+  else if(prorroga){ rumboLbl='🟡 Prórroga · rumbo 50%'; rumboCol='var(--warn)'; rumboBg='var(--warn-bg)'; }
+  else { rumboLbl='🔴 Vencido · rumbo 0%'; rumboCol='var(--bad)'; rumboBg='var(--bad-bg)'; }
+  return {fase:'liberado',badge:'✓ Liberado',badgeBg:'var(--ok-bg)',badgeCol:'var(--ok)',
+    inicio:ini,fin:fin,rumboLbl,rumboCol,rumboBg,dias};
+}
+
+// ── Overlay genérico de compensación ──
+function cerrarOverlayComp(){const o=document.getElementById('comp-overlay');if(o)o.remove();}
+function _overlayComp(html){
+  cerrarOverlayComp();
+  const o=document.createElement('div');
+  o.id='comp-overlay';
+  o.style.cssText='position:fixed;inset:0;background:rgba(15,21,53,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px';
+  o.innerHTML=`<div style="background:var(--surface);border-radius:var(--r2);max-width:560px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">${html}</div>`;
+  o.addEventListener('click',e=>{if(e.target===o)cerrarOverlayComp();});
+  document.body.appendChild(o);
+}
+
+// ── PASO 4: CLASIFICAR ──
+function abrirClasificar(pid){
+  const p=PROJ.find(x=>x.id===pid);if(!p)return;
+  const ex=bonoOf(pid)||{};
+  window._clasCrit={1:false,2:false,3:false,4:false,5:false,...(ex.criterios||{})};window._clasPidStore=pid;
+  renderClasificar(pid);
+}
+function togClas(n){window._clasCrit[n]=!window._clasCrit[n];renderClasificarBody();}
+function renderClasificar(pid){
+  const p=PROJ.find(x=>x.id===pid);
+  _overlayComp(`
+    <div style="background:var(--navy);color:#fff;padding:16px 18px;border-radius:var(--r2) var(--r2) 0 0">
+      <div style="font-family:var(--font-d);font-size:16px;font-weight:700">Clasificar complejidad</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px">${p.name} · ${p.id.replace('PROJ','P')}</div>
+    </div>
+    <div style="padding:16px 18px" id="clas-body"></div>`);
+  renderClasificarBody();
+}
+function renderClasificarBody(){
+  const cr=window._clasCrit;
+  const count=Object.values(cr).filter(Boolean).length;
+  const nivel=nivelPorCount(count);
+  const colN=nivel==='simple'?'var(--muted)':nivel==='medio'?'var(--blue)':'var(--purple)';
+  const pid=window._clasPid;
+  const items=CRITERIOS_COMP.map((t,i)=>{const n=i+1;const on=cr[n];
+    return `<div onclick="togClas(${n})" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--r);margin-bottom:6px;cursor:pointer;background:${on?'rgba(26,31,60,.04)':'var(--surface)'};${on?'border-color:var(--navy)':''}">
+      <div style="width:20px;height:20px;min-width:20px;border-radius:5px;border:2px solid ${on?'var(--navy)':'var(--border)'};background:${on?'var(--navy)':'transparent'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${on?'✓':''}</div>
+      <span style="font-size:13px;font-weight:${on?'600':'400'};color:var(--text)">${n} · ${t}</span>
+    </div>`;}).join('');
+  document.getElementById('clas-body').innerHTML=`
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Marca los criterios que cumple el proyecto. 0–1 = Simple · 2–3 = Medio · 4–5 = Complejo.</p>
+    ${items}
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--r);padding:12px 14px;margin-top:12px">
+      <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Resultado</div>
+      <div style="font-size:18px;font-weight:800;color:${colN}">${NIVEL_NOM[nivel]} · $${BONO_BASE_COMP[nivel].toLocaleString('es-MX')}</div></div>
+      <div style="font-size:32px;font-weight:800;font-family:var(--font-d);color:${colN}">${count}</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn sm" onclick="cerrarOverlayComp()">Cancelar</button>
+      <button class="btn sm primary" onclick="guardarClasificacion('${window._clasPidStore}')">✓ Guardar clasificación</button>
+    </div>`;
+}
+function guardarClasificacion(pid){
+  const cr=window._clasCrit;
+  const count=Object.values(cr).filter(Boolean).length;
+  const nivel=nivelPorCount(count);
+  window._bonosData=window._bonosData||{};
+  window._bonosData[pid]={...(window._bonosData[pid]||{}),nivel,criterios:{...cr},fechaClas:new Date().toISOString()};
+  bonosPush();
+  cerrarOverlayComp();
+  toast('✓ Complejidad guardada: '+NIVEL_NOM[nivel]);
+  if(av==='compensacion') sv2('compensacion');
+}
+
+// ── PASO 5: BONO REALIZADO (cierre, confirmación manual del Gerente) ──
+function abrirBonoRealizado(pid){
+  const p=PROJ.find(x=>x.id===pid);if(!p)return;
+  const ex=bonoOf(pid)||{};
+  window._brNivel=ex.nivel||'medio';
+  window._brMult=(ex.multiplicador!==undefined)?ex.multiplicador:100;
+  renderBonoRealizado(pid);
+}
+function brSetNivel(v){window._brNivel=v;renderBonoRealizadoBody(window._brPid);}
+function brSetMult(v){window._brMult=parseInt(v);renderBonoRealizadoBody(window._brPid);}
+function renderBonoRealizado(pid){
+  window._brPid=pid;
+  const p=PROJ.find(x=>x.id===pid);
+  _overlayComp(`
+    <div style="background:var(--navy);color:#fff;padding:16px 18px;border-radius:var(--r2) var(--r2) 0 0">
+      <div style="font-family:var(--font-d);font-size:16px;font-weight:700">Bono realizado · cierre</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px">${p.name} · ${p.id.replace('PROJ','P')}</div>
+    </div>
+    <div style="padding:16px 18px" id="br-body"></div>`);
+  renderBonoRealizadoBody(pid);
+}
+function renderBonoRealizadoBody(pid){
+  const nivel=window._brNivel,mult=window._brMult;
+  const base=BONO_BASE_COMP[nivel];
+  const bono=Math.round(base*(mult/100));
+  const col=mult===100?'var(--ok)':mult===50?'var(--warn)':'var(--bad)';
+  const nopt=Object.keys(BONO_BASE_COMP).map(k=>`<option value="${k}"${nivel===k?' selected':''}>${NIVEL_NOM[k]} · $${BONO_BASE_COMP[k].toLocaleString('es-MX')}</option>`).join('');
+  const escen=[[100,'✅ Entregó en la fecha comprometida'],[50,'🟡 Entregó dentro de la prórroga registrada'],[0,'🔴 No entregó / sin prórroga']]
+    .map(([v,t])=>`<div onclick="brSetMult(${v})" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid ${mult===v?'var(--navy)':'var(--border2)'};border-radius:var(--r);margin-bottom:5px;cursor:pointer;background:${mult===v?'rgba(26,31,60,.04)':'var(--surface)'}">
+      <span style="font-size:13px;font-weight:${mult===v?'600':'400'}">${t}</span><span style="font-weight:700;color:${v===100?'var(--ok)':v===50?'var(--warn)':'var(--bad)'}">${v}%</span></div>`).join('');
+  document.getElementById('br-body').innerHTML=`
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:5px">Nivel de complejidad</label>
+    <select onchange="brSetNivel(this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--font-b);font-size:13px;margin-bottom:14px">${nopt}</select>
+    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:5px">Escenario de entrega (confírmalo tú)</label>
+    ${escen}
+    <div style="background:var(--navy);border-radius:var(--r);padding:14px;text-align:center;margin-top:12px">
+      <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase">Bono realizado</div>
+      <div style="font-size:30px;font-weight:800;font-family:var(--font-d);color:${col}">$${bono.toLocaleString('es-MX')}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.5)">$${base.toLocaleString('es-MX')} × ${mult}%</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn sm" onclick="cerrarOverlayComp()">Cancelar</button>
+      <button class="btn sm primary" onclick="guardarBonoRealizado('${pid}')">✓ Guardar bono realizado</button>
+    </div>`;
+}
+function guardarBonoRealizado(pid){
+  const nivel=window._brNivel,mult=window._brMult;
+  const bono=Math.round(BONO_BASE_COMP[nivel]*(mult/100));
+  window._bonosData=window._bonosData||{};
+  window._bonosData[pid]={...(window._bonosData[pid]||{}),nivel,multiplicador:mult,bonoRealizado:bono,fechaEval:new Date().toISOString()};
+  bonosPush();
+  cerrarOverlayComp();
+  toast('✓ Bono realizado guardado: $'+bono.toLocaleString('es-MX'));
+  if(av==='compensacion') sv2('compensacion');
+}
+function marcarNoAplica(pid){
+  window._bonosData=window._bonosData||{};
+  const ex=window._bonosData[pid]||{};
+  delete ex.bonoRealizado; delete ex.multiplicador;
+  window._bonosData[pid]={...ex,noAplica:true};
+  bonosPush();
+  toast('Marcado como "No aplica"');
+  if(av==='compensacion') sv2('compensacion');
+}
+function reactivarBono(pid){
+  window._bonosData=window._bonosData||{};
+  if(window._bonosData[pid]){delete window._bonosData[pid].noAplica;}
+  bonosPush();
+  toast('Reactivado para evaluación');
+  if(av==='compensacion') sv2('compensacion');
+}
+
+function reporteBono(pid){
+  const p=PROJ.find(x=>x.id===pid); if(!p) return;
+  const b=bonoOf(pid)||{};
+  if(b.bonoRealizado===undefined){toast('Primero evalúa o registra el pago');return;}
+  const ENGS=USERS.filter(u=>['RB','FR','AE','PR','RE'].includes(u.perfil));
+  const engU=ENGS.find(u=>u.perfil===p.eng);
+  const engNom=engU?engU.nombre:(p.eng||'—');
+  const gerNom=(cu&&cu.nombre)?cu.nombre:'Gerencia de Innovación y Diseño';
+  const nivel=b.nivel?NIVEL_NOM[b.nivel]:'—';
+  const base=b.nivel?('$'+BONO_BASE_COMP[b.nivel].toLocaleString('es-MX')):'—';
+  const manual=!!b.pagoManual;
+  const escenTxt = manual?'Pago directo autorizado por el Gerente'
+    : (b.multiplicador===100?'Entrega en la fecha comprometida'
+      : b.multiplicador===50?'Entrega dentro de la prórroga registrada'
+      : 'No entregado en fecha ni prórroga');
+  const pct = manual?'Pago directo':(b.multiplicador+'%');
+  const fComp = p.fechaFinal?fmtD(p.fechaFinal):'—';
+  const hoy = fmtD(new Date().toISOString().slice(0,10));
+  const folio = 'BONO-'+p.id.replace('PROJ','')+'-'+(anioProyecto(p)||new Date().getFullYear());
+  const monto = '$'+b.bonoRealizado.toLocaleString('es-MX')+' MXN';
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte de Bono · ${p.name}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
+    body{color:#1a1f3c;padding:40px;max-width:800px;margin:0 auto;font-size:13px}
+    .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1a1f3c;padding-bottom:16px;margin-bottom:22px}
+    .brand{font-size:22px;font-weight:800;letter-spacing:.5px;color:#1a1f3c}
+    .brand small{display:block;font-size:9px;font-weight:600;letter-spacing:3px;color:#64748b;margin-top:2px}
+    .doc-title{text-align:right;font-size:13px;font-weight:700;color:#1a1f3c}
+    .doc-title small{display:block;font-weight:400;color:#64748b;font-size:11px;margin-top:3px}
+    h2{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin:22px 0 8px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}
+    table{width:100%;border-collapse:collapse}
+    td{padding:7px 4px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+    td.k{color:#64748b;width:42%}
+    td.v{font-weight:600;text-align:right}
+    .monto{background:#1a1f3c;color:#fff;border-radius:8px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+    .monto .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.7}
+    .monto .val{font-size:30px;font-weight:800}
+    .firmas{display:flex;gap:60px;margin-top:70px}
+    .firma{flex:1;text-align:center}
+    .firma .line{border-top:1.5px solid #1a1f3c;margin-bottom:6px}
+    .firma .rol{font-size:11px;color:#64748b}
+    .firma .nom{font-weight:700;font-size:13px}
+    .foot{margin-top:40px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:12px}
+    .btnbar{text-align:center;margin-bottom:24px}
+    .btnbar button{background:#1a1f3c;color:#fff;border:none;padding:10px 26px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer}
+    @media print{.btnbar{display:none}body{padding:0}}
+  </style></head><body>
+  <div class="btnbar"><button onclick="window.print()">🖨 Imprimir / Guardar PDF</button></div>
+  <div class="hdr">
+    <div class="brand">LÍNEA ITALIA<small>ECCELLENZA IN MOBILE</small></div>
+    <div class="doc-title">Reporte de Pago de Bono por Proyecto<small>Componente 1 · Folio ${folio}</small></div>
+  </div>
+  <h2>Datos del proyecto</h2>
+  <table>
+    <tr><td class="k">Proyecto</td><td class="v">${p.name}</td></tr>
+    <tr><td class="k">Clave</td><td class="v">${p.id}</td></tr>
+    <tr><td class="k">Ingeniero de Producto responsable</td><td class="v">${engNom}</td></tr>
+    <tr><td class="k">Nivel de complejidad</td><td class="v">${nivel}</td></tr>
+    <tr><td class="k">Bono base del nivel</td><td class="v">${base}</td></tr>
+  </table>
+  <h2>Cumplimiento</h2>
+  <table>
+    <tr><td class="k">Fecha comprometida</td><td class="v">${fComp}</td></tr>
+    <tr><td class="k">Escenario de entrega</td><td class="v">${escenTxt}</td></tr>
+    <tr><td class="k">Porcentaje de cumplimiento</td><td class="v">${pct}</td></tr>
+  </table>
+  <div class="monto"><span class="lbl">Bono a pagar</span><span class="val">${monto}</span></div>
+  <div class="firmas">
+    <div class="firma"><div class="line"></div><div class="nom">${engNom}</div><div class="rol">Ingeniero de Producto</div></div>
+    <div class="firma"><div class="line"></div><div class="nom">${gerNom}</div><div class="rol">Gerencia de Innovación y Diseño</div></div>
+  </div>
+  <div class="foot">Documento generado el ${hoy} · Línea Italia · Este comprobante autoriza el pago del bono correspondiente al proyecto indicado.</div>
+  </body></html>`;
+  const w=window.open('','_blank');
+  if(!w){toast('⚠ Habilita las ventanas emergentes para ver el reporte');return;}
+  w.document.write(html); w.document.close();
+}
+
+function rCompensacion(c){
+  if(!isG()){c.innerHTML='<div class="card" style="text-align:center;padding:40px;color:var(--muted)">Acceso exclusivo del Gerente.</div>';return;}
+  if(window._bonosData===undefined){window._bonosData={};bonosPull().then(()=>{if(av==='compensacion')sv2('compensacion');});}
+  const eng=window._compEng||'todos';
+  const anio=window._compAnio||String(TODAY.getFullYear());
+  const ENGS=USERS.filter(u=>['RB','FR','AE','PR','RE'].includes(u.perfil));
+  // años disponibles (por fecha comprometida) para el selector
+  const aniosSet=[...new Set(PROJ.map(p=>anioProyecto(p)).filter(Boolean))].sort().reverse();
+  const anioOpts=`<option value="todos" style="color:#1a2233;background:#fff"${anio==='todos'?' selected':''}>Todos los años</option>`+
+    aniosSet.map(a=>`<option value="${a}" style="color:#1a2233;background:#fff"${anio===a?' selected':''}>${a}</option>`).join('');
+  let act=PROJ.filter(p=>p.estatus==='En linea');
+  if(eng!=='todos') act=act.filter(p=>p.eng===eng);
+  // Nota: el monitoreo de activos NO se filtra por año (son el pipeline actual).
+  // El filtro de año aplica solo a Bonos realizados y al Resumen (histórico).
+
+  const total=act.length;
+  const pend=act.filter(p=>compEstado(p).fase==='pendiente').length;
+  const lib=act.filter(p=>{const f=compEstado(p).fase;return f==='liberado'||f==='liberado-sin-confirmar';}).length;
+  const riesgo=act.filter(p=>{const e=compEstado(p);return e.dias!==null&&e.dias<0;}).length;
+
+  const engOpts=`<option value="todos" style="color:#1a2233;background:#fff"${eng==='todos'?' selected':''}>Todo el equipo</option>`+
+    ENGS.map(u=>`<option value="${u.perfil}" style="color:#1a2233;background:#fff"${eng===u.perfil?' selected':''}>${u.nombre}</option>`).join('');
+
+  const grupos = eng==='todos'
+    ? ENGS.map(u=>({u,items:act.filter(p=>p.eng===u.perfil)})).filter(g=>g.items.length)
+    : [{u:ENGS.find(u=>u.perfil===eng)||{nombre:'—',perfil:eng},items:act}];
+
+  const cuerpo = grupos.map(g=>{
+    const ec=ecOf(g.u.perfil);
+    const header=`<tr><td colspan="7" style="background:rgba(100,116,139,.16);padding:9px 12px;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;border-radius:50%;background:${ec.bg};color:${ec.tc};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:0 0 24px">${ec.init}</div>
+        <span style="font-size:13px;font-weight:800;color:var(--text)">${g.u.nombre}</span>
+        <span style="font-size:11px;color:var(--muted)">· ${g.items.length} proyecto${g.items.length!==1?'s':''}</span>
+      </div></td></tr>`;
+    const filas=g.items.map(p=>{
+      const e=compEstado(p);
+      const b=bonoOf(p.id);
+      const clickable=(e.fase==='liberado'||e.fase==='liberado-sin-confirmar');
+      let cplx;
+      if(b&&b.nivel){const colN=b.nivel==='simple'?'var(--muted)':b.nivel==='medio'?'var(--blue)':'var(--purple)';
+        cplx=`<span class="tag" style="background:var(--surface2);color:${colN};white-space:normal;font-weight:700">${NIVEL_NOM[b.nivel]} · $${BONO_BASE_COMP[b.nivel].toLocaleString('es-MX')}</span>`;}
+      else if(clickable){cplx='<span class="tag" style="background:var(--blue-bg);color:var(--blue);white-space:normal;cursor:pointer">+ Clasificar</span>';}
+      else{cplx='<span class="tag" style="background:var(--surface2);color:var(--muted);white-space:normal">Sin clasificar</span>';}
+      const diasTxt = e.dias===null?'' : (e.dias>=0?`<div style="color:var(--ok);font-size:10px;margin-top:3px">${e.dias}d hábiles</div>`:`<div style="color:var(--bad);font-size:10px;margin-top:3px">Vencido ${Math.abs(e.dias)}d</div>`);
+      const tieneProrr=(p.historialFechas||[]).some(h=>h.tipo==='prorroga');
+      const prorrBtn = e.fase==='liberado'
+        ? `<div style="margin-top:5px"><button onclick="event.stopPropagation();otorgarProrroga('${p.id}')" style="font-size:10px;background:transparent;border:1px solid rgba(251,191,36,.6);color:var(--warn);padding:2px 7px;border-radius:var(--r);cursor:pointer;font-family:var(--font-b)">${tieneProrr?'+ otra prórroga':'+ Prórroga 30d'}</button></div>`
+        : '';
+      const rowClick=clickable?`onclick="abrirClasificar('${p.id}')" style="cursor:pointer"`:'';
+      return `<tr ${rowClick}>
+        <td style="font-family:monospace;font-size:11px;color:var(--muted);vertical-align:top">${p.id.replace('PROJ','P')}</td>
+        <td style="font-weight:600;font-size:12px;vertical-align:top">${p.name}</td>
+        <td style="vertical-align:top"><span class="tag" style="background:${e.badgeBg};color:${e.badgeCol};white-space:normal">${e.badge}</span></td>
+        <td style="vertical-align:top">${cplx}</td>
+        <td style="font-size:12px;vertical-align:top">${e.inicio?fmtD(e.inicio):'—'}</td>
+        <td style="font-size:12px;vertical-align:top">${e.fin?fmtD(e.fin):'—'}</td>
+        <td style="vertical-align:top"><span class="tag" style="background:${e.rumboBg};color:${e.rumboCol};white-space:normal">${e.rumboLbl}</span>${diasTxt}${prorrBtn}</td>
+      </tr>`;
+    }).join('');
+    return header+filas;
+  }).join('');
+
+  const tabla = grupos.length
+    ? `<div class="card" style="padding:0;overflow:hidden">
+        <table style="table-layout:fixed;width:100%">
+          <colgroup><col style="width:6%"><col style="width:23%"><col style="width:15%"><col style="width:12%"><col style="width:11%"><col style="width:13%"><col style="width:20%"></colgroup>
+          <thead><tr><th>ID</th><th>Proyecto</th><th>Estado</th><th>Complejidad</th><th>Inicio</th><th>Fin comprometido</th><th>Rumbo del bono</th></tr></thead>
+          <tbody>${cuerpo}</tbody>
+        </table>
+      </div>`
+    : '<div class="card" style="text-align:center;padding:30px;color:var(--muted)">Sin proyectos En línea para este filtro.</div>';
+
+  // ── BONOS REALIZADOS (proyectos terminados) ──
+  let term=PROJ.filter(p=>p.estatus==='Terminado');
+  if(eng!=='todos') term=term.filter(p=>p.eng===eng);
+  if(anio!=='todos') term=term.filter(p=>anioProyecto(p)===anio);
+  const termRows=term.map(p=>{
+    const b=bonoOf(p.id);
+    const eng2=ENGS.find(u=>u.perfil===p.eng);
+    let estado,accion;
+    if(b&&b.noAplica){
+      estado='<span class="tag" style="background:var(--surface2);color:var(--muted)">No aplica</span>';
+      accion=`<button class="btn sm" onclick="reactivarBono('${p.id}')" style="font-size:11px">Reactivar</button>`;
+    }else if(b&&b.bonoRealizado!==undefined){
+      const manual=!!b.pagoManual;
+      const col=manual?'var(--ok)':(b.multiplicador===100?'var(--ok)':b.multiplicador===50?'var(--warn)':'var(--bad)');
+      const detalle=manual?'pago directo':`${b.multiplicador}%`;
+      const pagChip=b.pagado?' <span class="tag" style="background:var(--ok-bg);color:var(--ok);font-weight:700">Pagado ✓</span>':'';
+      estado=`<span class="tag" style="background:var(--surface2);color:${col};font-weight:700">$${b.bonoRealizado.toLocaleString('es-MX')} · ${detalle}</span>${pagChip}`;
+      const btnPago=b.pagado
+        ?`<button class="btn sm" onclick="desmarcarPagado('${p.id}')" style="font-size:11px">Quitar pagado</button>`
+        :`<button class="btn sm primary" onclick="marcarPagado('${p.id}')" style="font-size:11px">Marcar pagado</button>`;
+      const btnEditar=manual
+        ?`<button class="btn sm" onclick="marcarPagadoManual('${p.id}')" style="font-size:11px">Editar monto</button>`
+        :`<button class="btn sm" onclick="abrirBonoRealizado('${p.id}')" style="font-size:11px">Editar</button>`;
+      accion=`<div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">${btnEditar}${btnPago}<button class="btn sm" onclick="reporteBono('${p.id}')" style="font-size:11px">📄 Reporte</button></div>`;
+    }else{
+      estado='<span class="tag" style="background:var(--warn-bg);color:var(--warn)">Sin evaluar</span>';
+      accion=`<div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap"><button class="btn sm primary" onclick="abrirBonoRealizado('${p.id}')" style="font-size:11px">Evaluar bono</button><button class="btn sm" onclick="marcarPagadoManual('${p.id}')" style="font-size:11px">Pagar directo</button><button class="btn sm" onclick="marcarNoAplica('${p.id}')" style="font-size:11px">No aplica</button></div>`;
+    }
+    return `<tr>
+      <td style="font-family:monospace;font-size:11px;color:var(--muted)">${p.id.replace('PROJ','P')}</td>
+      <td style="font-weight:600;font-size:12px">${p.name}</td>
+      <td style="font-size:12px">${eng2?eng2.nombre:p.eng}</td>
+      <td>${estado}</td>
+      <td style="text-align:right">${accion}</td>
+    </tr>`;
+  }).join('');
+  const tablaTerm = term.length
+    ? `<div class="card" style="padding:0;overflow:hidden">
+        <table style="table-layout:fixed;width:100%">
+          <colgroup><col style="width:7%"><col style="width:31%"><col style="width:20%"><col style="width:18%"><col style="width:24%"></colgroup>
+          <thead><tr><th>ID</th><th>Proyecto</th><th>Ingeniero</th><th>Bono realizado</th><th></th></tr></thead>
+          <tbody>${termRows}</tbody>
+        </table>
+      </div>`
+    : '<div class="card" style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Aún no hay proyectos terminados para evaluar en este filtro.</div>';
+
+  // ── RESUMEN DEL EQUIPO (acumulado real desde /bonos) ──
+  const resumenEngs = eng==='todos'?ENGS:ENGS.filter(u=>u.perfil===eng);
+  const resumen=resumenEngs.map(u=>{
+    const ps=PROJ.filter(p=>p.eng===u.perfil&&p.estatus==='Terminado'&&(anio==='todos'||anioProyecto(p)===anio));
+    let totalBono=0,nProy=0,pagado=0;
+    ps.forEach(p=>{const b=bonoOf(p.id);if(b&&!b.noAplica&&b.bonoRealizado!==undefined){totalBono+=b.bonoRealizado;nProy++;if(b.pagado)pagado+=b.bonoRealizado;}});
+    return {u,totalBono,nProy,pagado};
+  });
+  const granTotal=resumen.reduce((s,r)=>s+r.totalBono,0);
+  const granPagado=resumen.reduce((s,r)=>s+r.pagado,0);
+  const resumenRows=resumen.map(r=>`<tr>
+    <td style="font-weight:600;font-size:12px">${r.u.nombre}</td>
+    <td style="text-align:center">${r.nProy}</td>
+    <td style="text-align:right;color:${r.pagado>0?'var(--ok)':'var(--muted)'}">$${r.pagado.toLocaleString('es-MX')}</td>
+    <td style="text-align:right;font-weight:700;color:${r.totalBono>0?'var(--text)':'var(--muted)'}">$${r.totalBono.toLocaleString('es-MX')}</td>
+  </tr>`).join('');
+
+  c.innerHTML=`
+  <div style="background:var(--navy);border-radius:var(--r2);padding:14px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:#fff">💰 Monitoreo de proyectos · Bono por proyecto</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px">Rumbo real contra fechas bloqueadas · el reloj corre solo después de liberar Gate 1</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select onchange="compSetEng(this.value)" style="padding:8px 12px;background:#fff;border:1px solid rgba(255,255,255,.3);border-radius:var(--r);color:#1a2233;font-weight:600;font-size:13px;font-family:var(--font-b)">${engOpts}</select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      ${[{l:'Activos',v:total,s:'en línea',col:'#fff'},{l:'Pendiente Gate 1',v:pend,s:'sin reloj aún',col:'#94a3b8'},{l:'Liberados',v:lib,s:'con compromiso',col:'#818cf8'},{l:'⚠ En riesgo',v:riesgo,s:'vencidos',col:riesgo>0?'#f87171':'#4ade80'}].map(k=>`<div style="background:rgba(255,255,255,.07);border-radius:8px;padding:10px 12px;text-align:center">
+        <div style="font-size:9px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${k.l}</div>
+        <div style="font-size:24px;font-weight:800;font-family:var(--font-d);color:${k.col};line-height:1">${k.v}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">${k.s}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px 2px">Monitoreo · proyectos en curso</div>
+  ${tabla}
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 8px 2px;flex-wrap:wrap;gap:8px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Bonos realizados · proyectos terminados</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:11px;color:var(--muted)">Año de cierre:</span>
+      <select onchange="compSetAnio(this.value)" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);font-weight:600;cursor:pointer">${anioOpts}</select>
+    </div>
+  </div>
+  ${tablaTerm}
+
+  <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:20px 0 8px 2px">Resumen del equipo · acumulado real</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table style="table-layout:fixed;width:100%">
+      <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+      <thead><tr><th>Ingeniero</th><th style="text-align:center">Proyectos pagados</th><th style="text-align:right">Pagado</th><th style="text-align:right">Bono acumulado</th></tr></thead>
+      <tbody>${resumenRows}
+        <tr style="background:var(--surface2)"><td style="font-weight:800">Total equipo</td><td></td><td style="text-align:right;font-weight:800;color:var(--ok)">$${granPagado.toLocaleString('es-MX')}</td><td style="text-align:right;font-weight:800">$${granTotal.toLocaleString('es-MX')}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="background:var(--surface2);border:none;font-size:11px;color:var(--muted);line-height:1.6;margin-top:14px">
+    <strong style="color:var(--text)">Cómo leer el rumbo:</strong> 🟢 En rumbo (100%) · 🟡 Prórroga registrada (rumbo 50%) · 🔴 Vencido sin prórroga (rumbo 0%). Haz clic en un proyecto liberado para <strong>clasificar su complejidad</strong>. Los proyectos en <em>Pendiente Gate 1</em> no tienen reloj: su compromiso nace al liberar el concepto. Los montos se guardan en un nodo aparte, solo visible para el Gerente.
+  </div>`;
+}
+
+function svgLineTend(labels, values, accent){
+  const W=520,H=190,padL=30,padR=14,padT=16,padB=24;
+  const iw=W-padL-padR, ih=H-padT-padB, n=labels.length;
+  const niceMax=Math.max(1,Math.ceil(Math.max(1,...values)));
+  const X=i=> n<=1?padL+iw/2:padL+iw*i/(n-1);
+  const Y=v=> padT+ih-ih*(v/niceMax);
+  const steps=Math.min(niceMax,4);
+  let grid='';
+  for(let s=0;s<=steps;s++){const val=Math.round(niceMax*s/steps);const gy=Y(val);
+    grid+=`<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${W-padR}" y2="${gy.toFixed(1)}" style="stroke:var(--border2)" stroke-width="1"/>`;
+    grid+=`<text x="${padL-5}" y="${(gy+3).toFixed(1)}" text-anchor="end" font-size="9" style="fill:var(--muted)">${val}</text>`;}
+  const P=values.map((v,i)=>[X(i),Y(v)]);
+  const smooth=(pts)=>{
+    if(pts.length<2) return '';
+    let d=`M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+    for(let i=0;i<pts.length-1;i++){
+      const p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||p2;
+      const t=0.18;
+      const c1x=p1[0]+(p2[0]-p0[0])*t, c1y=p1[1]+(p2[1]-p0[1])*t;
+      const c2x=p2[0]-(p3[0]-p1[0])*t, c2y=p2[1]-(p3[1]-p1[1])*t;
+      d+=` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    return d;
+  };
+  const linePath=smooth(P);
+  const area=n>1?`<path d="${linePath} L ${X(n-1).toFixed(1)} ${Y(0).toFixed(1)} L ${X(0).toFixed(1)} ${Y(0).toFixed(1)} Z" fill="${accent}" opacity="0.10"/>`:'';
+  const line=n>1?`<path d="${linePath}" fill="none" stroke="${accent}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`:'';
+  const dots=values.map((v,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.5" fill="${accent}" style="stroke:var(--surface)" stroke-width="1.5"/><text x="${X(i).toFixed(1)}" y="${(Y(v)-7).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" style="fill:var(--text)">${v}</text>`).join('');
+  const xl=labels.map((l,i)=>`<text x="${X(i).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="9" style="fill:var(--muted)">${l}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">${grid}${area}${line}${dots}${xl}</svg>`;
+}
+
 function rInicio(c){
   const engU=USERS.filter(u=>u.perfil!=='GI');
 
@@ -1077,6 +1584,33 @@ function rInicio(c){
 
   </div>`;
 
+
+  // ── FILA TENDENCIAS: cierres por año y por mes ──
+  const _termTend=filtProj.filter(p=>p.estatus==='Terminado');
+  const _yc={};
+  _termTend.forEach(p=>{const y=anioProyecto(p);if(y)_yc[y]=(_yc[y]||0)+1;});
+  const _yrs=Object.keys(_yc).map(Number).filter(nn=>nn&&nn>1900);
+  let _aL=[],_aV=[];
+  if(_yrs.length){const _mn=Math.min(..._yrs),_mx=Math.max(..._yrs);for(let y=_mn;y<=_mx;y++){_aL.push(String(y));_aV.push(_yc[String(y)]||0);}}
+  const _anioT=window._dashAnioTend||String(TODAY.getFullYear());
+  const _meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const _mV=new Array(12).fill(0);
+  _termTend.forEach(p=>{const f=p.fechaFinal||p.fechasFase?.['Lanzamiento']?.fin||'';if(f&&String(f).slice(0,4)===_anioT){const m=parseInt(String(f).slice(5,7),10);if(m>=1&&m<=12)_mV[m-1]++;}});
+  const _yearsSel=[...new Set([..._yrs.map(String),String(TODAY.getFullYear())])].sort().reverse();
+  const _anioTendOpts=_yearsSel.map(a=>`<option value="${a}"${_anioT===a?' selected':''}>${a}</option>`).join('');
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Proyectos cerrados por año</div>
+      ${_aL.length?svgLineTend(_aL,_aV,'#185FA5'):'<div style="text-align:center;color:var(--muted);font-size:12px;padding:34px 0">Aún no hay proyectos terminados.</div>'}
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Cerrados por mes</div>
+        <select onchange="window._dashAnioTend=this.value;rInicio(document.getElementById('vc'))" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);font-weight:600;cursor:pointer">${_anioTendOpts}</select>
+      </div>
+      ${svgLineTend(_meses,_mV,'#185FA5')}
+    </div>
+  </div>`;
 
   // ── FILA 2: Proyectos criticos ──
   h+=`<div style="margin-bottom:12px">
@@ -1467,7 +2001,7 @@ function rMiDashboard(c){
   h+=`<div style="background:linear-gradient(135deg,${ec.bg} 0%,var(--surface) 100%);border:1px solid var(--border2);border-radius:var(--r2);padding:18px 22px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
     <div style="width:48px;height:48px;border-radius:50%;background:${ec.bg};border:3px solid var(--surface);box-shadow:0 2px 12px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:${ec.tc};flex-shrink:0">${ec.init}</div>
     <div style="flex:1">
-      <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--text)">${saludo}, ${cu?.nombre?.split(' ')[0]||'Ingeniero'}</div>
+      <div style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--text)">${saludo}, ${cu?.perfil==='GI'?'René':(cu?.nombre?.split(' ')[0]||'Ingeniero')}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:2px">${TODAY.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
     </div>
     ${venc.length>0
@@ -2406,9 +2940,9 @@ function rModal(){
         <div style="font-size:11px;color:rgba(255,255,255,.6)">Define la fecha inicio y fin de cada fase. El sistema distribuye las tareas automáticamente en días hábiles.</div>
       </div>
       ${(ed||isG())&&!p.fechasConfirmadas?`<button onclick="confirmarFechas('${p.id}')" id="btn-confirmar-${p.id}"
-        style="font-size:11px;font-weight:700;padding:7px 16px;border-radius:var(--r);border:2px solid ${GOLD};background:${GOLD};color:#1a1f3c;cursor:pointer;font-family:var(--font-b);opacity:.5;pointer-events:none" 
-        title="Disponible cuando las 4 fases tengan fechas">🔒 Confirmar fechas</button>`
-      :p.fechasConfirmadas?'<div style="font-size:11px;color:#4ade80;font-weight:700">✓ Fechas confirmadas'+(isG()?` · <button onclick="desbloquearFechas('${p.id}')" style="font-size:10px;background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.7);padding:3px 8px;border-radius:var(--r);cursor:pointer">Modificar (Gerente)</button>`:'')+'</div>':''}
+        style="font-size:11px;font-weight:700;padding:7px 16px;border-radius:var(--r);border:2px solid ${GOLD};background:${GOLD};color:#1a1f3c;cursor:pointer;font-family:var(--font-b);opacity:${['Diseño','Desarrollo','Implementacion','Lanzamiento'].every(f=>p.fechasFase?.[f]?.inicio&&p.fechasFase?.[f]?.fin)?'1':'.5'};pointer-events:${['Diseño','Desarrollo','Implementacion','Lanzamiento'].every(f=>p.fechasFase?.[f]?.inicio&&p.fechasFase?.[f]?.fin)?'auto':'none'}" 
+        title="${['Diseño','Desarrollo','Implementacion','Lanzamiento'].every(f=>p.fechasFase?.[f]?.inicio&&p.fechasFase?.[f]?.fin)?'Confirma y bloquea las fechas del proyecto':'Disponible cuando las 4 fases tengan fechas'}">${['Diseño','Desarrollo','Implementacion','Lanzamiento'].every(f=>p.fechasFase?.[f]?.inicio&&p.fechasFase?.[f]?.fin)?'🔓 Confirmar fechas':'🔒 Confirmar fechas'}</button>`
+      :p.fechasConfirmadas?'<div style="font-size:11px;color:#4ade80;font-weight:700">✓ Fechas confirmadas'+(isG()?` · <button onclick="desbloquearFechas('${p.id}')" style="font-size:10px;background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.7);padding:3px 8px;border-radius:var(--r);cursor:pointer">Modificar (Gerente)</button> <button onclick="otorgarProrroga('${p.id}')" style="font-size:10px;background:transparent;border:1px solid rgba(251,191,36,.5);color:#fbbf24;padding:3px 8px;border-radius:var(--r);cursor:pointer">Otorgar prórroga 30d</button>`:'')+'</div>':''}
     </div>
   </div>
   <!-- TARJETAS RESUMEN POR FASE -->
@@ -3952,6 +4486,32 @@ function desbloquearFechas(pid){
   toast('Fechas desbloqueadas — puedes modificarlas');
 }
 
+function otorgarProrroga(pid){
+  if(!isG()){toast('Solo el Gerente puede otorgar prórroga');return;}
+  const p=PROJ.find(x=>x.id===pid);if(!p) return;
+  if(!p.fechaFinal){toast('⚠ El proyecto no tiene fecha comprometida aún');return;}
+  const yaTiene=(p.historialFechas||[]).some(h=>h.tipo==='prorroga');
+  if(yaTiene&&!confirm('Este proyecto ya tiene una prórroga registrada. ¿Registrar otra?')) return;
+  const motivo=prompt('Motivo de la prórroga de 30 días (queda registrado en historial):');
+  if(!motivo) return;
+  const base=pd(p.fechaFinal);
+  if(!base){toast('⚠ Fecha comprometida inválida');return;}
+  const hasta=new Date(base); hasta.setDate(hasta.getDate()+30);
+  const iso=hasta.toISOString().slice(0,10);
+  p.prorrogaHasta=iso;
+  if(!p.historialFechas) p.historialFechas=[];
+  p.historialFechas.push({
+    tipo:'prorroga',
+    fecha:new Date().toISOString(),
+    usuario:cu?.nombre||'?',
+    detalle:`Prórroga de 30 días otorgada por ${cu?.nombre||'?'} hasta ${iso}. Motivo: ${motivo}`
+  });
+  addAct(p,'fechas',`Gerente otorgó prórroga 30d (hasta ${iso}): ${motivo}`);
+  saveProj(p);
+  if(av==='compensacion'){sv2('compensacion');}else{rModalKeepScroll('tareas');}
+  toast('✓ Prórroga de 30 días registrada (habilita el tramo 50%)');
+}
+
 
 // ─── ACTUALIZAR FECHA CON CASCADA ─────────────────────────────────────
 function uTFecha(pid,f,i,campo,val){
@@ -5045,7 +5605,7 @@ function getWelcomeTasks(){
 function showWelcomePopup(){
   if(document.getElementById('welcome-overlay')) return;
   const saludo=getSaludo();
-  const nombre=cu?.nombre?.split(' ')[0]||cu?.uid||'';
+  const nombre=(cu?.perfil==='GI'?'René':(cu?.nombre?.split(' ')[0]||cu?.uid||''));
   const frase=getFraseDelDia();
   const {criticas,semana,recientes,total,completadas,enProceso,pendientes,pct,circ,offset}=getWelcomeTasks();
   const today=new Date();
