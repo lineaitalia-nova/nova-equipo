@@ -983,42 +983,93 @@ window.STATE = STATE;
 
 // ── FIREBASE SYNC ──
 function fbSave(data) {
+  // Agregar timestamp para saber cuál versión es más reciente
+  data._ts = Date.now();
+  // Guardar en localStorage siempre primero (es el fallback confiable)
+  try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e) {}
+  // Luego intentar Firebase
   fetch(FB_URL + '/state.json', {
     method: 'PUT',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(data)
   }).then(function(r) {
-    if (r.ok) { FB_ON = true; updateFBIndicator(true); }
-  }).catch(function() { updateFBIndicator(false); });
+    if (r.ok) {
+      FB_ON = true;
+      updateFBIndicator(true);
+      console.log('[Folios] Guardado en Firebase OK - ts:', data._ts);
+    } else {
+      console.warn('[Folios] Firebase rechazó el guardado - status:', r.status);
+      updateFBIndicator(false);
+    }
+  }).catch(function(e) {
+    console.warn('[Folios] Firebase no disponible, usando localStorage:', e.message);
+    updateFBIndicator(false);
+  });
 }
 
 function fbLoad(cb) {
+  // Leer localStorage primero para comparar timestamps
+  var localData = null;
+  var localTs = 0;
+  try {
+    var ls = localStorage.getItem(LS_KEY);
+    if (ls) { localData = JSON.parse(ls); localTs = localData._ts || 0; }
+  } catch(e) {}
+
   fetch(FB_URL + '/state.json')
     .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data && data.folios && data.folios.length > 0) {
-        FB_ON = true;
-        updateFBIndicator(true);
-        // Aplicar status automático
-        data.folios = data.folios.map(function(f) {
+    .then(function(fbData) {
+      FB_ON = true;
+      updateFBIndicator(true);
+      var fbTs = fbData ? (fbData._ts || 0) : 0;
+      console.log('[Folios] Firebase ts:', fbTs, '| Local ts:', localTs);
+
+      // Usar el más reciente
+      var useData = null;
+      if (fbData && fbData.folios && fbData.folios.length > 0 && fbTs >= localTs) {
+        console.log('[Folios] Usando datos de Firebase');
+        useData = fbData;
+      } else if (localData && localData.folios && localData.folios.length > 0) {
+        console.log('[Folios] Usando datos de localStorage (más reciente)');
+        useData = localData;
+        // Sincronizar localStorage a Firebase
+        fbSave(useData);
+      }
+
+      if (useData && useData.folios && useData.folios.length > 0) {
+        useData.folios = useData.folios.map(function(f) {
           if (!f || !f.id) return null;
+          f.status = calcStatus(f.fecha, f.garantia, f.status);
+          if (!f.pedido) f.pedido = 'sin_pedido';
+          if (!f.sucursal) f.sucursal = '';
+          return f;
+        }).filter(Boolean);
+        STATE.folios = useData.folios;
+        if (useData.problemas) STATE.problemas = useData.problemas;
+        window.STATE = STATE;
+        try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e) {}
+      } else {
+        // Todo vacío — subir FOLIOS_BASE a Firebase
+        console.log('[Folios] Sin datos — subiendo FOLIOS_BASE a Firebase');
+        STATE.folios = FOLIOS_BASE.map(arrToObj);
+        window.STATE = STATE;
+        fbSave(STATE);
+      }
+      if (cb) cb();
+    }).catch(function(e) {
+      console.warn('[Folios] Firebase no disponible:', e.message);
+      updateFBIndicator(false);
+      // Usar localStorage como fallback
+      if (localData && localData.folios && localData.folios.length > 0) {
+        localData.folios = localData.folios.map(function(f) {
+          if (!f||!f.id) return null;
           f.status = calcStatus(f.fecha, f.garantia, f.status);
           if (!f.pedido) f.pedido = 'sin_pedido';
           return f;
         }).filter(Boolean);
-        STATE.folios = data.folios;
-        if (data.problemas) STATE.problemas = data.problemas;
+        STATE.folios = localData.folios;
         window.STATE = STATE;
-        // Guardar en localStorage como cache
-        try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e) {}
-        if (cb) cb();
-      } else {
-        // Firebase vacío — subir datos locales
-        fbSave(STATE);
-        if (cb) cb();
       }
-    }).catch(function() {
-      updateFBIndicator(false);
       if (cb) cb();
     });
 }
@@ -1727,12 +1778,8 @@ window.doLogin = function() {
   var unEl=document.getElementById('usr-name'); if(unEl) unEl.textContent=found.n;
   var urEl=document.getElementById('usr-rol'); if(urEl) urEl.textContent=found.rol;
   window.applyPermisos();
-  // Intentar cargar desde Firebase, si falla usar datos locales
+  // Cargar desde Firebase o localStorage (el más reciente gana)
   fbLoad(function() {
-    if (STATE.folios.length === 0) {
-      STATE.folios = FOLIOS_BASE.map(arrToObj);
-      window.STATE = STATE;
-    }
     setTimeout(function(){ window.goTab('list'); }, 80);
   });
 };
