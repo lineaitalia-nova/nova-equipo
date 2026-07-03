@@ -423,8 +423,11 @@ tr:hover td{background:var(--bg);cursor:pointer}
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
     <div class="card">
-      <div class="card-h"><div class="card-t">Folios por tipo — acumulado</div></div>
-      <canvas id="chart-tipo" height="180" style="padding:12px;display:block;width:100%"></canvas>
+      <div class="card-h"><div class="card-t">Folios por tipo — acumulado</div><div id="dash-tipo-total" style="font-size:22px;font-weight:300;font-family:'JetBrains Mono',monospace;color:var(--nv)">—</div></div>
+      <div style="display:flex;align-items:stretch">
+        <canvas id="chart-tipo" height="180" style="padding:12px;display:block;flex:1"></canvas>
+        <div id="dash-tipo-breakdown" style="display:flex;flex-direction:column;justify-content:center;gap:8px;padding:12px 16px 12px 0;min-width:130px;border-left:1px solid var(--bg2)"></div>
+      </div>
     </div>
     <div class="card">
       <div class="card-h"><div class="card-t">Carga por ingeniero</div></div>
@@ -1263,6 +1266,24 @@ window.renderDash = function() {
       ctx.fillStyle='#456278'; ctx.font='11px Plus Jakarta Sans';
       ctx.fillText('Tipo '+v[0],x+bW/2,H-10);
     });
+  }
+  // Total y breakdown de tipos
+  var totalF = f.length;
+  var totalEl = document.getElementById('dash-tipo-total');
+  if (totalEl) totalEl.textContent = totalF + ' folios';
+  var bkEl = document.getElementById('dash-tipo-breakdown');
+  if (bkEl) {
+    var tipoLabels = {A:'FA',B:'FB',C:'FC',D:'FD'};
+    var tipoColors = {A:'#1D4ED8',B:'#059669',C:'#D97706',D:'#DC2626'};
+    bkEl.innerHTML = Object.entries(tipos).map(function(e) {
+      var pct = totalF > 0 ? Math.round(e[1]/totalF*100) : 0;
+      return '<div style="display:flex;align-items:center;gap:8px">'
+        +'<div style="width:10px;height:10px;border-radius:2px;background:'+tipoColors[e[0]]+';flex-shrink:0"></div>'
+        +'<div style="font-size:11px;font-weight:600;color:var(--tx2);width:24px">'+tipoLabels[e[0]]+'</div>'
+        +'<div style="font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;color:'+tipoColors[e[0]]+'">'+e[1]+'</div>'
+        +'<div style="font-size:10px;color:var(--tx3)">'+pct+'%</div>'
+        +'</div>';
+    }).join('');
   }
   // Barras ingenieros
   var ingEl = document.getElementById('ing-bars');
