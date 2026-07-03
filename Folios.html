@@ -756,6 +756,20 @@ tr:hover td{background:var(--bg);cursor:pointer}
         <input id="f-proyecto" placeholder="Nombre del proyecto">
       </div>
       <div class="form-group">
+        <label>Sucursal</label>
+        <select id="f-sucursal">
+          <option value="">— Seleccionar —</option>
+          <option value="CDMX">CDMX</option>
+          <option value="MTY">Monterrey</option>
+          <option value="QRO">Querétaro</option>
+          <option value="AGS">Aguascalientes</option>
+          <option value="LEON">León</option>
+          <option value="GDL">Guadalajara</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
         <label>Asesor comercial</label>
         <select id="f-asesor">
           <option value="">— Seleccionar asesor —</option>
@@ -1439,6 +1453,7 @@ window.openModal = function(id) {
   var fst=document.getElementById('f-status'); if(fst) fst.value=folio?folio.status:'pendiente';
   var fga=document.getElementById('f-garantia'); if(fga) fga.value=folio&&folio.garantia?'true':'false';
   var fno=document.getElementById('f-nota'); if(fno) fno.value=folio?folio.nota||'':'';
+  var fsuc=document.getElementById('f-sucursal'); if(fsuc) fsuc.value=folio?folio.sucursal||'':'';
   var fpe=document.getElementById('f-precio'); if(fpe) fpe.value=folio&&folio.precio?folio.precio:'';
   var fpd=document.getElementById('f-pedido'); if(fpd) fpd.value=folio?folio.pedido||'sin_pedido':'sin_pedido';
   var btnEl=document.getElementById('btn-eliminar'); if(btnEl) btnEl.style.display=id?'inline-flex':'none';
@@ -1496,7 +1511,7 @@ window.saveModal = function() {
     vendedor:asesor, asesor:asesor,
     proyecto:(document.getElementById('f-proyecto')||{}).value||'',
     cliente:(document.getElementById('f-proyecto')||{}).value||'',
-    sucursal:'', status:(document.getElementById('f-status')||{}).value||'pendiente',
+    sucursal:(document.getElementById('f-sucursal')||{}).value||'', status:(document.getElementById('f-status')||{}).value||'pendiente',
     garantia:(document.getElementById('f-garantia')||{}).value==='true',
     nota:(document.getElementById('f-nota')||{}).value||'',
     checklist:ck, flujoStep:flujoStep, pedido:pedido,
@@ -1507,7 +1522,7 @@ window.saveModal = function() {
     var idx=STATE.folios.findIndex(function(f){return f.id===editId;});
     if(idx>=0){
       obj.precio=precio>0?precio:(STATE.folios[idx].precio||0);
-      obj.sucursal=STATE.folios[idx].sucursal||'';
+      obj.sucursal=(document.getElementById('f-sucursal')||{}).value||STATE.folios[idx].sucursal||'';
       obj.desc=STATE.folios[idx].desc||'';
       STATE.folios[idx]=Object.assign({},STATE.folios[idx],obj);
     }
@@ -1534,10 +1549,14 @@ window.openPanelIng = function(id) {
   var stLabels={pendiente:'Pendiente',en_proceso:'En proceso',terminado:'Terminado',problema:'Con problema'};
   var stColors={pendiente:'var(--tx3)',en_proceso:'var(--ac)',terminado:'var(--gn)',problema:'var(--rd)'};
   var st=f.status||'pendiente';
+  var ingOpts=['','ROMO','ALEXIS','OBED','EVERARDO','FRANCISCO','RAMON'];
+  var ingSelect='<select id="ing-resp-sel" style="font-size:11px;padding:3px 6px;border:1px solid var(--br);border-radius:4px;background:var(--w);color:var(--tx)">'
+    +ingOpts.map(function(o){return '<option value="'+o+'"'+(o===f.ing?' selected':'')+'>'+( o||'— Sin asignar —')+'</option>';}).join('')
+    +'</select>';
   var rows=[
     ['Tipo','<span class="b b'+f.tipo+'">F'+f.tipo+'</span>'],
     ['Fecha',f.fecha||'—'],['Vendedor',f.vendedor||'—'],['Sucursal',f.sucursal||'—'],
-    ['Cliente',f.cliente||'—'],['Responsable',f.ing||'—'],
+    ['Cliente',f.cliente||'—'],['Responsable',ingSelect],
     ['Status','<span style="color:'+stColors[st]+';font-weight:600">'+stLabels[st]+'</span>'],
     ['Precio',f.precio?'$'+Math.round(f.precio).toLocaleString():'—'],
     ['Pedido',f.pedido==='con_pedido'?'Con pedido':'Sin pedido'],
@@ -1594,6 +1613,9 @@ window.saveChkIng = function() {
   if(!_ingFolioId) return;
   var f=STATE.folios.find(function(x){return x.id===_ingFolioId;});
   if(!f) return;
+  // Guardar responsable si fue cambiado
+  var respSel=document.getElementById('ing-resp-sel');
+  if(respSel&&respSel.value) f.ing=respSel.value;
   var keys=['solicitud','dimensiones','accesorios','caratula','especificacion'];
   if(!f.checklist) f.checklist={};
   keys.forEach(function(k){var b=document.getElementById('ichk-'+k); f.checklist[k]=b&&b.classList.contains('on');});
