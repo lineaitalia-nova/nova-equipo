@@ -444,263 +444,55 @@ tr:hover td{background:var(--bg);cursor:pointer}
 <!-- GARANTÍAS PANE -->
 <div id="p-gar" class="pane">
 
-  <!-- KPIs dinámicos con datos reales -->
+  <!-- KPIs en tiempo real -->
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px">
     <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:14px">
       <div style="font-size:9px;font-weight:700;color:#1E3A8A;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Folios fabricados</div>
-      <div style="font-size:26px;font-weight:300;font-family:'JetBrains Mono',monospace;color:#1D4ED8" data-kpi="fab">739</div>
-      <div style="font-size:10px;color:#456278;margin-top:2px">ene–jul 2026</div>
+      <div style="font-size:26px;font-weight:300;font-family:'JetBrains Mono',monospace;color:#1D4ED8" data-kpi="fab">—</div>
+      <div style="font-size:10px;color:#456278;margin-top:2px">terminados a la fecha</div>
     </div>
     <div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:14px">
       <div style="font-size:9px;font-weight:700;color:#7D4E00;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Garantías de folios</div>
-      <div style="font-size:26px;font-weight:300;font-family:'JetBrains Mono',monospace;color:#D97706" data-kpi="gar">33</div>
-      <div style="font-size:10px;color:#456278;margin-top:2px">ene–jul 2026</div>
+      <div style="font-size:26px;font-weight:300;font-family:'JetBrains Mono',monospace;color:#D97706" data-kpi="gar">—</div>
+      <div style="font-size:10px;color:#456278;margin-top:2px">registradas en el sistema</div>
     </div>
     <div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:14px">
       <div style="font-size:9px;font-weight:700;color:#7D4E00;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Tasa global</div>
-      <div style="font-size:26px;font-weight:300;font-family:'JetBrains Mono',monospace;color:#D97706" data-kpi="tasa">4.47%</div>
-      <div style="font-size:10px;color:#456278;margin-top:2px">de folios con garantía</div>
+      <div style="font-size:26px;font-weight:300;font-family:'JetBrains Mono',monospace;color:#D97706" data-kpi="tasa">—</div>
+      <div style="font-size:10px;color:#456278;margin-top:2px">garantías / fabricados</div>
     </div>
     <div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:14px">
       <div style="font-size:9px;font-weight:700;color:#7F1D1D;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Tasa tipo FD</div>
-      <div style="font-size:26px;font-weight:300;font-family:'JetBrains Mono',monospace;color:#DC2626" data-kpi="fd">14.0%</div>
-      <div style="font-size:10px;color:#456278;margin-top:2px">alerta crítica ▲</div>
+      <div style="font-size:26px;font-weight:300;font-family:'JetBrains Mono',monospace;color:#DC2626" data-kpi="fd">—</div>
+      <div style="font-size:10px;color:#456278;margin-top:2px" data-kpi="fdnote">tipo crítico</div>
     </div>
     <div style="background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;padding:14px">
-      <div style="font-size:9px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Costo estimado garantías</div>
+      <div style="font-size:9px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Costo real capturado</div>
       <div style="font-size:22px;font-weight:300;font-family:'JetBrains Mono',monospace;color:#059669" data-kpi="costo">—</div>
-      <div style="font-size:10px;color:#456278;margin-top:2px">~15% valor folio</div>
+      <div style="font-size:10px;color:#456278;margin-top:2px" data-kpi="costonote">dato capturado, no estimado</div>
     </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-
-    <!-- Tabla por tipo con datos reales -->
     <div class="card">
-      <div class="card-h"><div class="card-t">Tasa de garantías por tipo de folio</div><div style="font-size:10px;color:var(--tx3)">Ene–Jul 2026 · datos reales</div></div>
+      <div class="card-h"><div class="card-t">Tasa de garantías por tipo de folio</div><div style="font-size:10px;color:var(--tx3)">en tiempo real</div></div>
       <table>
-        <thead><tr>
-          <th>Tipo</th><th>Folios fab.</th><th>Garantías</th><th>Tasa real</th><th>Evaluación</th>
-        </tr></thead>
-        <tbody>
-          
-          <tr style="">
-            <td><span class="b bA">FA</span></td>
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:#1D4ED8;">406</td>
-            <td style="font-family:'JetBrains Mono',monospace;;color:#1D4ED8">16</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:6px">
-                <div style="width:80px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:14%;height:100%;background:#1D4ED8;border-radius:4px"></div></div>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#1D4ED8">3.9%</span>
-              </div>
-            </td>
-            <td><span style="font-size:11px;background:#ECFDF5;color:#065F46;padding:2px 8px;border-radius:4px;font-weight:500">Normal · En control</span></td>
-          </tr>
-          <tr style="background:var(--bg)">
-            <td><span class="b bB">FB</span></td>
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:#059669;">90</td>
-            <td style="font-family:'JetBrains Mono',monospace;;color:#059669">4</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:6px">
-                <div style="width:80px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:16%;height:100%;background:#059669;border-radius:4px"></div></div>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#059669">4.4%</span>
-              </div>
-            </td>
-            <td><span style="font-size:11px;background:#ECFDF5;color:#065F46;padding:2px 8px;border-radius:4px;font-weight:500">Normal · Monitorear</span></td>
-          </tr>
-          <tr style="">
-            <td><span class="b bC">FC</span></td>
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:#D97706;">240</td>
-            <td style="font-family:'JetBrains Mono',monospace;;color:#D97706">17</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:6px">
-                <div style="width:80px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:25%;height:100%;background:#D97706;border-radius:4px"></div></div>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#D97706">7.1%</span>
-              </div>
-            </td>
-            <td><span style="font-size:11px;background:#FFFBEB;color:#7D4E00;padding:2px 8px;border-radius:4px;font-weight:500">Elevado · Requiere acción</span></td>
-          </tr>
-          <tr style="background:#FEF2F2">
-            <td><span class="b bD">FD</span></td>
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:600;color:#DC2626;font-weight:700">50</td>
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#DC2626">12</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:6px">
-                <div style="width:80px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:100%;height:100%;background:#DC2626;border-radius:4px"></div></div>
-                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#DC2626">14.0%</span>
-              </div>
-            </td>
-            <td><span style="font-size:11px;background:#FEF2F2;color:#7F1D1D;padding:2px 8px;border-radius:4px;font-weight:700">CRÍTICO · Acción inmediata</span></td>
-          </tr>
-          <tr style="background:var(--nv)">
-            <td style="color:#fff;font-weight:700">TOTAL</td>
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff">739</td>
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff">33</td>
-            <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff">4.47%</td>
-            <td></td>
-          </tr>
-        </tbody>
+        <thead><tr><th>Tipo</th><th>Folios fab.</th><th>Garantías</th><th>Tasa real</th><th>Evaluación</th></tr></thead>
+        <tbody id="gar-tipo-body"></tbody>
       </table>
     </div>
-
-    <!-- Causas raíz con datos reales -->
     <div class="card">
-      <div class="card-h"><div class="card-t">Causas raíz de garantías en folios</div><div style="font-size:10px;color:var(--tx3)">49 casos clasificados</div></div>
-      <div style="padding:4px 0">
-        
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--bg2);">
-          <div style="width:9px;height:9px;border-radius:50%;background:#D85A30;flex-shrink:0"></div>
-          <div style="flex:1;font-size:12px;color:var(--tx);font-weight:500">E5 — Tornillería/accesorios faltantes</div>
-          <div style="width:60px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:100%;height:100%;background:#D85A30;border-radius:4px"></div></div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#D85A30;width:24px;text-align:right">13</div>
-          <div style="font-size:10px;color:var(--tx3);width:30px">27%</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--bg2);background:var(--bg)">
-          <div style="width:9px;height:9px;border-radius:50%;background:#A32D2D;flex-shrink:0"></div>
-          <div style="flex:1;font-size:12px;color:var(--tx);font-weight:500">E2 — Especificación/carátula no coincide</div>
-          <div style="width:60px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:92%;height:100%;background:#A32D2D;border-radius:4px"></div></div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#A32D2D;width:24px;text-align:right">12</div>
-          <div style="font-size:10px;color:var(--tx3);width:30px">24%</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--bg2);">
-          <div style="width:9px;height:9px;border-radius:50%;background:#DC2626;flex-shrink:0"></div>
-          <div style="flex:1;font-size:12px;color:var(--tx);font-weight:500">E1 — Dimensiones incorrectas</div>
-          <div style="width:60px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:62%;height:100%;background:#DC2626;border-radius:4px"></div></div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#DC2626;width:24px;text-align:right">8</div>
-          <div style="font-size:10px;color:var(--tx3);width:30px">16%</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--bg2);background:var(--bg)">
-          <div style="width:9px;height:9px;border-radius:50%;background:#888780;flex-shrink:0"></div>
-          <div style="flex:1;font-size:12px;color:var(--tx);font-weight:500">Daño en transporte/manufactura</div>
-          <div style="width:60px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:46%;height:100%;background:#888780;border-radius:4px"></div></div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#888780;width:24px;text-align:right">6</div>
-          <div style="font-size:10px;color:var(--tx3);width:30px">12%</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--bg2);">
-          <div style="width:9px;height:9px;border-radius:50%;background:#7C3AED;flex-shrink:0"></div>
-          <div style="flex:1;font-size:12px;color:var(--tx);font-weight:500">E3 — Color/material incorrecto</div>
-          <div style="width:60px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:38%;height:100%;background:#7C3AED;border-radius:4px"></div></div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#7C3AED;width:24px;text-align:right">5</div>
-          <div style="font-size:10px;color:var(--tx3);width:30px">10%</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--bg2);background:var(--bg)">
-          <div style="width:9px;height:9px;border-radius:50%;background:#BA7517;flex-shrink:0"></div>
-          <div style="flex:1;font-size:12px;color:var(--tx);font-weight:500">E7 — Calibre insuficiente / pandeo</div>
-          <div style="width:60px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:31%;height:100%;background:#BA7517;border-radius:4px"></div></div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#BA7517;width:24px;text-align:right">4</div>
-          <div style="font-size:10px;color:var(--tx3);width:30px">8%</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--bg2);">
-          <div style="width:9px;height:9px;border-radius:50%;background:#378ADD;flex-shrink:0"></div>
-          <div style="flex:1;font-size:12px;color:var(--tx);font-weight:500">E6 — Accesorios omitidos en espec.</div>
-          <div style="width:60px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:8%;height:100%;background:#378ADD;border-radius:4px"></div></div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#378ADD;width:24px;text-align:right">1</div>
-          <div style="font-size:10px;color:var(--tx3);width:30px">2%</div>
-        </div>
-        <div style="padding:9px 14px;background:var(--amb);border-top:1px solid var(--ambr)">
-          <div style="font-size:11px;font-weight:600;color:var(--am)">84% de garantías son errores de proceso prevenibles</div>
-          <div style="font-size:11px;color:#633806;margin-top:2px">Solo el 16% corresponde a daños de manufactura o transporte</div>
-        </div>
-      </div>
+      <div class="card-h"><div class="card-t">Causas raíz de garantías</div><div style="font-size:10px;color:var(--tx3)" id="gar-causas-cnt">—</div></div>
+      <div style="padding:4px 0" id="gar-causas"></div>
     </div>
   </div>
 
-  <!-- Tabla completa de los 49 casos reales -->
-  <div class="card" style="margin-bottom:14px">
+  <div class="card">
     <div class="card-h">
-      <div class="card-t">📋 Detalle de las 33 garantías de folios — datos reales del sistema CS</div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <div class="fg" style="gap:2px"><select id="gar-ftipo" onchange="renderGarTabla()" style="height:26px;font-size:11px;padding:2px 6px;border:1px solid var(--br);border-radius:4px;background:var(--w)"><option value="">Todos los tipos</option><option value="A">FA</option><option value="B">FB</option><option value="C">FC</option><option value="D">FD</option></select></div>
-      </div>
-    </div>
-    <div class="tscroll" style="max-height:380px">
-      <table>
-        <thead><tr>
-          <th>Folio</th><th>Tipo</th><th>Fecha programada</th><th>Fecha garantía</th>
-          <th>Sucursal</th><th>Cliente</th><th>Descripción del problema</th><th>Costo est.</th>
-        </tr></thead>
-        <tbody id="tb-gar-real"></tbody>
-      </table>
-    </div>
-    <div style="padding:8px 14px;background:var(--bg2);border-top:1px solid var(--br);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:11px;color:var(--tx3)">Fuente: REPORTE_GARANTIAS_CS · <span id="gar-cnt">33</span> registros mostrados</span>
+      <div class="card-t">💰 Impacto económico (costos reales capturados)</div>
       <button onclick="expGar()" style="font-size:10px;padding:3px 10px;border-radius:4px;border:1px solid var(--br);background:var(--w);cursor:pointer;color:var(--tx2)">⬇ Exportar CSV</button>
     </div>
-  </div>
-
-  <!-- Impacto económico y meta -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-    <div class="card">
-      <div class="card-h"><div class="card-t">💰 Impacto económico estimado</div></div>
-      <div style="padding:4px 0">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bg2)">
-          <span style="font-size:12px;color:var(--tx2)">Valor total folios con garantía</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--nv)">$421,632</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bg2);background:var(--bg)">
-          <span style="font-size:12px;color:var(--tx2)">Costo estimado garantías (15%)</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700">$63,245</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bg2)">
-          <span style="font-size:12px;color:var(--tx2)">Costo total 33 garantías 2026</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--am)">$63,245</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bg2);background:var(--bg)">
-          <span style="font-size:12px;color:var(--tx2)">Solo garantías FD (12 casos)</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--rd)">$24,135</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--gnb)">
-          <span style="font-size:12px;font-weight:600;color:var(--gn)">Ahorro proyectado con plan anti-errores</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gn)">~$52,000</span>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-h"><div class="card-t">🎯 Meta 2026 — segundo semestre</div></div>
-      <div style="padding:16px 14px">
-        <div style="margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-            <span style="font-size:12px;color:var(--tx2)">Tasa actual global</span>
-            <span style="font-size:12px;font-weight:700;color:var(--am)">4.47%</span>
-          </div>
-          <div style="height:10px;background:var(--bg2);border-radius:5px;overflow:hidden">
-            <div style="width:63%;height:100%;background:var(--am);border-radius:5px"></div>
-          </div>
-        </div>
-        <div style="margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-            <span style="font-size:12px;color:var(--tx2)">Meta global</span>
-            <span style="font-size:12px;font-weight:700;color:var(--gn)">≤3%</span>
-          </div>
-          <div style="height:10px;background:var(--bg2);border-radius:5px;overflow:hidden">
-            <div style="width:30%;height:100%;background:var(--gn);border-radius:5px"></div>
-          </div>
-        </div>
-        <div style="margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-            <span style="font-size:12px;color:var(--tx2)">Tasa FD actual</span>
-            <span style="font-size:12px;font-weight:700;color:var(--rd)">14.0%</span>
-          </div>
-          <div style="height:10px;background:var(--bg2);border-radius:5px;overflow:hidden">
-            <div style="width:100%;height:100%;background:var(--rd);border-radius:5px"></div>
-          </div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-            <span style="font-size:12px;color:var(--tx2)">Meta FD</span>
-            <span style="font-size:12px;font-weight:700;color:var(--gn)">≤8%</span>
-          </div>
-          <div style="height:10px;background:var(--bg2);border-radius:5px;overflow:hidden">
-            <div style="width:29%;height:100%;background:var(--gn);border-radius:5px"></div>
-          </div>
-        </div>
-        <div style="margin-top:14px;padding:10px;background:var(--nv);border-radius:6px;text-align:center">
-          <div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:2px">Medida más urgente</div>
-          <div style="font-size:12px;font-weight:700;color:#fff">Protocolo de prototipo obligatorio para tipo FD</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Ningún FD a producción sin validación física previa</div>
-        </div>
-      </div>
-    </div>
+    <div style="padding:4px 0" id="gar-econ"></div>
   </div>
 
 </div>
@@ -833,10 +625,37 @@ tr:hover td{background:var(--bg);cursor:pointer}
       </div>
       <div class="form-group">
         <label>¿Generó garantía?</label>
-        <select id="f-garantia">
+        <select id="f-garantia" onchange="window.toggleGarFields()">
           <option value="false">No</option>
           <option value="true">Sí — registrar</option>
         </select>
+      </div>
+    </div>
+    <div class="form-row" id="gar-fields" style="display:none">
+      <div class="form-group">
+        <label>Causa de la garantía</label>
+        <select id="f-causa">
+          <option value="">— Selecciona una causa —</option>
+          <option value="E1">E1 · Dimensiones incorrectas</option>
+          <option value="E2">E2 · Especificación / carátula no coincide</option>
+          <option value="E3">E3 · Color / material incorrecto</option>
+          <option value="E5">E5 · Tornillería / accesorios faltantes</option>
+          <option value="E6">E6 · Accesorios omitidos en la especificación</option>
+          <option value="E7">E7 · Calibre insuficiente / pandeo</option>
+          <option value="E8">E8 · Daño en transporte / manufactura</option>
+          <option value="E9">E9 · Error de asesor comercial</option>
+          <option value="E10">E10 · Error en captura</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Costo real de la garantía (MXN)</label>
+        <input id="f-costogar" placeholder="$0.00" type="number" min="0" step="0.01">
+      </div>
+    </div>
+    <div class="form-row full" id="gar-desc-row" style="display:none">
+      <div class="form-group">
+        <label>Descripción de la garantía</label>
+        <textarea id="f-descgar" placeholder="Qué falló y por qué: pieza afectada, detalle…"></textarea>
       </div>
     </div>
     <div class="form-row">
@@ -945,6 +764,7 @@ function arrToObj(a) {
     vendedor: a[5]||'', sucursal: a[6]||'', cliente: a[7]||'',
     desc: a[8]||'', precio: a[9]||0,
     garantia: a[10]||false, flujoStep: a[11]||0,
+    causa:'', costoGar:0, descGar:'',
     checklist: {
       solicitud: !!(ck&&ck[0]), dimensiones: !!(ck&&ck[1]),
       accesorios: !!(ck&&ck[2]), caratula: !!(ck&&ck[3]),
@@ -1158,6 +978,7 @@ window.renderKPIs = function() {
       +'<div class="kcard-v" style="'+k.c+'">'+k.v+'</div>'
       +'<div class="kcard-s">'+k.s+'</div></div>';
   }).join('');
+  var pg=document.getElementById('p-gar'); if(pg && pg.classList.contains('on') && window.renderGar) window.renderGar();
 };
 
 // ── CALENDAR ──
@@ -1503,6 +1324,10 @@ window.openModal = function(id) {
   var fas=document.getElementById('f-asesor'); if(fas) fas.value=folio?folio.vendedor||folio.asesor||'':'';
   var fst=document.getElementById('f-status'); if(fst) fst.value=folio?folio.status:'pendiente';
   var fga=document.getElementById('f-garantia'); if(fga) fga.value=folio&&folio.garantia?'true':'false';
+  var fca=document.getElementById('f-causa'); if(fca) fca.value=folio&&folio.causa?folio.causa:'';
+  var fcg=document.getElementById('f-costogar'); if(fcg) fcg.value=folio&&folio.costoGar?folio.costoGar:'';
+  var fdg=document.getElementById('f-descgar'); if(fdg) fdg.value=folio&&folio.descGar?folio.descGar:'';
+  window.toggleGarFields();
   var fno=document.getElementById('f-nota'); if(fno) fno.value=folio?folio.nota||'':'';
   var fsuc=document.getElementById('f-sucursal'); if(fsuc) fsuc.value=folio?folio.sucursal||'':'';
   var fpe=document.getElementById('f-precio'); if(fpe) fpe.value=folio&&folio.precio?folio.precio:'';
@@ -1557,13 +1382,17 @@ window.saveModal = function() {
   var precioRaw=(document.getElementById('f-precio')||{}).value||'';
   var precio=precioRaw?parseFloat(precioRaw)||0:0;
   var pedido=(document.getElementById('f-pedido')||{}).value||'sin_pedido';
+  var esGar=((document.getElementById('f-garantia')||{}).value)==='true';
   var obj={
     id:id, tipo:tipo, fecha:fecha, mes:fecha.slice(0,7), ing:ing,
     vendedor:asesor, asesor:asesor,
     proyecto:(document.getElementById('f-proyecto')||{}).value||'',
     cliente:(document.getElementById('f-proyecto')||{}).value||'',
     sucursal:(document.getElementById('f-sucursal')||{}).value||'', status:(document.getElementById('f-status')||{}).value||'pendiente',
-    garantia:(document.getElementById('f-garantia')||{}).value==='true',
+    garantia: esGar,
+    causa: esGar?((document.getElementById('f-causa')||{}).value||''):'',
+    costoGar: esGar?(parseFloat((document.getElementById('f-costogar')||{}).value)||0):0,
+    descGar: esGar?((document.getElementById('f-descgar')||{}).value||''):'',
     nota:(document.getElementById('f-nota')||{}).value||'',
     checklist:ck, flujoStep:flujoStep, pedido:pedido,
     atraso:false, limite:'',
@@ -1677,38 +1506,131 @@ window.saveChkIng = function() {
 };
 
 // ── GARANTÍAS ──
+var GAR_CAUSAS = [
+  {c:'E1',  l:'E1 — Dimensiones incorrectas',                col:'#DC2626'},
+  {c:'E2',  l:'E2 — Especificación / carátula no coincide',  col:'#A32D2D'},
+  {c:'E3',  l:'E3 — Color / material incorrecto',            col:'#7C3AED'},
+  {c:'E5',  l:'E5 — Tornillería / accesorios faltantes',     col:'#D85A30'},
+  {c:'E6',  l:'E6 — Accesorios omitidos en especificación',  col:'#378ADD'},
+  {c:'E7',  l:'E7 — Calibre insuficiente / pandeo',          col:'#BA7517'},
+  {c:'E8',  l:'E8 — Daño en transporte / manufactura',       col:'#888780'},
+  {c:'E9',  l:'E9 — Error de asesor comercial',              col:'#0EA5E9'},
+  {c:'E10', l:'E10 — Error en captura',                      col:'#DB2777'}
+];
+function esFabricado(f){ return f.status==='terminado' || f.status==='problema'; }
+function pesosMX(n){ return '$'+Math.round(n||0).toLocaleString('es-MX'); }
+
+window.toggleGarFields = function() {
+  var v = ((document.getElementById('f-garantia')||{}).value)==='true';
+  var a = document.getElementById('gar-fields');   if(a) a.style.display = v?'':'none';
+  var b = document.getElementById('gar-desc-row');  if(b) b.style.display = v?'':'none';
+};
+
 window.renderGar = function() {
-  window.renderGarTabla();
-};
-window.renderGarTabla = function() {
-  var ftipo=(document.getElementById('gar-ftipo')||{}).value||'';
-  var foliosConGar=STATE.folios.filter(function(x){return x.garantia===true;});
-  var f=foliosConGar.map(function(x){
-    var det=GAR_DATA.find(function(g){return g.sku===x.id;})||{};
-    return {sku:x.id,tipo:x.tipo,fecha:x.fecha,vendedor:x.vendedor||'',
-             sucursal:x.sucursal||'',cliente:x.cliente||det.cliente||'',
-             desc_gar:det.desc_gar||x.nota||'Sin descripción',fecha_gar:det.fecha_gar||'',precio:x.precio||0};
-  }).filter(function(x){return !ftipo||x.tipo===ftipo;});
-  var cnt=document.getElementById('gar-cnt'); if(cnt) cnt.textContent=f.length;
-  var tb=document.getElementById('tb-gar-real'); if(!tb) return;
-  tb.innerHTML=f.map(function(g,i){
-    var costo=Math.round((g.precio||0)*0.15);
-    return '<tr style="'+(i%2===0?'':'background:var(--bg)')+'">'
-      +'<td class="mono" style="font-size:11px;font-weight:700;color:var(--nv)">'+g.sku+'</td>'
-      +'<td><span class="b b'+g.tipo+'">F'+g.tipo+'</span></td>'
-      +'<td style="font-size:11px;color:var(--ac);font-weight:500">'+(g.fecha||'—')+'</td>'
-      +'<td style="font-size:11px;color:var(--tx3)">'+(g.fecha_gar||'—')+'</td>'
-      +'<td style="font-size:11px;color:var(--tx2)">'+(g.sucursal||'—')+'</td>'
-      +'<td style="font-size:11px;color:var(--tx2)">'+(g.cliente||'—')+'</td>'
-      +'<td style="font-size:11px;max-width:220px;white-space:normal;line-height:1.4;color:var(--rd)">'+g.desc_gar+'</td>'
-      +'<td style="font-family:JetBrains Mono,monospace;font-size:11px;color:var(--am);text-align:right">'+(costo?'$'+costo.toLocaleString():'—')+'</td>'
+  var all = STATE.folios || [];
+  var fab = all.filter(esFabricado);
+  var gar = all.filter(function(x){ return x.garantia===true; });
+  var totFab = fab.length, totGar = gar.length;
+  var tasa = totFab ? (totGar/totFab*100) : 0;
+  var fabD = fab.filter(function(x){return x.tipo==='D';}).length;
+  var garD = gar.filter(function(x){return x.tipo==='D';}).length;
+  var tasaFD = fabD ? (garD/fabD*100) : 0;
+  var costoReal = gar.reduce(function(s,x){ return s + (x.costoGar||0); }, 0);
+  var sinCosto  = gar.filter(function(x){ return !(x.costoGar>0); }).length;
+
+  function setKpi(k,v){ var e=document.querySelector('#p-gar [data-kpi="'+k+'"]'); if(e) e.textContent=v; }
+  setKpi('fab', totFab.toLocaleString('es-MX'));
+  setKpi('gar', totGar.toLocaleString('es-MX'));
+  setKpi('tasa', tasa.toFixed(2)+'%');
+  setKpi('fd', tasaFD.toFixed(1)+'%');
+  setKpi('fdnote', garD+' de '+fabD+' folios FD');
+  setKpi('costo', costoReal>0 ? pesosMX(costoReal) : '—');
+  setKpi('costonote', sinCosto>0 ? (sinCosto+' garantía(s) sin costo capturado') : 'dato capturado, no estimado');
+
+  var tipos=['A','B','C','D'], cols={A:'#1D4ED8',B:'#059669',C:'#D97706',D:'#DC2626'};
+  var maxTasa=0;
+  tipos.forEach(function(t){ var ft=fab.filter(function(x){return x.tipo===t;}).length; var gt=gar.filter(function(x){return x.tipo===t;}).length; var ts=ft?gt/ft*100:0; if(ts>maxTasa)maxTasa=ts; });
+  if(maxTasa<=0) maxTasa=1;
+  var body='';
+  tipos.forEach(function(t,i){
+    var ft=fab.filter(function(x){return x.tipo===t;}).length;
+    var gt=gar.filter(function(x){return x.tipo===t;}).length;
+    var ts=ft?gt/ft*100:0, col=cols[t], w=Math.round(ts/maxTasa*100);
+    var eT,eC,eB;
+    if(ts>=10){eT='CRÍTICO · Acción inmediata';eC='#7F1D1D';eB='#FEF2F2';}
+    else if(ts>=6){eT='Elevado · Requiere acción';eC='#7D4E00';eB='#FFFBEB';}
+    else if(ts>=4){eT='Normal · Monitorear';eC='#065F46';eB='#ECFDF5';}
+    else{eT='Normal · En control';eC='#065F46';eB='#ECFDF5';}
+    var rb=(i%2===0)?'':'background:var(--bg)';
+    body+='<tr style="'+rb+'">'
+      +'<td><span class="b b'+t+'">F'+t+'</span></td>'
+      +'<td style="font-family:\'JetBrains Mono\',monospace;font-weight:600;color:'+col+'">'+ft+'</td>'
+      +'<td style="font-family:\'JetBrains Mono\',monospace;color:'+col+'">'+gt+'</td>'
+      +'<td><div style="display:flex;align-items:center;gap:6px"><div style="width:80px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:'+w+'%;height:100%;background:'+col+';border-radius:4px"></div></div><span style="font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:700;color:'+col+'">'+ts.toFixed(1)+'%</span></div></td>'
+      +'<td><span style="font-size:11px;background:'+eB+';color:'+eC+';padding:2px 8px;border-radius:4px;font-weight:500">'+eT+'</span></td>'
       +'</tr>';
-  }).join('');
+  });
+  body+='<tr style="background:var(--nv)"><td style="color:#fff;font-weight:700">TOTAL</td>'
+    +'<td style="font-family:\'JetBrains Mono\',monospace;font-weight:700;color:#fff">'+totFab+'</td>'
+    +'<td style="font-family:\'JetBrains Mono\',monospace;font-weight:700;color:#fff">'+totGar+'</td>'
+    +'<td style="font-family:\'JetBrains Mono\',monospace;font-weight:700;color:#fff">'+tasa.toFixed(2)+'%</td><td></td></tr>';
+  var tb=document.getElementById('gar-tipo-body'); if(tb) tb.innerHTML=body;
+
+  var counts={}, clasificadas=0;
+  gar.forEach(function(x){ if(x.causa){ counts[x.causa]=(counts[x.causa]||0)+1; clasificadas++; } });
+  var arr=GAR_CAUSAS.map(function(cz){return {c:cz.c,l:cz.l,col:cz.col,n:counts[cz.c]||0};}).filter(function(o){return o.n>0;});
+  arr.sort(function(a,b){return b.n-a.n;});
+  var maxN=arr.length?arr[0].n:1;
+  var sinClas=gar.length-clasificadas;
+  var ch='';
+  if(arr.length===0){
+    ch='<div style="padding:20px 14px;text-align:center;color:var(--tx3);font-size:12px">Aún no hay garantías con causa clasificada.<br>Se irán llenando conforme el equipo registre la causa en cada folio.</div>';
+  } else {
+    arr.forEach(function(o,i){
+      var pct=clasificadas?Math.round(o.n/clasificadas*100):0, w=Math.round(o.n/maxN*100), bg=(i%2===0)?'':'background:var(--bg)';
+      ch+='<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--bg2);'+bg+'">'
+        +'<div style="width:9px;height:9px;border-radius:50%;background:'+o.col+';flex-shrink:0"></div>'
+        +'<div style="flex:1;font-size:12px;color:var(--tx);font-weight:500">'+o.l+'</div>'
+        +'<div style="width:60px;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="width:'+w+'%;height:100%;background:'+o.col+';border-radius:4px"></div></div>'
+        +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:12px;font-weight:700;color:'+o.col+';width:24px;text-align:right">'+o.n+'</div>'
+        +'<div style="font-size:10px;color:var(--tx3);width:34px;text-align:right">'+pct+'%</div></div>';
+    });
+    var prev=arr.filter(function(o){return o.c!=='E8';}).reduce(function(s,o){return s+o.n;},0);
+    var pctPrev=clasificadas?Math.round(prev/clasificadas*100):0;
+    ch+='<div style="padding:9px 14px;background:var(--amb);border-top:1px solid var(--ambr)">'
+      +'<div style="font-size:11px;font-weight:600;color:var(--am)">'+pctPrev+'% de las garantías clasificadas son errores de proceso prevenibles</div>'
+      +'<div style="font-size:11px;color:#633806;margin-top:2px">Solo el daño en transporte/manufactura (E8) se considera no prevenible</div></div>';
+  }
+  if(sinClas>0){ ch+='<div style="padding:7px 14px;font-size:11px;color:var(--tx3);border-top:1px dashed var(--br)">'+sinClas+' garantía(s) sin causa asignada — pídele al ingeniero que la clasifique.</div>'; }
+  var cc=document.getElementById('gar-causas'); if(cc) cc.innerHTML=ch;
+  var ccn=document.getElementById('gar-causas-cnt'); if(ccn) ccn.textContent=clasificadas+' de '+gar.length+' clasificadas';
+
+  var valorGar=gar.reduce(function(s,x){return s+(x.precio||0);},0);
+  var costoFD=gar.filter(function(x){return x.tipo==='D';}).reduce(function(s,x){return s+(x.costoGar||0);},0);
+  var conCosto=gar.filter(function(x){return x.costoGar>0;}).length;
+  var prom=conCosto?costoReal/conCosto:0;
+  var rows=[
+    ['Valor total de folios con garantía', pesosMX(valorGar), 'var(--nv)'],
+    ['Costo real capturado ('+conCosto+' de '+gar.length+')', costoReal>0?pesosMX(costoReal):'—', 'var(--gn)'],
+    ['Costo promedio por garantía', prom>0?pesosMX(prom):'—', 'var(--tx)'],
+    ['Costo real garantías FD', costoFD>0?pesosMX(costoFD):'—', 'var(--rd)']
+  ];
+  var eh='';
+  rows.forEach(function(r,i){
+    var bg=(i%2===0)?'':'background:var(--bg)';
+    eh+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bg2);'+bg+'">'
+      +'<span style="font-size:12px;color:var(--tx2)">'+r[0]+'</span>'
+      +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:13px;font-weight:700;color:'+r[2]+'">'+r[1]+'</span></div>';
+  });
+  if(sinCosto>0){ eh+='<div style="padding:8px 14px;font-size:11px;color:var(--tx3)">Faltan '+sinCosto+' garantía(s) por capturar su costo real. El total sube conforme se registren.</div>'; }
+  var ehl=document.getElementById('gar-econ'); if(ehl) ehl.innerHTML=eh;
 };
+
 window.expGar = function() {
-  var rows=['Folio,Tipo,Fecha,Cliente,Costo est.'];
-  STATE.folios.filter(function(f){return f.garantia;}).forEach(function(f){
-    rows.push([f.id,'F'+f.tipo,f.fecha,f.cliente||'',Math.round((f.precio||0)*0.15)].join(','));
+  var rows=['Folio,Tipo,Fecha,Causa,Costo real,Descripción'];
+  (STATE.folios||[]).filter(function(f){return f.garantia;}).forEach(function(f){
+    var d=(f.descGar||'').replace(/[",\n]/g,' ');
+    rows.push([f.id,'F'+f.tipo,f.fecha,(f.causa||''),(f.costoGar||0),d].join(','));
   });
   var b=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='garantias.csv';a.click();
