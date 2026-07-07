@@ -231,6 +231,7 @@ tr:hover td{background:var(--bg);cursor:pointer}
     <div class="usr-pill"><div><div class="usr-name" id="usr-name">—</div><div class="usr-rol" id="usr-rol">—</div></div></div>
     <button class="btn btn-sec" onclick="openModal()">+ Nuevo folio</button>
     <button class="btn btn-sec" onclick="doLogout()" style="font-size:11px">Salir</button>
+    <button class="btn btn-sec" onclick="window.descargarRespaldo()" style="font-size:11px" title="Descargar respaldo del estado actual">⬇ Respaldar</button>
     <button class="btn btn-prim" onclick="enviarReporte()">📊 Reporte</button>
   </div>
 </div>
@@ -795,141 +796,175 @@ function loadState() {
       return d;
     }
   } catch(e) {}
-  return {folios: FOLIOS_BASE.map(arrToObj), problemas: PROBLEMAS_BASE.slice(), reactivaciones: []};
+  return {folios: FOLIOS_BASE.map(arrToObj), problemas: PROBLEMAS_BASE.slice(), del:{}, reactivaciones: []};
 }
 
 var STATE = loadState();
 window.STATE = STATE;
 
 // ── FIREBASE SYNC ──
-function fbSave(data) {
-  // Agregar timestamp para saber cuál versión es más reciente
-  data._ts = Date.now();
-  // Guardar en localStorage siempre primero (es el fallback confiable)
-  try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e) {}
-  // Luego intentar Firebase
-  fetch(FB_URL + '/state.json', {
-    method: 'PUT',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(data)
-  }).then(function(r) {
-    if (r.ok) {
-      FB_ON = true;
-      updateFBIndicator(true);
-      console.log('[Folios] Guardado en Firebase OK - ts:', data._ts);
-    } else {
-      console.warn('[Folios] Firebase rechazó el guardado - status:', r.status);
-      updateFBIndicator(false);
-    }
-  }).catch(function(e) {
-    console.warn('[Folios] Firebase no disponible, usando localStorage:', e.message);
-    updateFBIndicator(false);
+// ── SINCRONIZACIÓN (merge folio por folio · nadie pisa a nadie) ──
+var FB_ETAG = null;
+var _syncing = false, _syncQueued = false;
+
+function stampFolio(f){ if(f) f._m = Date.now(); return f; }
+window.stampFolio = stampFolio;
+
+// Combina dos estados quedándose, por CADA folio, con la versión más nueva (por _m)
+function mergeState(local, remote){
+  local = local || {}; remote = remote || {};
+  var lf = local.folios || [], rf = remote.folios || [];
+  var del = {};
+  var lDel = local.del || {}, rDel = remote.del || {};
+  Object.keys(lDel).forEach(function(id){ del[id] = Math.max(del[id]||0, lDel[id]||0); });
+  Object.keys(rDel).forEach(function(id){ del[id] = Math.max(del[id]||0, rDel[id]||0); });
+  var byId = {};
+  rf.forEach(function(f){ if(f && f.id) byId[f.id] = f; });
+  lf.forEach(function(f){
+    if(!f || !f.id) return;
+    var ex = byId[f.id];
+    if(!ex){ byId[f.id] = f; return; }
+    byId[f.id] = ((f._m||0) >= (ex._m||0)) ? f : ex;
   });
+  var folios = [];
+  Object.keys(byId).forEach(function(id){
+    var f = byId[id];
+    var dt = del[id] || 0;
+    if(dt && dt >= (f._m||0)) return; // borrado posterior a la última edición → se queda borrado
+    folios.push(f);
+  });
+  // problemas: unión sin duplicados
+  var probs = (local.problemas || []).slice();
+  var seen = {}; probs.forEach(function(p){ seen[JSON.stringify(p)] = 1; });
+  (remote.problemas || []).forEach(function(p){ var k = JSON.stringify(p); if(!seen[k]){ seen[k]=1; probs.push(p); } });
+  // limpiar tombstones de más de 30 días
+  var cut = Date.now() - 30*24*3600*1000;
+  Object.keys(del).forEach(function(id){ if(del[id] < cut) delete del[id]; });
+  return { folios: folios, problemas: probs, del: del, reactivaciones: (local.reactivaciones||remote.reactivaciones||[]) };
 }
 
-function fbLoad(cb) {
-  // Leer localStorage primero para comparar timestamps
-  var localData = null;
-  var localTs = 0;
-  try {
-    var ls = localStorage.getItem(LS_KEY);
-    if (ls) { localData = JSON.parse(ls); localTs = localData._ts || 0; }
-  } catch(e) {}
-
-  fetch(FB_URL + '/state.json')
-    .then(function(r) { return r.json(); })
-    .then(function(fbData) {
-      FB_ON = true;
-      updateFBIndicator(true);
-      var fbTs = fbData ? (fbData._ts || 0) : 0;
-      console.log('[Folios] Firebase ts:', fbTs, '| Local ts:', localTs);
-
-      // Usar el más reciente
-      var useData = null;
-      if (fbData && fbData.folios && fbData.folios.length > 0 && fbTs >= localTs) {
-        console.log('[Folios] Usando datos de Firebase');
-        useData = fbData;
-      } else if (localData && localData.folios && localData.folios.length > 0) {
-        console.log('[Folios] Usando datos de localStorage (más reciente)');
-        useData = localData;
-        // Sincronizar localStorage a Firebase
-        fbSave(useData);
-      }
-
-      if (useData && useData.folios && useData.folios.length > 0) {
-        useData.folios = useData.folios.map(function(f) {
-          if (!f || !f.id) return null;
-          f.status = calcStatus(f.fecha, f.garantia, f.status);
-          if (!f.pedido) f.pedido = 'sin_pedido';
-          if (!f.sucursal) f.sucursal = '';
-          return f;
-        }).filter(Boolean);
-        STATE.folios = useData.folios;
-        if (useData.problemas) STATE.problemas = useData.problemas;
-        window.STATE = STATE;
-        try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e) {}
-      } else {
-        // Todo vacío — subir FOLIOS_BASE a Firebase
-        console.log('[Folios] Sin datos — subiendo FOLIOS_BASE a Firebase');
-        STATE.folios = FOLIOS_BASE.map(arrToObj);
-        window.STATE = STATE;
-        fbSave(STATE);
-      }
-      if (cb) cb();
-    }).catch(function(e) {
-      console.warn('[Folios] Firebase no disponible:', e.message);
-      updateFBIndicator(false);
-      // Usar localStorage como fallback
-      if (localData && localData.folios && localData.folios.length > 0) {
-        localData.folios = localData.folios.map(function(f) {
-          if (!f||!f.id) return null;
-          f.status = calcStatus(f.fecha, f.garantia, f.status);
-          if (!f.pedido) f.pedido = 'sin_pedido';
-          return f;
-        }).filter(Boolean);
-        STATE.folios = localData.folios;
-        window.STATE = STATE;
-      }
-      if (cb) cb();
-    });
+function normalizeFolios(arr){
+  return (arr||[]).map(function(f){
+    if(!f || !f.id) return null;
+    f.status = calcStatus(f.fecha, f.garantia, f.status);
+    if(!f.pedido) f.pedido = 'sin_pedido';
+    if(f.sucursal === undefined) f.sucursal = '';
+    return f;
+  }).filter(Boolean);
 }
 
-function updateFBIndicator(online) {
+function applyMerged(m, rerender){
+  m.folios = normalizeFolios(m.folios);
+  STATE.folios = m.folios;
+  STATE.problemas = m.problemas || STATE.problemas || [];
+  STATE.del = m.del || {};
+  if(m.reactivaciones) STATE.reactivaciones = m.reactivaciones;
+  window.STATE = STATE;
+  try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e) {}
+  if(rerender){
+    if(window.renderList) window.renderList();
+    if(window.renderKPIs) window.renderKPIs();
+    var pd=document.getElementById('p-dash'); if(pd && pd.classList.contains('on') && window.renderDash) window.renderDash();
+    var pg=document.getElementById('p-gar'); if(pg && pg.classList.contains('on') && window.renderGar) window.renderGar();
+  }
+}
+
+function updateFBIndicator(online){
   var el = document.getElementById('fb-status');
-  if (!el) return;
+  if(!el) return;
   el.style.background = online ? '#059669' : '#D97706';
   el.title = online ? 'Firebase conectado ✓' : 'Sin Firebase — modo local';
 }
 
-// Polling cada 30 segundos para sincronizar cambios de otros usuarios
-function fbPoll() {
-  if (!FB_ON) return;
-  fetch(FB_URL + '/state.json')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (!data || !data.folios) return;
-      // Solo actualizar si hay cambios (comparar cantidad)
-      if (data.folios.length !== STATE.folios.length) {
-        data.folios = data.folios.map(function(f) {
-          if (!f||!f.id) return null;
-          f.status = calcStatus(f.fecha, f.garantia, f.status);
-          if (!f.pedido) f.pedido = 'sin_pedido';
-          return f;
-        }).filter(Boolean);
-        STATE.folios = data.folios;
-        window.STATE = STATE;
-        window.renderList();
-        window.renderKPIs();
-      }
-    }).catch(function(){});
+// GET remoto pidiendo el ETag (para control de concurrencia)
+function fbGet(){
+  return fetch(FB_URL + '/state.json', { headers: {'X-Firebase-ETag':'true'} })
+    .then(function(r){ FB_ETAG = r.headers.get('ETag'); FB_ON = true; updateFBIndicator(true); return r.json(); });
 }
-setInterval(fbPoll, 30000);
 
-function saveState() {
+// Guardar = leer + combinar + escribir. Si alguien escribió en medio (412), reintenta con lo más nuevo.
+function fbSync(){
+  if(_syncing){ _syncQueued = true; return; }
+  _syncing = true;
+  attempt(0);
+  function attempt(tries){
+    fbGet().then(function(remote){
+      var merged = mergeState(STATE, remote);
+      applyMerged(merged, true);
+      var body = JSON.stringify(Object.assign({}, merged, {_ts: Date.now()}));
+      var headers = {'Content-Type':'application/json'};
+      if(FB_ETAG) headers['if-match'] = FB_ETAG;
+      return fetch(FB_URL + '/state.json', {method:'PUT', headers:headers, body:body}).then(function(pr){
+        if(pr.status === 412 && tries < 4){ return attempt(tries+1); }
+        if(pr.status === 412){
+          // último recurso: recombinar con lo más reciente y escribir sin condición
+          return fbGet().then(function(r2){
+            var m2 = mergeState(STATE, r2); applyMerged(m2, true);
+            return fetch(FB_URL + '/state.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(Object.assign({}, m2, {_ts:Date.now()}))});
+          });
+        }
+        if(pr.ok){ FB_ON = true; updateFBIndicator(true); } else { updateFBIndicator(false); }
+      });
+    }).catch(function(e){ updateFBIndicator(false); })
+      .then(function(){ _syncing = false; if(_syncQueued){ _syncQueued = false; setTimeout(fbSync, 150); } });
+  }
+}
+
+// Poll: SOLO lee y combina lo de otros. Nunca escribe (cada quien sube lo suyo al guardar).
+function fbPoll(){
+  fetch(FB_URL + '/state.json').then(function(r){ FB_ON = true; updateFBIndicator(true); return r.json(); })
+    .then(function(remote){
+      if(!remote) return;
+      function sig(list){ return (list||[]).length + '|' + (list||[]).map(function(f){return f.id+':'+(f._m||0)+':'+f.status;}).sort().join(','); }
+      var before = sig(STATE.folios);
+      var merged = mergeState(STATE, remote);
+      var mf = normalizeFolios(merged.folios.slice());
+      if(before !== sig(mf)){ applyMerged(merged, true); }
+    }).catch(function(){ updateFBIndicator(false); });
+}
+setInterval(fbPoll, 7000);
+
+// Carga inicial: el servidor es la base; se combinan cambios locales no sincronizados.
+function fbLoad(cb){
+  var localData = null;
+  try { var ls = localStorage.getItem(LS_KEY); if(ls) localData = JSON.parse(ls); } catch(e){}
+  fbGet().then(function(remote){
+    var hasRemote = remote && remote.folios && remote.folios.length > 0;
+    var hasLocal  = localData && localData.folios && localData.folios.length > 0;
+    var merged;
+    if(hasRemote && hasLocal) merged = mergeState(localData, remote);
+    else if(hasRemote)        merged = mergeState({folios:[], del:(localData&&localData.del)||{}}, remote);
+    else if(hasLocal)         merged = mergeState(localData, {});
+    else                      merged = {folios: FOLIOS_BASE.map(arrToObj), problemas: PROBLEMAS_BASE.slice(), del:{}, reactivaciones:[]};
+    applyMerged(merged, false);
+    fbSync(); // sube al servidor cualquier cambio local que no estuviera
+    if(cb) cb();
+  }).catch(function(e){
+    updateFBIndicator(false);
+    if(localData && localData.folios){ applyMerged(mergeState(localData, {}), false); }
+    if(cb) cb();
+  });
+}
+
+function saveState(){
   try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e) {}
-  fbSave(STATE); // también guardar en Firebase
+  fbSync();
 }
 window.saveState = saveState;
+
+// Descargar respaldo del estado actual (un clic)
+window.descargarRespaldo = function(){
+  try{
+    var d = new Date();
+    var p = function(n){ return ('0'+n).slice(-2); };
+    var stamp = d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes());
+    var blob = new Blob([JSON.stringify(STATE, null, 2)], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'folios_respaldo_'+stamp+'.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }catch(e){ alert('No se pudo generar el respaldo: '+e.message); }
+};
 
 // ── CLOCK ──
 function tick() {
@@ -1396,6 +1431,7 @@ window.saveModal = function() {
     nota:(document.getElementById('f-nota')||{}).value||'',
     checklist:ck, flujoStep:flujoStep, pedido:pedido,
     atraso:false, limite:'',
+    _m: Date.now(),
   };
   if(precio>0) obj.precio=precio;
   if(editId){
@@ -1417,7 +1453,7 @@ window.eliminarFolio = function() {
   if(!editId) return;
   if(!confirm('¿Eliminar el folio '+editId+'? Esta acción no se puede deshacer.')) return;
   var idx=STATE.folios.findIndex(function(f){return f.id===editId;});
-  if(idx>=0){STATE.folios.splice(idx,1); saveState(); window.closeModal(); window.renderList(); window.renderKPIs();}
+  if(idx>=0){STATE.del=STATE.del||{}; STATE.del[editId]=Date.now(); STATE.folios.splice(idx,1); saveState(); window.closeModal(); window.renderList(); window.renderKPIs();}
 };
 
 // ── PANEL INGENIERO ──
@@ -1502,7 +1538,7 @@ window.saveChkIng = function() {
   var done=keys.filter(function(k){return f.checklist[k];}).length;
   if(done===keys.length) f.status='terminado';
   else if(done>0&&f.status==='pendiente') f.status='en_proceso';
-  saveState(); window.closePanelIng(); window.renderList(); window.renderKPIs();
+  f._m=Date.now(); saveState(); window.closePanelIng(); window.renderList(); window.renderKPIs();
 };
 
 // ── GARANTÍAS ──
