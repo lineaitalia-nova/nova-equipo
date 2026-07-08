@@ -512,7 +512,7 @@ const RAW = [
 // ─── STATE ──────────────────────────────────────────────────────────
 let PROJ=[], USERS=[], cu=null, av='inicio', stm=null;
 function render(){sv2(av);}
-let fEng='todos', srch='', fFase='todos', fEst='todos';
+let fEng='todos', srch='', fFase='todos', fEst='todos', fAnio='todos';
 let cpid=null, amt='resumen';
 
 // ─── UTILS ──────────────────────────────────────────────────────────
@@ -2327,7 +2327,8 @@ function rMisProyectos(c, filtro){
 
 // ─── TODOS LOS PROYECTOS ─────────────────────────────────────────────
 function rProyectos(c){
-  const hasFilters=srch||fEng!=='todos'||fFase!=='todos'||fEst!=='todos';
+  const hasFilters=srch||fEng!=='todos'||fFase!=='todos'||fEst!=='todos'||fAnio!=='todos';
+  const anios=[...new Set(PROJ.map(anioProyecto).filter(Boolean))].sort().reverse();
   let h=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap">
     <div class="fbar" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:9px 12px;margin-bottom:0;gap:7px;min-width:0">
       <div style="position:relative;flex:1;min-width:140px">
@@ -2349,7 +2350,11 @@ function rProyectos(c){
         <option value="Fuera de linea"${fEst==='Fuera de linea'?' selected':''}>🔴 Fuera de línea</option>
         <option value="Terminado"${fEst==='Terminado'?' selected':''}>✅ Terminado</option>
       </select>
-      ${hasFilters?`<button onclick="srch='';fEng='todos';fFase='todos';fEst='todos';rProyectos(document.getElementById('vc'))" style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--bad);cursor:pointer;height:30px;white-space:nowrap">✕ Limpiar</button>`:''}
+      <select onchange="fAnio=this.value;rProyectos(document.getElementById('vc'))" style="font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);outline:none;height:30px">
+        <option value="todos">📅 Todos los años</option>
+        ${anios.map(a=>`<option value="${a}"${fAnio===a?' selected':''}>${a}</option>`).join('')}
+      </select>
+      ${hasFilters?`<button onclick="srch='';fEng='todos';fFase='todos';fEst='todos';fAnio='todos';rProyectos(document.getElementById('vc'))" style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--bad);cursor:pointer;height:30px;white-space:nowrap">✕ Limpiar</button>`:''}
     </div>
     ${isG()?`<button onclick="nuevoProyecto()" style="padding:8px 18px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b);white-space:nowrap;flex-shrink:0">＋ Nuevo proyecto</button>`:''}
   </div>`;
@@ -2357,6 +2362,7 @@ function rProyectos(c){
     if(fEng!=='todos'&&p.eng!==fEng)return false;
     if(fFase!=='todos'&&p.fase!==fFase)return false;
     if(fEst!=='todos'&&p.estatus!==fEst)return false;
+    if(fAnio!=='todos'&&anioProyecto(p)!==fAnio)return false;
     if(srch){const q=srch.toLowerCase();if(!p.name.toLowerCase().includes(q)&&!p.id.toLowerCase().includes(q))return false;}
     return true;
   });
@@ -2365,6 +2371,7 @@ function rProyectos(c){
   if(fEng!=='todos') activeFilters.push(NOMBRES[fEng]||fEng);
   if(fFase!=='todos') activeFilters.push(fFase);
   if(fEst!=='todos') activeFilters.push(fEst);
+  if(fAnio!=='todos') activeFilters.push('Año '+fAnio);
   h+=`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600;display:flex;align-items:center;gap:8px">
     <span>${list.length} de ${PROJ.length} proyectos</span>
     ${activeFilters.length?`<span style="color:var(--navy);font-size:10px">Filtrado por: ${activeFilters.join(' · ')}</span>`:''}
