@@ -38,7 +38,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .tab.on{color:#fff;border-bottom-color:#fff;font-weight:600}
 
 /* KPI */
-.krow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:16px 20px 0}
+.krow{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:16px 20px 0}
 .kcard{background:var(--w);border:1px solid var(--br);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh)}
 .kcard-l{font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
 .kcard-v{font-size:22px;font-weight:300;font-family:'JetBrains Mono',monospace;color:var(--tx)}
@@ -819,7 +819,7 @@ function arrToObj(a) {
     vendedor: a[5]||'', sucursal: a[6]||'', cliente: a[7]||'',
     desc: a[8]||'', precio: a[9]||0,
     garantia: a[10]||false, flujoStep: a[11]||0,
-    causa:'', costoGar:0, descGar:'', errorDiseno:false, tipoError:'',
+    causa:'', costoGar:0, descGar:'', errorDiseno:false, tipoError:'', liberadoDiseno:false,
     checklist: {
       solicitud: !!(ck&&ck[0]), dimensiones: !!(ck&&ck[1]),
       accesorios: !!(ck&&ck[2]), caratula: !!(ck&&ck[3]),
@@ -903,6 +903,7 @@ function normalizeFolios(arr){
     f.status = calcStatus(f.fecha, f.garantia, f.status);
     if(!f.pedido) f.pedido = 'sin_pedido';
     if(f.sucursal === undefined) f.sucursal = '';
+    if(f.liberadoDiseno===undefined && f.listo===true) f.liberadoDiseno=true;
     return f;
   }).filter(Boolean);
 }
@@ -1048,7 +1049,8 @@ window.goTab = function(id) {
 window.renderKPIs = function() {
   var f = STATE.folios;
   var total = f.length;
-  var pend = f.filter(function(d){return d.status==='pendiente';}).length;
+  var pend = f.filter(function(d){return d.status==='pendiente' && d.liberadoDiseno!==true;}).length;
+  var libDis = f.filter(function(d){return d.liberadoDiseno===true && d.status!=='terminado';}).length;
   var done = f.filter(function(d){return d.status==='terminado';}).length;
   var prob = f.filter(function(d){return d.garantia===true;}).length;
   var _hoy=new Date(); var _dw=_hoy.getDay(); var _lun=new Date(_hoy); _lun.setDate(_hoy.getDate()-(_dw===0?6:_dw-1));
@@ -1060,6 +1062,7 @@ window.renderKPIs = function() {
     {l:'Total folios',v:total,s:'registrados',c:''},
     {l:'Pendientes',v:pend,s:'sin iniciar',c:'color:var(--am)'},
     {l:'Terminados',v:done,s:'completados',c:'color:var(--gn)'},
+    {l:'Liberado diseño',v:libDis,s:'pend. producción',c:'color:#2563EB'},
     {l:'Con problema',v:prob,s:'o garantía',c:'color:var(--rd)'},
     {l:'Con pedido',v:conP,s:'hasta sem. pasada',c:'color:var(--gn)'},
     {l:'Sin pedido',v:sinP,s:'hasta sem. pasada',c:'color:var(--am)'},
@@ -1266,7 +1269,7 @@ window.renderDash = function() {
   if (cntEl) cntEl.textContent = f.length+' folios';
   // Velocímetro de efectividad de diseño
   (function(){
-    var hechos = f.filter(function(d){return d.status==='terminado'||d.status==='problema';}).length;
+    var hechos = f.filter(function(d){return d.liberadoDiseno===true||d.status==='terminado'||d.status==='problema';}).length;
     var errores = f.filter(function(d){return d.errorDiseno===true;}).length;
     var efe = hechos>0 ? (hechos-errores)/hechos*100 : 0;
     var col = efe>=90?'#059669':(efe>=75?'#D97706':'#DC2626');
@@ -1473,10 +1476,12 @@ window.renderWeek = function() {
     headHtml+='<div class="week-head-d">'+d+' '+fecha.getDate()+'/'+(fecha.getMonth()+1)+'<br><span style="font-size:10px;opacity:.6">'+fDia.length+' folios</span></div>';
     bodyHtml+='<div class="week-col">';
     fDia.forEach(function(f){
-      var listo = f.listo===true;
-      bodyHtml+='<div style="display:flex;align-items:flex-start;gap:5px;margin-bottom:4px">'
-        +'<div onclick="window.toggleListo(\''+f.id+'\',event)" title="Marcar como listo (referencia)" style="flex-shrink:0;width:16px;height:16px;margin-top:1px;border-radius:4px;border:2px solid '+(listo?'#059669':'var(--br2)')+';background:'+(listo?'#059669':'transparent')+';color:#fff;font-size:11px;line-height:12px;text-align:center;cursor:pointer;font-weight:700">'+(listo?'\u2713':'')+'</div>'
-        +'<span class="cal-folio cf-'+f.tipo+(f.status==='terminado'?' cf-done':'')+(f.garantia?' cf-problema':'')+'" onclick="window.editFolio(\''+f.id+'\')" style="flex:1;display:block;font-size:11px'+(listo?';opacity:.55;text-decoration:line-through':'')+'">'+f.id+(f.ing?'<br><span style="font-size:9px;opacity:.7">'+f.ing+'</span>':'')+'</span>'
+      var lib = f.liberadoDiseno===true;
+      var term = f.status==='terminado';
+      bodyHtml+='<div style="display:flex;align-items:flex-start;gap:4px;margin-bottom:4px">'
+        +'<div onclick="window.toggleDiseno(\''+f.id+'\',event)" title="Liberado de diseño (ingeniero)" style="flex-shrink:0;width:15px;height:15px;margin-top:1px;border-radius:4px;border:2px solid '+(lib?'#2563EB':'var(--br2)')+';background:'+(lib?'#2563EB':'transparent')+';color:#fff;font-size:10px;line-height:11px;text-align:center;cursor:pointer;font-weight:700">'+(lib?'\u2713':'')+'</div>'
+        +'<div onclick="window.toggleProduccion(\''+f.id+'\',event)" title="Liberado a producción (Luis)" style="flex-shrink:0;width:15px;height:15px;margin-top:1px;border-radius:4px;border:2px solid '+(term?'#059669':'var(--br2)')+';background:'+(term?'#059669':'transparent')+';color:#fff;font-size:12px;line-height:11px;text-align:center;cursor:pointer;font-weight:700">'+(term?'\u2013':'')+'</div>'
+        +'<span class="cal-folio cf-'+f.tipo+(term?' cf-done':'')+(f.garantia?' cf-problema':'')+'" onclick="window.editFolio(\''+f.id+'\')" style="flex:1;display:block;font-size:11px'+(term?';opacity:.55;text-decoration:line-through':(lib?';opacity:.85':''))+'">'+f.id+(f.ing?'<br><span style="font-size:9px;opacity:.7">'+f.ing+'</span>':'')+'</span>'
         +'</div>';
     });
     bodyHtml+='<div style="margin-top:6px"><button onclick="window.quickAddDate(\''+ds+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px dashed var(--br2);background:none;color:var(--tx3);cursor:pointer;width:100%">+ Agregar</button></div>';
@@ -1486,14 +1491,22 @@ window.renderWeek = function() {
   var wb=document.getElementById('wk-body'); if(wb) wb.innerHTML=bodyHtml;
 };
 
-window.toggleListo = function(id, ev){
+window.toggleDiseno = function(id, ev){
   if(ev){ ev.stopPropagation(); }
   var f=STATE.folios.find(function(x){return x.id===id;});
   if(!f) return;
-  f.listo = !f.listo;
+  f.liberadoDiseno = !f.liberadoDiseno;
   if(window.stampFolio) window.stampFolio(f); else f._m=Date.now();
-  saveState();
-  window.renderWeek();
+  saveState(); window.renderWeek(); if(window.renderKPIs) window.renderKPIs();
+};
+window.toggleProduccion = function(id, ev){
+  if(ev){ ev.stopPropagation(); }
+  var f=STATE.folios.find(function(x){return x.id===id;});
+  if(!f) return;
+  if(f.status==='terminado'){ f.status = f.garantia ? 'problema' : 'pendiente'; }
+  else { f.status='terminado'; f.liberadoDiseno=true; }
+  if(window.stampFolio) window.stampFolio(f); else f._m=Date.now();
+  saveState(); window.renderWeek(); if(window.renderKPIs) window.renderKPIs();
 };
 
 // ── MODAL ──
@@ -1702,7 +1715,7 @@ window.saveChkIng = function() {
   if(!f.checklist) f.checklist={};
   keys.forEach(function(k){var b=document.getElementById('ichk-'+k); f.checklist[k]=b&&b.classList.contains('on');});
   var done=keys.filter(function(k){return f.checklist[k];}).length;
-  if(done===keys.length) f.status='terminado';
+  if(done===keys.length){ f.liberadoDiseno=true; if(f.status!=='terminado') f.status='en_proceso'; }
   else if(done>0&&f.status==='pendiente') f.status='en_proceso';
   f._m=Date.now(); saveState(); window.closePanelIng(); window.renderList(); window.renderKPIs();
 };
