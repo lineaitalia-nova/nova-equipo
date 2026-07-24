@@ -395,7 +395,7 @@ tr:hover td{background:var(--bg);cursor:pointer}
   <div class="frow" style="margin-bottom:12px;padding:10px 14px;background:var(--w);border:1px solid var(--br);border-radius:var(--r)">
     <div class="fg">
       <label>Mes</label>
-      <select id="dash-mes" onchange="renderDash()">
+      <select id="dash-mes" onchange="dashMesChange()">
         <option value="">Todos los meses</option>
         <option value="2026-01">Ene 2026</option>
         <option value="2026-02">Feb 2026</option>
@@ -430,18 +430,8 @@ tr:hover td{background:var(--bg);cursor:pointer}
     </div>
     <div class="fg">
       <label>Semana</label>
-      <select id="dash-sem" onchange="renderDash()">
+      <select id="dash-sem" onchange="dashSemChange()">
         <option value="">Todas las semanas</option>
-        <option value="2026-07-06">Sem 6–10 Jul</option>
-        <option value="2026-06-29">Sem 29 Jun–3 Jul</option>
-        <option value="2026-06-22">Sem 22–26 Jun</option>
-        <option value="2026-06-15">Sem 15–19 Jun</option>
-        <option value="2026-06-08">Sem 8–12 Jun</option>
-        <option value="2026-06-01">Sem 1–5 Jun</option>
-        <option value="2026-05-25">Sem 25–29 May</option>
-        <option value="2026-05-18">Sem 18–22 May</option>
-        <option value="2026-05-11">Sem 11–15 May</option>
-        <option value="2026-05-04">Sem 4–8 May</option>
       </select>
     </div>
     <button class="fbtn" onclick="clearDash()" style="align-self:flex-end">Limpiar</button>
@@ -1040,7 +1030,7 @@ window.goTab = function(id) {
   var krow = document.getElementById('krow');
   if (krow) krow.style.display = id==='dash' ? '' : 'none';
   if (id==='list') window.renderList();
-  if (id==='dash') { window.renderKPIs(); window.renderDash(); setTimeout(window.drawSem, 150); }
+  if (id==='dash') { window.fillDashWeekSelect(); window.renderKPIs(); window.renderDash(); setTimeout(window.drawSem, 150); }
   if (id==='gar') window.renderGar();
   if (id==='sem') window.fillWeekSelect();
 };
@@ -1253,6 +1243,25 @@ function _inDashWeek(fecha, lun){
   var d=new Date(fecha+"T00:00:00");
   return d>=L && d<=E;
 }
+window.fillDashWeekSelect = function(){
+  var sel=document.getElementById('dash-sem'); if(!sel) return;
+  var prev=sel.value;
+  var weeks={};
+  STATE.folios.forEach(function(d){
+    if(!d.fecha) return;
+    var dt=new Date(d.fecha+'T00:00:00'); var wd=dt.getDay();
+    var lun=new Date(dt); lun.setDate(dt.getDate()-(wd===0?6:wd-1));
+    var k=lun.toISOString().slice(0,10);
+    var vie=new Date(lun); vie.setDate(lun.getDate()+4);
+    var wn=Math.ceil(((lun-new Date(lun.getFullYear(),0,1))/86400000+new Date(lun.getFullYear(),0,1).getDay()+1)/7);
+    weeks[k]='Sem '+(wn<10?'0':'')+wn+' · '+lun.getDate()+'/'+(lun.getMonth()+1)+' – '+vie.getDate()+'/'+(vie.getMonth()+1);
+  });
+  var sorted=Object.keys(weeks).sort(function(a,b){return a<b?1:-1;});
+  sel.innerHTML='<option value="">Todas las semanas</option>'+sorted.map(function(k){return '<option value="'+k+'">'+weeks[k]+'</option>';}).join('');
+  if(prev) sel.value=prev;
+};
+window.dashMesChange = function(){ var s=document.getElementById('dash-sem'); if(s && (document.getElementById('dash-mes')||{}).value) s.value=''; window.renderDash(); };
+window.dashSemChange = function(){ var m=document.getElementById('dash-mes'); if(m && (document.getElementById('dash-sem')||{}).value) m.value=''; window.renderDash(); };
 window.renderDash = function() {
   var filtMes  = (document.getElementById('dash-mes')||{}).value||'';
   var filtIng  = (document.getElementById('dash-ing')||{}).value||'';
