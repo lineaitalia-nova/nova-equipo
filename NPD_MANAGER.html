@@ -2441,7 +2441,8 @@ function rCadencia(c){
   PROJ.forEach(p=>{(p.tareasSemana||[]).forEach(t=>{ if((t.creadoEn||0)>=rangoIni && (t.creadoEn||0)<rangoFin) metas.push({estatus:t.estatus, eng:p.eng}); });});
   const colFor = pct => pct===null?'#9ca3af':pct>=80?'#16a34a':pct>=60?'#d97706':'#dc2626';
   const circ = Math.PI*52;
-  let data = ENGS.map(u=>{
+  const _ORDEN=['RB','FR','AE','PR'];
+  const data = _ORDEN.map(pf=>ENGS.find(u=>u.perfil===pf)).filter(Boolean).map(u=>{
     const m = metas.filter(t=>t.eng===u.perfil);
     const total = m.length;
     const log = m.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
@@ -2449,28 +2450,10 @@ function rCadencia(c){
     const ini = (u.nombre||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
     return {nombre:u.nombre||u.perfil, ini, total, log, pct};
   });
-  data.sort((a,b)=>{
-    if(a.pct===null && b.pct===null) return 0;
-    if(a.pct===null) return 1;
-    if(b.pct===null) return -1;
-    return (b.pct-a.pct) || (b.log-a.log);
-  });
-  const lider = data.find(d=>d.pct!==null && d.total>0);
-  const liderHtml = lider ? `<div style="background:linear-gradient(90deg,#fef9e7,#fdf3d0);border:1px solid #e6c34a;border-radius:var(--r2);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
-      <span style="font-size:22px">🏆</span>
-      <div><div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:#a67c00;text-transform:uppercase">Líder del mes</div>
-      <div style="font-size:15px;font-weight:700;color:var(--navy)">${lider.nombre} · ${lider.pct}% <span style="font-size:12px;font-weight:400;color:var(--muted)">(${lider.log} de ${lider.total} metas)</span></div></div>
-    </div>` : '';
-  const gauges = data.map((d,i)=>{
+  const gauges = data.map(d=>{
     const col = colFor(d.pct);
     const off = d.pct===null? circ : circ*(1-d.pct/100);
-    const esLider = lider && d.nombre===lider.nombre;
-    const pos = d.pct===null ? '—' : '#'+(i+1);
-    const posBadge = esLider
-      ? `<div style="position:absolute;top:8px;right:10px;font-size:16px">🏆</div>`
-      : `<div style="position:absolute;top:8px;right:10px;font-size:11px;font-weight:700;color:var(--muted)">${pos}</div>`;
-    return `<div style="position:relative;background:var(--surface);border:${esLider?'2px solid #e6c34a':'1px solid var(--border2)'};border-radius:var(--r2);padding:14px 10px;text-align:center">
-      ${posBadge}
+    return `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 10px;text-align:center">
       <div style="position:relative;width:120px;height:74px;margin:0 auto">
         <svg viewBox="0 0 120 74" width="120" height="74">
           <path d="M8 64 A52 52 0 0 1 112 64" fill="none" stroke="var(--border2)" stroke-width="9" stroke-linecap="round"/>
@@ -2521,7 +2504,6 @@ function rCadencia(c){
       <span style="font-size:11px;color:var(--muted)">${periodoLbl}</span>
     </div>
     <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 10px;display:flex;align-items:center;gap:6px">Cumplimiento de metas SMART por ingeniero</div>
-    ${liderHtml}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px">${gauges||'<div style="color:var(--muted);font-size:12px;padding:20px">Sin metas registradas en las últimas 4 semanas.</div>'}</div>
     <div style="display:flex;gap:16px;font-size:11px;color:var(--muted);flex-wrap:wrap;margin-bottom:24px">
       <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#16a34a"></span>≥ 80% al día</span>
