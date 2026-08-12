@@ -644,6 +644,36 @@ function getFaseDates(p, f){
 }
 function toISO(d){if(!d)return'';const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${dd}`;}
 
+// ─── SALUD POR FASE (fuente única de verdad para 'En riesgo') ───
+// Devuelve la fecha fin de la fase del próximo gate no aprobado.
+function finFaseActual(p){
+  const gateOrder=['Gate 1','Gate 2','Gate 3','Gate 4','Gate 5'];
+  for(const gk of gateOrder){
+    if(!p.gates?.[gk]?.aprobado){
+      const gInfo=GATES[gk];
+      if(!gInfo) continue;
+      const fd=getFaseDates(p,gInfo.fase);
+      return fd&&fd.fin?toISO(fd.fin):(p.fechasFase?.[gInfo.fase]?.fin||'');
+    }
+  }
+  return '';
+}
+// Semáforo por fase: rojo=fase vencida, ámbar=vence en ≤7d (0d=vence hoy, aún no vencida), verde=holgura.
+// Solo aplica a proyectos activos (En línea + Fuera de línea). Otros → null (no cuenta en 'En riesgo').
+function saludFase(p){
+  if(!p||!(p.estatus==='En linea'||p.estatus==='Fuera de linea')) return null;
+  const fin=finFaseActual(p);
+  if(!fin) return null;
+  const fd=pd(fin);
+  if(!fd) return null;
+  const dias=Math.round((fd-TODAY)/86400000);
+  if(dias<0)  return {nivel:'rojo',  dias, col:'#dc2626', lbl:Math.abs(dias)+'d vencida'};
+  if(dias<=7) return {nivel:'ambar', dias, col:'#d97706', lbl:dias===0?'vence hoy':`vence en ${dias}d`};
+  return {nivel:'verde', dias, col:'#16a34a', lbl:`${dias}d de holgura`};
+}
+// Cuenta 'En riesgo' = proyectos con fase vencida (rojo).
+function enRiesgoFase(lista){return (lista||[]).filter(p=>{const s=saludFase(p);return s&&s.nivel==='rojo';}).length;}
+
 // ─── PERSISTENCIA ───────────────────────────────────────────────────
 // ─── FIREBASE SYNC ──────────────────────────────────────────────────
 const FB_NPD='https://nova-lineaitalia-2-default-rtdb.firebaseio.com/npd';
@@ -2432,14 +2462,7 @@ function rReporte(c){
   const enL=baseProj.filter(p=>p.estatus==='En linea').length;
   const fueraL=baseProj.filter(p=>p.estatus==='Fuera de linea').length;
   const enP=baseProj.filter(p=>p.estatus==='En pausa').length;
-  const rk=baseProj.filter(p=>p.estatus!=='Terminado').filter(p=>{
-    const fe=p.fechaFinal||p.fe||'';
-    if(!fe) return false;
-    const fechaFin=pd(fe);
-    if(!fechaFin) return false;
-    const d=Math.round((fechaFin-TODAY)/86400000);
-    return d<=14;
-  }).length;
+  const rk=enRiesgoFase(baseProj);
   const ef=baseProj.length?Math.round(term/baseProj.length*100):0;
   const avgAv=baseProj.filter(p=>p.estatus!=='Terminado').length?Math.round(baseProj.filter(p=>p.estatus!=='Terminado').reduce((s,p)=>s+p.avance,0)/baseProj.filter(p=>p.estatus!=='Terminado').length):0;
 
@@ -2455,7 +2478,7 @@ function rReporte(c){
         {l:'Terminados',      v:term,                  s:ef+'% del portafolio',           col:'#4ade80'},
         {l:'Efectividad',     v:ef+'%',                s:`${term} de ${baseProj.length}`, col:ef>=70?'#4ade80':ef>=40?'#fbbf24':'#f87171'},
         {l:'Fuera de Línea',  v:fueraL,                s:'con retraso',                   col:'#f87171'},
-        {l:'⚠ En Riesgo',    v:rk,                    s:'entrega ≤14 días',              col:rk>0?'#f87171':'#4ade80'},
+        {l:'⚠ En Riesgo',    v:rk,                    s:'fase vencida',              col:rk>0?'#f87171':'#4ade80'},
         {l:'Avance Prom.',    v:avgAv+'%',             s:'proyectos activos',             col:'#a78bfa'},
       ].map(k=>`<div style="background:rgba(255,255,255,.07);border-radius:8px;padding:9px 10px;text-align:center">
         <div style="font-size:9px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${k.l}</div>
@@ -2469,22 +2492,14 @@ function rReporte(c){
   const engsToShow = selEng ? [USERS.find(u=>u.perfil===selEng)].filter(Boolean) : engU;
 
   function salud(p){
-    // Proyectos pausados, cancelados o terminados no muestran semáforo de vencimiento
     if(p.estatus==='Terminado') return{ico:'✅',col:'#16a34a',lbl:'Terminado'};
     if(p.estatus==='Cancelado') return{ico:'⚫',col:'#6b7280',lbl:'Cancelado'};
     if(p.estatus==='En pausa') return{ico:'⏸',col:'#6b7280',lbl:'En pausa'};
-    if(p.estatus==='Fuera de línea') return{ico:'⚫',col:'#6b7280',lbl:'Fuera de línea'};
-    // Usar fechaFinal del proyecto, no fechaFase
-    const fe=p.fechaFinal||p.fe||'';
-    if(!fe) return{ico:'⚪',col:'#9ca3af',lbl:'Sin fecha'};
-    const fechaFin=pd(fe);
-    if(!fechaFin) return{ico:'⚪',col:'#9ca3af',lbl:'Sin fecha'};
-    const d=Math.round((fechaFin-TODAY)/86400000);
-    if(d<0) return{ico:'🔴',col:'#dc2626',lbl:Math.abs(d)+'d vencido'};
-    if(d<=3) return{ico:'🔴',col:'#dc2626',lbl:`⚠ ${d}d restantes`};
-    if(d<=7) return{ico:'🟠',col:'#ea580c',lbl:`⚠ ${d}d restantes`};
-    if(d<=21) return{ico:'🟡',col:'#d97706',lbl:`${d}d restantes`};
-    return{ico:'🟢',col:'#16a34a',lbl:`${d}d restantes`};
+    const s=saludFase(p);
+    if(!s) return{ico:'⚪',col:'#9ca3af',lbl:'Sin fase'};
+    if(s.nivel==='rojo')  return{ico:'🔴',col:s.col,lbl:s.lbl};
+    if(s.nivel==='ambar') return{ico:'🟠',col:s.col,lbl:s.lbl};
+    return{ico:'🟢',col:s.col,lbl:s.lbl};
   }
   function getSigMS(p){
     // Buscar el próximo gate no aprobado en orden
@@ -2512,7 +2527,7 @@ function rReporte(c){
     if(!pp.length) return;
     const actEng=pp.filter(p=>p.estatus!=='Terminado');
     const avgEng=actEng.length?Math.round(actEng.reduce((s,p)=>s+p.avance,0)/actEng.length):0;
-    const vencEng=actEng.filter(p=>{const d=dNF(p);return d!==null&&d<0;}).length;
+    const vencEng=enRiesgoFase(actEng);
 
     h+=`<div style="margin-bottom:14px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border2)">
 
