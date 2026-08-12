@@ -887,7 +887,7 @@ function entrarDirectivo(){
 function rSB(){
   const ec=ecOf(cu?.perfil);
   const act=PROJ.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
-  const risk=act.filter(p=>dNF(p)!==null&&dNF(p)<=7).length;
+  const risk=enRiesgoFase(act);
   const pAp=PROJ.filter(p=>p.avance>=80&&p.aprob?.g?.s==='pendiente').length;
   let nav=[];
   if(isDir()){
@@ -1517,8 +1517,8 @@ function rInicio(c){
   const filtEnL=filtAct.filter(p=>p.estatus==='En linea');
   const filtEnP=filtAct.filter(p=>p.estatus==='En pausa');
   const filtFuera=filtAct.filter(p=>p.estatus==='Fuera de linea');
-  const filtRisk=filtAct.filter(p=>{const d=dNF(p);return d!==null&&d<0;});
-  const filtSoon=filtAct.filter(p=>{const d=dNF(p);return d!==null&&d>=0&&d<=14;});
+  const filtRisk=filtAct.filter(p=>{const s=saludFase(p);return s&&s.nivel==='rojo';});
+  const filtSoon=filtAct.filter(p=>{const s=saludFase(p);return s&&s.nivel==='ambar';});
   const filtAvg=filtProj.length?Math.round(filtProj.reduce((s,p)=>s+p.avance,0)/filtProj.length):0;
   const filtEf=filtProj.length?Math.round(filtTerm.length/filtProj.length*100):0;
   const filtPAp=filtProj.filter(p=>p.avance>=80&&p.aprob?.g?.s==='pendiente').length;
@@ -1928,7 +1928,7 @@ function renderRepFiltro(){
     const eng=USERS.find(u=>u.perfil===sel);
     const pp=lista;
     const avg=pp.length?Math.round(pp.reduce((s,p)=>s+p.avance,0)/pp.length):0;
-    const rk=pp.filter(p=>dNF(p)!==null&&dNF(p)<=7).length;
+    const rk=enRiesgoFase(pp);
     h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2) var(--r2) 0 0;border-bottom:1px solid var(--border2)">
       <div style="width:26px;height:26px;border-radius:50%;background:${ec.bg};color:${ec.tc};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">${ec.init}</div>
       <div style="font-size:13px;font-weight:700">${eng?.nombre||sel}</div>
@@ -1970,7 +1970,7 @@ function rMiDashboard(c){
   const act=mis.filter(p=>p.estatus!=='Terminado');
   const term=mis.filter(p=>p.estatus==='Terminado');
   const venc=act.filter(p=>{const d=dNF(p);return d!==null&&d<0;});
-  const riesgo=act.filter(p=>{const d=dNF(p);return d!==null&&d>=0&&d<=14;});
+  const riesgo=act.filter(p=>{const s=saludFase(p);return s&&s.nivel==='ambar';});
   const enL=act.filter(p=>p.estatus==='En linea');
   const avg=mis.length?Math.round(mis.reduce((s,p)=>s+p.avance,0)/mis.length):0;
   const ec=ecOf(cu?.perfil||'GI');
@@ -2255,7 +2255,7 @@ function rMisProyectos(c, filtro){
   const enc   = mis.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
   const term  = mis.filter(p=>p.estatus==='Terminado');
   const canc  = mis.filter(p=>p.estatus==='Cancelado');
-  const rk    = enc.filter(p=>{const d=dNF(p);return d!==null&&d<=7;});
+  const rk    = enc.filter(p=>{const s=saludFase(p);return s&&s.nivel==='rojo';});
   const avg   = mis.length?Math.round(mis.reduce((s,p)=>s+p.avance,0)/mis.length):0;
 
   // Lista a mostrar según filtro
@@ -2273,7 +2273,7 @@ function rMisProyectos(c, filtro){
       <div class="kc-lbl">Terminados</div><div class="kc-val">${term.length}</div><div class="kc-hint">completados</div>
     </div>
     <div class="kc${rk.length>0?' bad':' ok'}" style="cursor:pointer" onclick="rMisProyectos(document.getElementById('vc'),'riesgo')">
-      <div class="kc-lbl">En riesgo</div><div class="kc-val">${rk.length}</div><div class="kc-hint">entrega ≤ 7 días</div>
+      <div class="kc-lbl">En riesgo</div><div class="kc-val">${rk.length}</div><div class="kc-hint">fase vencida</div>
     </div>
     <div class="kc blue">
       <div class="kc-lbl">Avance promedio</div><div class="kc-val">${avg}%</div><div class="kc-hint">de todos mis proyectos</div>
