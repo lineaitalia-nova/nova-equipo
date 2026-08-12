@@ -2426,11 +2426,18 @@ function rProyectos(c){
 // ─── REPORTE EJECUTIVO (DASHBOARD STYLE) ────────────────────────────
 var _repFiltEng='todos', _repFiltEst='activos'; // persist filter across navigation
 function rCadencia(c){
-  const CUATRO_SEM = Date.now() - 28*86400000;
-  const ENGS = USERS.filter(u=>['RB','FR','AE','PR','RE'].includes(u.perfil));
+  const sel=window._cadMes||'actual';
+  const _now=new Date(); let _y=_now.getFullYear(), _m=_now.getMonth();
+  if(sel==='anterior'){_m--;if(_m<0){_m=11;_y--;}} else if(sel!=='actual'){const _a=sel.split('-');_y=+_a[0];_m=+_a[1]-1;}
+  const rangoIni=new Date(_y,_m,1).getTime(), rangoFin=new Date(_y,_m+1,1).getTime();
+  const periodoLbl=new Date(_y,_m,1).toLocaleDateString('es-MX',{month:'long',year:'numeric'});
+  const mesesSet={};
+  PROJ.forEach(p=>(p.tareasSemana||[]).forEach(t=>{if(t.creadoEn){const d=new Date(t.creadoEn);mesesSet[d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')]=true;}}));
+  const mesesDisp=Object.keys(mesesSet).sort().reverse();
+  const ENGS = USERS.filter(u=>['RB','FR','AE','PR'].includes(u.perfil));
   // Metas SMART de las últimas 4 semanas, asignadas al ingeniero del proyecto
   const metas=[];
-  PROJ.forEach(p=>{(p.tareasSemana||[]).forEach(t=>{ if((t.creadoEn||0)>=CUATRO_SEM) metas.push({estatus:t.estatus, eng:p.eng}); });});
+  PROJ.forEach(p=>{(p.tareasSemana||[]).forEach(t=>{ if((t.creadoEn||0)>=rangoIni && (t.creadoEn||0)<rangoFin) metas.push({estatus:t.estatus, eng:p.eng}); });});
   const colFor = pct => pct===null?'#9ca3af':pct>=80?'#16a34a':pct>=60?'#d97706':'#dc2626';
   const circ = Math.PI*52;
   const gauges = ENGS.map(u=>{
@@ -2459,9 +2466,14 @@ function rCadencia(c){
 
   c.innerHTML = `
   <div style="max-width:1100px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--blue);padding:3px 9px;border-radius:99px">PANORAMA DEL EQUIPO</span>
-      <span style="font-size:11px;color:var(--muted)">últimas 4 semanas</span>
+      <select onchange="window._cadMes=this.value;rCadencia(document.getElementById('vc'))" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);outline:none;cursor:pointer">
+        <option value="actual"${sel==='actual'?' selected':''}>Este mes</option>
+        <option value="anterior"${sel==='anterior'?' selected':''}>Mes pasado</option>
+        ${mesesDisp.map(mk=>{const _p=mk.split('-');const _l=new Date(+_p[0],+_p[1]-1,1).toLocaleDateString('es-MX',{month:'long',year:'numeric'});return `<option value="${mk}"${sel===mk?' selected':''}>${_l}</option>`;}).join('')}
+      </select>
+      <span style="font-size:11px;color:var(--muted)">${periodoLbl}</span>
     </div>
     <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 10px;display:flex;align-items:center;gap:6px">Cumplimiento de metas SMART por ingeniero</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px">${gauges||'<div style="color:var(--muted);font-size:12px;padding:20px">Sin metas registradas en las últimas 4 semanas.</div>'}</div>
