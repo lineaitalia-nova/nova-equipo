@@ -2428,10 +2428,15 @@ function rProyectos(c){
 var _repFiltEng='todos', _repFiltEst='activos'; // persist filter across navigation
 function rCadencia(c){
   const sel=window._cadMes||'actual';
-  const _now=new Date(); let _y=_now.getFullYear(), _m=_now.getMonth();
-  if(sel==='anterior'){_m--;if(_m<0){_m=11;_y--;}} else if(sel!=='actual'){const _a=sel.split('-');_y=+_a[0];_m=+_a[1]-1;}
-  const rangoIni=new Date(_y,_m,1).getTime(), rangoFin=new Date(_y,_m+1,1).getTime();
-  const periodoLbl=new Date(_y,_m,1).toLocaleDateString('es-MX',{month:'long',year:'numeric'});
+  let rangoIni, rangoFin, periodoLbl;
+  if(sel==='todos'){
+    rangoIni=0; rangoFin=Infinity; periodoLbl='Todos los meses · promedio general';
+  } else {
+    const _now=new Date(); let _y=_now.getFullYear(), _m=_now.getMonth();
+    if(sel==='anterior'){_m--;if(_m<0){_m=11;_y--;}} else if(sel!=='actual'){const _a=sel.split('-');_y=+_a[0];_m=+_a[1]-1;}
+    rangoIni=new Date(_y,_m,1).getTime(); rangoFin=new Date(_y,_m+1,1).getTime();
+    periodoLbl=new Date(_y,_m,1).toLocaleDateString('es-MX',{month:'long',year:'numeric'});
+  }
   const mesesSet={};
   PROJ.forEach(p=>(p.tareasSemana||[]).forEach(t=>{if(t.creadoEn){const d=new Date(t.creadoEn);mesesSet[d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')]=true;}}));
   const mesesDisp=Object.keys(mesesSet).sort().reverse();
@@ -2492,6 +2497,57 @@ function rCadencia(c){
     </div>`
     : `<div style="color:var(--muted);font-size:12px;padding:20px">Sin metas registradas en este mes.</div>`;
 
+  // ---- Detalle por proyecto: jerarquía Milestones → Metas (acumulado, no filtrado por mes) ----
+  const _projList = PROJ.filter(p=>p.estatus!=='Cancelado');
+  let _selProj = window._cadProj;
+  if(!_selProj || !_projList.find(p=>p.id===_selProj)) _selProj = (_projList.find(p=>p.estatus==='En linea')||_projList[0])?.id;
+  const _proj = _projList.find(p=>p.id===_selProj);
+  const _projOptions = _projList.map(p=>`<option value="${p.id}"${p.id===_selProj?' selected':''}>${p.name}</option>`).join('');
+  const _mIcon = st => st==='Lograda'?['●','#16a34a']:st==='Parcial'?['◐','#d97706']:st==='No lograda'?['✕','#dc2626']:['○','#9ca3af'];
+  let detalleHtml='';
+  if(_proj){
+    const _gO=['Gate 1','Gate 2','Gate 3','Gate 4','Gate 5'];
+    const _mp = _proj.tareasSemana||[];
+    const _primerPend = _gO.find(gk=>!_proj.gates?.[gk]?.aprobado);
+    const _gatesHtml = _gO.map(gk=>{
+      const gi=GATES[gk]; if(!gi) return '';
+      const aprob=_proj.gates?.[gk]?.aprobado;
+      const mm=_mp.filter(t=>t.milestone===gi.nombre);
+      const tot=mm.length, log=mm.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
+      const pct=tot?Math.round(log/tot*100):null;
+      const estado=aprob?'aprobado':(gk===_primerPend?'en_curso':'bloqueado');
+      const sc=estado==='aprobado'?{dot:'#16a34a',bg:'#e7f6ee',tx:'#16a34a',lbl:'Aprobado'}:estado==='en_curso'?{dot:'#2563eb',bg:'#e8f0fe',tx:'#2563eb',lbl:'En curso'}:{dot:'#9ca3af',bg:'var(--surface2)',tx:'var(--muted)',lbl:'Por abrir'};
+      const col=pct===null?'#9ca3af':pct>=80?'#16a34a':pct>=60?'#d97706':'#dc2626';
+      const lis=mm.length?mm.map(t=>{const [ic,c]=_mIcon(t.estatus);return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--border2)"><span style="color:${c};font-size:13px;flex:none">${ic}</span><span style="flex:1;font-size:12px;color:var(--text)">${t.tarea||'(sin texto)'}</span><span style="font-size:10px;color:${c};flex:none">${t.estatus}</span></div>`;}).join(''):`<div style="font-size:11px;color:var(--muted);font-style:italic;padding:4px 0">Aún sin metas para este milestone.</div>`;
+      return `<div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surface)">
+          <span style="width:9px;height:9px;border-radius:50%;background:${sc.dot};flex:none"></span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--text)">${gi.nombre}</div><div style="font-size:10px;color:var(--muted)">Fase ${gi.fase}</div></div>
+          ${pct!==null?`<div style="text-align:right;margin-right:6px"><div style="font-size:15px;font-weight:700;color:${col}">${pct}%</div><div style="font-size:9px;color:var(--muted)">${log} de ${tot} metas</div></div>`:''}
+          <span style="background:${sc.bg};color:${sc.tx};font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;flex:none">${sc.lbl}</span>
+        </div>
+        <div style="padding:2px 14px 10px 32px;background:var(--surface)">${lis}</div>
+      </div>`;
+    }).join('');
+    const _nombresGate=_gO.map(gk=>GATES[gk]?.nombre);
+    const _huerf=_mp.filter(t=>!t.milestone||!_nombresGate.includes(t.milestone));
+    const _huerfHtml=_huerf.length?`<div style="border:1px dashed var(--border2);border-radius:var(--r2);padding:10px 14px;margin-top:4px"><div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:2px">Sin milestone asignado (${_huerf.length})</div>${_huerf.map(t=>{const [ic,c]=_mIcon(t.estatus);return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><span style="color:${c};font-size:13px">${ic}</span><span style="flex:1;font-size:12px;color:var(--text)">${t.tarea||''}</span><span style="font-size:10px;color:${c}">${t.estatus}</span></div>`;}).join('')}</div>`:'';
+    const _engNom=(USERS.find(u=>u.perfil===_proj.eng)?.nombre)||_proj.eng||'';
+    detalleHtml=`
+      <div style="background:var(--navy);border-radius:var(--r2);padding:14px 16px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+          <div><div style="font-size:10px;color:#93a4c8;letter-spacing:.04em;text-transform:uppercase">Proyecto</div>
+          <div style="font-size:16px;font-weight:700;color:#fff">${_proj.name}</div>
+          <div style="font-size:11px;color:#93a4c8;margin-top:2px">${_engNom} · entrega ${_proj.fechaFinal?fmtD(_proj.fechaFinal):'—'}</div></div>
+          <div style="text-align:right"><div style="font-size:24px;font-weight:700;color:#85B7EB">${_proj.avance||0}%</div><div style="font-size:10px;color:#93a4c8">avance</div></div>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--muted);font-size:14px;margin:2px 0">↓</div>
+      ${_gatesHtml}${_huerfHtml}`;
+  } else {
+    detalleHtml=`<div style="color:var(--muted);font-size:12px;padding:20px">No hay proyectos para mostrar.</div>`;
+  }
+
   c.innerHTML = `
   <div style="max-width:1100px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
@@ -2499,6 +2555,7 @@ function rCadencia(c){
       <select onchange="window._cadMes=this.value;rCadencia(document.getElementById('vc'))" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);outline:none;cursor:pointer">
         <option value="actual"${sel==='actual'?' selected':''}>Este mes</option>
         <option value="anterior"${sel==='anterior'?' selected':''}>Mes pasado</option>
+        <option value="todos"${sel==='todos'?' selected':''}>Todos los meses (promedio)</option>
         ${mesesDisp.map(mk=>{const _p=mk.split('-');const _l=new Date(+_p[0],+_p[1]-1,1).toLocaleDateString('es-MX',{month:'long',year:'numeric'});return `<option value="${mk}"${sel===mk?' selected':''}>${_l}</option>`;}).join('')}
       </select>
       <span style="font-size:11px;color:var(--muted)">${periodoLbl}</span>
@@ -2514,8 +2571,13 @@ function rCadencia(c){
       <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 12px">Cumplimiento del equipo por semana <span style="font-size:11px;font-weight:400;color:var(--muted)">· ${periodoLbl}</span></div>
       ${semanaHtml}
     </div>
-    <div style="border-top:1px dashed var(--border2);padding-top:16px;margin-top:20px;color:var(--muted);font-size:12px;font-style:italic">
-      Próximamente aquí: el detalle por proyecto (Milestones → Metas). — en construcción, sub-paso siguiente.
+    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--navy);padding:3px 9px;border-radius:99px">DETALLE POR PROYECTO</span>
+        <select onchange="window._cadProj=this.value;rCadencia(document.getElementById('vc'))" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);outline:none;cursor:pointer;max-width:320px">${_projOptions}</select>
+        <span style="font-size:11px;color:var(--muted)">Milestones → Metas · acumulado</span>
+      </div>
+      ${detalleHtml}
     </div>
   </div>`;
 }
