@@ -1645,34 +1645,7 @@ function rInicio(c){
     </div>
   </div>`;
 
-  // ── FILA 2: Proyectos criticos ──
-  h+=`<div style="margin-bottom:12px">
-
-    <!-- Proyectos criticos -->
-
-    <!-- Proyectos críticos -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">
-        Atención requerida
-        ${filtRisk.length+filtSoon.length>0?`<span style="font-size:10px;font-weight:700;color:#fff;background:var(--bad);padding:1px 7px;border-radius:99px;margin-left:6px">${filtRisk.length+filtSoon.length}</span>`:''}
-      </div>
-      ${[...filtRisk.map(p=>({p,tipo:'vencido'})),...filtSoon.map(p=>({p,tipo:'pronto'}))].slice(0,6).map(({p,tipo})=>{
-        const d=dNF(p);
-        const ec=ecOf(p.eng);
-        return`<div onclick="oP('${p.id}')" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--r);cursor:pointer;margin-bottom:4px;background:${tipo==='vencido'?'var(--bad-bg)':'var(--warn-bg)'}">
-          <div style="width:6px;height:6px;border-radius:50%;background:${tipo==='vencido'?'var(--bad)':'var(--warn)'};flex-shrink:0"></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-            <div style="font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px;margin-top:1px">
-              <span class="edot" style="background:${ec.dot}"></span>${NOMBRES[p.eng]||p.eng}
-            </div>
-          </div>
-          <span style="font-size:10px;font-weight:800;color:${tipo==='vencido'?'var(--bad)':'var(--warn)'};white-space:nowrap">${tipo==='vencido'?Math.abs(d)+'d venc.':d+'d'}</span>
-        </div>`;
-      }).join('')}
-      ${filtRisk.length+filtSoon.length===0?`<div style="text-align:center;padding:20px;color:var(--ok);font-size:12px;font-weight:600">✓ Todos los proyectos en tiempo</div>`:''}
-    </div>
-  </div>`;
+  // ── FILA 2: Atención requerida y Cumplimiento → tarjetas resumen con liga (abajo) ──
 
   // ── PANEL METAS SMART CONSOLIDADO ══
   const todasMetasDash=filtProj.flatMap(p=>(p.tareasSemana||[]).map(t=>({...t,pname:p.name,eng:p.eng||''})));
@@ -1696,52 +1669,26 @@ function rInicio(c){
   const pctGlobal=totalMetasSem>0?Math.round(totalLogradas/totalMetasSem*100):0;
   const fmtSemOpt=(s)=>{const d=new Date(s+'T12:00:00');const fin=new Date(d);fin.setDate(d.getDate()+6);return`${d.toLocaleDateString('es-MX',{day:'numeric',month:'short'})} – ${fin.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}`;};
 
-  if(todasMetasDash.length>0){
-    h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Metas SMART del equipo</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">${totalMetasSem} metas · ${semSelDash==='todas'?'Todas las semanas':fmtSemOpt(semSelDash)}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <select style="font-size:11px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);cursor:pointer"
-            onchange="window._dashSemSel=this.value;rInicio(document.getElementById('vc'))">
-            <option value="todas" ${semSelDash==='todas'?'selected':''}>Todas las semanas</option>
-            ${semanas.map(s=>`<option value="${s}" ${semSelDash===s?'selected':''}>${fmtSemOpt(s)}</option>`).join('')}
-          </select>
-          <div style="text-align:right">
-            <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:${pctGlobal>=70?'var(--ok)':pctGlobal>=50?'var(--warn)':'var(--bad)'};line-height:1">${pctGlobal}%</div>
-            <div style="font-size:9px;color:var(--muted)">cumplimiento</div>
-          </div>
-        </div>
-      </div>
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="border-bottom:1px solid var(--border2)">
-          <th style="text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:3px 6px">Ingeniero</th>
-          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:3px 6px">Total</th>
-          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--ok);text-transform:uppercase;padding:3px 6px">Logradas</th>
-          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--bad);text-transform:uppercase;padding:3px 6px">No logradas</th>
-          <th style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:3px 6px">Pendientes</th>
-          <th style="text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:3px 6px;min-width:80px">Cumplimiento</th>
-        </tr></thead>
-        <tbody>
-        ${filasMetas.map(f=>`<tr style="border-bottom:1px solid var(--border2)">
-          <td style="padding:6px 6px"><div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:${f.dotCol};flex-shrink:0"></div><span style="font-size:11px;font-weight:600">${f.nombre}</span></div></td>
-          <td style="text-align:center;font-size:11px;font-weight:700;padding:6px">${f.total}</td>
-          <td style="text-align:center;padding:6px"><span style="font-size:11px;font-weight:700;color:var(--ok)">${f.logradas}</span></td>
-          <td style="text-align:center;padding:6px"><span style="font-size:11px;font-weight:700;color:${f.noLogradas>0?'var(--bad)':'var(--muted)'}">${f.noLogradas}</span></td>
-          <td style="text-align:center;padding:6px"><span style="font-size:11px;color:var(--muted)">${f.pendientes}</span></td>
-          <td style="padding:6px"><div style="display:flex;align-items:center;gap:6px">
-            <div style="flex:1;height:6px;background:rgba(0,0,0,0.08);border-radius:99px;overflow:hidden;min-width:50px">
-              <div style="height:100%;width:${f.pct}%;background:${f.pct>=70?'var(--ok)':f.pct>=50?'var(--warn)':'var(--bad)'};border-radius:99px"></div>
-            </div>
-            <span style="font-size:10px;font-weight:700;color:${f.pct>=70?'var(--ok)':f.pct>=50?'var(--warn)':'var(--bad)'};min-width:28px">${f.pct}%</span>
-          </div></td>
-        </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
-  }
+  const _dHoy=new Date(); const _dMIni=new Date(_dHoy.getFullYear(),_dHoy.getMonth(),1).getTime();
+  const _dMetasMes=todasMetasDash.filter(t=>(t.creadoEn||0)>=_dMIni);
+  const _dLog=_dMetasMes.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
+  const _dPct=_dMetasMes.length?Math.round(_dLog/_dMetasMes.length*100):null;
+  const _dPctCol=_dPct===null?'var(--muted)':_dPct>=80?'var(--ok)':_dPct>=60?'var(--warn)':'var(--bad)';
+  const _atN=filtRisk.length;
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px 18px;display:flex;flex-direction:column">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Atención requerida</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px"><span style="font-size:34px;font-weight:800;color:${_atN>0?'var(--bad)':'var(--ok)'};line-height:1">${_atN}</span><span style="font-size:13px;color:var(--muted)">proyectos con fase vencida</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;min-height:14px">${filtRisk.slice(0,3).map(p=>p.name).join(', ')||'Todo en tiempo ✓'}</div>
+      <a onclick="sv2('reporte')" style="margin-top:auto;font-size:12px;font-weight:700;color:var(--blue);cursor:pointer">Ver en Reporte ejecutivo →</a>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px 18px;display:flex;flex-direction:column">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Cumplimiento del equipo</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px"><span style="font-size:34px;font-weight:800;color:${_dPctCol};line-height:1">${_dPct===null?'—':_dPct+'%'}</span><span style="font-size:13px;color:var(--muted)">metas SMART · este mes</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;min-height:14px">${_dMetasMes.length?_dLog+' de '+_dMetasMes.length+' metas logradas':'sin metas este mes'}</div>
+      <a onclick="sv2('cadencia')" style="margin-top:auto;font-size:12px;font-weight:700;color:var(--blue);cursor:pointer">Ver en Cadencia →</a>
+    </div>
+  </div>`;
 
   // ── ACCESOS RÁPIDOS ──
   h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
