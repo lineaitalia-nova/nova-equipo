@@ -2486,6 +2486,29 @@ function rCadencia(c){
     </div>`;
   }).join('');
 
+  // Cumplimiento del equipo por semana (dentro del mes seleccionado)
+  function _mondayOf(ms){const d=new Date(ms);const day=(d.getDay()+6)%7;d.setHours(0,0,0,0);d.setDate(d.getDate()-day);return d;}
+  const _sem={};
+  PROJ.forEach(p=>(p.tareasSemana||[]).forEach(t=>{
+    if((t.creadoEn||0)>=rangoIni && (t.creadoEn||0)<rangoFin){
+      const mon=_mondayOf(t.creadoEn), k=mon.getTime();
+      if(!_sem[k]) _sem[k]={ini:mon,total:0,log:0};
+      _sem[k].total++;
+      if(t.estatus==='Lograda'||t.estatus==='Parcial') _sem[k].log++;
+    }
+  }));
+  const semArr=Object.values(_sem).sort((a,b)=>a.ini-b.ini).map(s=>({pct:s.total?Math.round(s.log/s.total*100):0,total:s.total,log:s.log,lbl:s.ini.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}));
+  const semanaHtml = semArr.length ? `<div style="display:flex;align-items:flex-end;gap:14px;height:180px;padding:8px 4px 0;border-bottom:1px solid var(--border2)">
+      ${semArr.map(s=>{const col=colFor(s.pct);const h=Math.max(4,Math.round(s.pct/100*140));return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
+        <div style="font-size:12px;font-weight:700;color:${col};margin-bottom:3px">${s.pct}%</div>
+        <div style="width:100%;max-width:52px;height:${h}px;background:${col};border-radius:4px 4px 0 0"></div>
+      </div>`;}).join('')}
+    </div>
+    <div style="display:flex;gap:14px;padding:6px 4px 0">
+      ${semArr.map(s=>`<div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--muted)">Sem ${s.lbl}</div><div style="font-size:9px;color:var(--muted)">${s.log}/${s.total}</div></div>`).join('')}
+    </div>`
+    : `<div style="color:var(--muted);font-size:12px;padding:20px">Sin metas registradas en este mes.</div>`;
+
   c.innerHTML = `
   <div style="max-width:1100px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
@@ -2505,8 +2528,12 @@ function rCadencia(c){
       <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#d97706"></span>60–79% atención</span>
       <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#dc2626"></span>&lt; 60% en foco</span>
     </div>
-    <div style="border-top:1px dashed var(--border2);padding-top:16px;color:var(--muted);font-size:12px;font-style:italic">
-      Próximamente aquí: cumplimiento del equipo por semana, y el detalle por proyecto (Milestones → Metas). — en construcción, sub-pasos siguientes.
+    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:6px">
+      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 12px">Cumplimiento del equipo por semana <span style="font-size:11px;font-weight:400;color:var(--muted)">· ${periodoLbl}</span></div>
+      ${semanaHtml}
+    </div>
+    <div style="border-top:1px dashed var(--border2);padding-top:16px;margin-top:20px;color:var(--muted);font-size:12px;font-style:italic">
+      Próximamente aquí: el detalle por proyecto (Milestones → Metas). — en construcción, sub-paso siguiente.
     </div>
   </div>`;
 }
