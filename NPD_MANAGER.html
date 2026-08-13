@@ -2446,7 +2446,7 @@ function rCadencia(c){
     : `<div style="color:var(--muted);font-size:12px;padding:20px">Sin metas registradas en este mes.</div>`;
 
   // ---- Detalle por proyecto: jerarquía Milestones → Metas (acumulado, no filtrado por mes) ----
-  const _projList = PROJ.filter(p=>p.estatus!=='Cancelado');
+  const _projList = PROJ.filter(p=>p.estatus!=='Cancelado' && (selEng==='todos'||p.eng===selEng));
   let _selProj = window._cadProj;
   if(!_selProj || !_projList.find(p=>p.id===_selProj)) _selProj = (_projList.find(p=>p.estatus==='En linea')||_projList[0])?.id;
   const _proj = _projList.find(p=>p.id===_selProj);
