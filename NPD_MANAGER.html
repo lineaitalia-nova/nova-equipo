@@ -2496,6 +2496,39 @@ function rCadencia(c){
     detalleHtml=`<div style="color:var(--muted);font-size:12px;padding:20px">No hay proyectos para mostrar.</div>`;
   }
 
+  // ---- Roadmap del portafolio (Gantt por fases · un renglón por proyecto) ----
+  const _roadProjs = PROJ.filter(p=>(p.estatus==='En linea'||p.estatus==='Fuera de linea') && (selEng==='todos'||p.eng===selEng));
+  let roadmapHtml='';
+  {
+    const _rows=_roadProjs.map(p=>({p,phases:FK.map(f=>{const {ini,fin}=getFaseDates(p,f);return{f,ini,fin,fd:FD[f]};}).filter(x=>x.ini&&x.fin)})).filter(r=>r.phases.length);
+    if(!_rows.length){
+      roadmapHtml=`<div style="padding:16px;color:var(--muted);font-size:12px">Sin fechas de fase capturadas en los proyectos activos.</div>`;
+    } else {
+      const _allD=[]; _rows.forEach(r=>r.phases.forEach(ph=>{_allD.push(ph.ini,ph.fin);})); _allD.push(TODAY);
+      let _minD=new Date(Math.min(..._allD.map(d=>d.getTime()))), _maxD=new Date(Math.max(..._allD.map(d=>d.getTime())));
+      _minD.setDate(_minD.getDate()-10); _maxD.setDate(_maxD.getDate()+10);
+      const _tot=_maxD-_minD;
+      const _pct=d=>Math.max(0,Math.min(100,((d-_minD)/_tot)*100));
+      const _todayPct=_pct(TODAY);
+      const _months=[]; let _cur=new Date(_minD.getFullYear(),_minD.getMonth(),1);
+      while(_cur<=_maxD){_months.push({d:new Date(_cur),p:_pct(new Date(_cur))});_cur.setMonth(_cur.getMonth()+1);}
+      const _axis=`<div style="display:flex;align-items:center;height:16px;margin-bottom:3px"><span style="width:130px;flex:none"></span><div style="position:relative;flex:1;height:16px">${_months.map(m=>`<div style="position:absolute;left:${m.p}%;font-size:9px;color:var(--muted);font-weight:600;transform:translateX(-50%)">${m.d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`).join('')}</div><span style="width:40px;flex:none"></span></div>`;
+      const _rowsHtml=_rows.map(r=>{
+        const segs=r.phases.map(ph=>{const s=_pct(ph.ini),e=_pct(ph.fin),w=Math.max(1,e-s);return `<div style="position:absolute;left:${s}%;width:${w}%;top:0;height:16px;background:${ph.fd.c};border-radius:3px" title="${ph.f}: ${fmtD(toISO(ph.ini))} → ${fmtD(toISO(ph.fin))}"></div>`;}).join('');
+        return `<div style="display:flex;align-items:center;height:22px;margin-bottom:5px">
+          <span style="width:124px;flex:none;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px" title="${r.p.name}">${r.p.name}</span>
+          <div style="position:relative;flex:1;height:16px;background:var(--surface2);border-radius:3px">
+            <div style="position:absolute;left:${_todayPct}%;top:-3px;bottom:-3px;width:2px;background:#dc2626;z-index:2"></div>
+            ${segs}
+          </div>
+          <span style="width:40px;flex:none;text-align:right;font-size:11px;font-weight:700;color:var(--blue)">${r.p.avance||0}%</span>
+        </div>`;
+      }).join('');
+      const _leg=FK.map(f=>FD[f]?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:9px;height:9px;border-radius:2px;background:${FD[f].c}"></span>${f}</span>`:'').join('')+`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:14px;height:2px;background:#dc2626;display:inline-block"></span>hoy</span>`;
+      roadmapHtml=`${_axis}${_rowsHtml}<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)">${_leg}</div>`;
+    }
+  }
+
   c.innerHTML = `
   <div style="max-width:1100px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
@@ -2522,6 +2555,10 @@ function rCadencia(c){
     <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:6px">
       <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 12px">Cumplimiento del equipo por semana <span style="font-size:11px;font-weight:400;color:var(--muted)">· ${periodoLbl}</span></div>
       ${semanaHtml}
+    </div>
+    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:20px">
+      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 12px">Roadmap del portafolio <span style="font-size:11px;font-weight:400;color:var(--muted)">· proyectos activos · fases en el tiempo</span></div>
+      ${roadmapHtml}
     </div>
     <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:20px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
