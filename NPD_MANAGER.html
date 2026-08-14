@@ -2424,16 +2424,20 @@ function rCadencia(c){
 
   // Cumplimiento del equipo por semana (dentro del mes seleccionado)
   function _mondayOf(ms){const d=new Date(ms);const day=(d.getDay()+6)%7;d.setHours(0,0,0,0);d.setDate(d.getDate()-day);return d;}
+  function _isoWeek(d){const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=dt.getUTCDay()||7;dt.setUTCDate(dt.getUTCDate()+4-day);const ys=new Date(Date.UTC(dt.getUTCFullYear(),0,1));return Math.ceil((((dt-ys)/86400000)+1)/7);}
   const _sem={};
   PROJ.forEach(p=>(p.tareasSemana||[]).forEach(t=>{
-    if((selEng==='todos'||p.eng===selEng) && (t.creadoEn||0)>=rangoIni && (t.creadoEn||0)<rangoFin){
-      const mon=_mondayOf(t.creadoEn), k=mon.getTime();
+    const _cr=+t.creadoEn;
+    if(!Number.isFinite(_cr)||_cr<=0) return;
+    if((selEng==='todos'||p.eng===selEng) && _cr>=rangoIni && _cr<rangoFin){
+      const mon=_mondayOf(_cr); if(isNaN(mon.getTime())) return;
+      const k=mon.getTime();
       if(!_sem[k]) _sem[k]={ini:mon,total:0,log:0};
       _sem[k].total++;
       if(t.estatus==='Lograda'||t.estatus==='Parcial') _sem[k].log++;
     }
   }));
-  const semArr=Object.values(_sem).sort((a,b)=>a.ini-b.ini).map(s=>({pct:s.total?Math.round(s.log/s.total*100):0,total:s.total,log:s.log,lbl:s.ini.toLocaleDateString('es-MX',{day:'numeric',month:'short'})}));
+  const semArr=Object.values(_sem).sort((a,b)=>a.ini-b.ini).map(s=>({pct:s.total?Math.round(s.log/s.total*100):0,total:s.total,log:s.log,lbl:'Semana '+_isoWeek(s.ini)}));
   const semanaHtml = semArr.length ? `<div style="display:flex;align-items:flex-end;gap:14px;height:180px;padding:8px 4px 0;border-bottom:1px solid var(--border2)">
       ${semArr.map(s=>{const col=colFor(s.pct);const h=Math.max(4,Math.round(s.pct/100*140));return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
         <div style="font-size:12px;font-weight:700;color:${col};margin-bottom:3px">${s.pct}%</div>
@@ -2441,7 +2445,7 @@ function rCadencia(c){
       </div>`;}).join('')}
     </div>
     <div style="display:flex;gap:14px;padding:6px 4px 0">
-      ${semArr.map(s=>`<div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--muted)">Sem ${s.lbl}</div><div style="font-size:9px;color:var(--muted)">${s.log}/${s.total}</div></div>`).join('')}
+      ${semArr.map(s=>`<div style="flex:1;text-align:center"><div style="font-size:10px;color:var(--muted)">${s.lbl}</div><div style="font-size:9px;color:var(--muted)">${s.log}/${s.total}</div></div>`).join('')}
     </div>`
     : `<div style="color:var(--muted);font-size:12px;padding:20px">Sin metas registradas en este mes.</div>`;
 
@@ -2512,16 +2516,22 @@ function rCadencia(c){
       const _todayPct=_pct(TODAY);
       const _months=[]; let _cur=new Date(_minD.getFullYear(),_minD.getMonth(),1);
       while(_cur<=_maxD){_months.push({d:new Date(_cur),p:_pct(new Date(_cur))});_cur.setMonth(_cur.getMonth()+1);}
-      const _axis=`<div style="display:flex;align-items:center;height:16px;margin-bottom:3px"><span style="width:130px;flex:none"></span><div style="position:relative;flex:1;height:16px">${_months.map(m=>`<div style="position:absolute;left:${m.p}%;font-size:9px;color:var(--muted);font-weight:600;transform:translateX(-50%)">${m.d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`).join('')}</div><span style="width:40px;flex:none"></span></div>`;
+      const _axis=`<div style="display:flex;align-items:center;height:16px;margin-bottom:3px"><span style="width:124px;flex:none"></span><div style="position:relative;flex:1;height:16px">${_months.map(m=>`<div style="position:absolute;left:${m.p}%;font-size:9px;color:var(--muted);font-weight:600;transform:translateX(-50%)">${m.d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`).join('')}<div style="position:absolute;left:${_todayPct}%;font-size:9px;color:#dc2626;font-weight:800;transform:translateX(-50%)">HOY</div></div><span style="width:46px;flex:none"></span></div>`;
       const _rowsHtml=_rows.map(r=>{
-        const segs=r.phases.map(ph=>{const s=_pct(ph.ini),e=_pct(ph.fin),w=Math.max(1,e-s);return `<div style="position:absolute;left:${s}%;width:${w}%;top:0;height:16px;background:${ph.fd.c};border-radius:3px" title="${ph.f}: ${fmtD(toISO(ph.ini))} → ${fmtD(toISO(ph.fin))}"></div>`;}).join('');
-        return `<div style="display:flex;align-items:center;height:22px;margin-bottom:5px">
+        const segs=r.phases.map(ph=>{
+          const s=_pct(ph.ini),e=_pct(ph.fin),w=Math.max(1,e-s);
+          const fp=fpct(r.p,ph.f);
+          const op=fp===0?0.4:1;
+          const lbl=(w>7&&fp>0)?`<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:8px;font-weight:600;color:#fff;opacity:.8;white-space:nowrap">${fp}%</span>`:'';
+          return `<div style="position:absolute;left:${s}%;width:${w}%;top:0;height:22px;background:${ph.fd.c};opacity:${op};border-radius:5px" title="${ph.f}: ${fmtD(toISO(ph.ini))} → ${fmtD(toISO(ph.fin))} · ${fp}%">${lbl}</div>`;
+        }).join('');
+        return `<div style="display:flex;align-items:center;height:28px;margin-bottom:6px">
           <span style="width:124px;flex:none;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px" title="${r.p.name}">${r.p.name}</span>
-          <div style="position:relative;flex:1;height:16px;background:var(--surface2);border-radius:3px">
-            <div style="position:absolute;left:${_todayPct}%;top:-3px;bottom:-3px;width:2px;background:#dc2626;z-index:2"></div>
+          <div style="position:relative;flex:1;height:22px;background:var(--surface2);border-radius:5px">
+            <div style="position:absolute;left:${_todayPct}%;top:-4px;bottom:-4px;width:2px;background:#dc2626;z-index:2"></div>
             ${segs}
           </div>
-          <span style="width:40px;flex:none;text-align:right;font-size:11px;font-weight:700;color:var(--blue)">${r.p.avance||0}%</span>
+          <span style="width:46px;flex:none;text-align:right;font-size:15px;font-weight:800;color:var(--blue)">${r.p.avance||0}%</span>
         </div>`;
       }).join('');
       const _leg=FK.map(f=>FD[f]?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:9px;height:9px;border-radius:2px;background:${FD[f].c}"></span>${f}</span>`:'').join('')+`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:14px;height:2px;background:#dc2626;display:inline-block"></span>hoy</span>`;
@@ -2534,9 +2544,8 @@ function rCadencia(c){
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--blue);padding:3px 9px;border-radius:99px">PANORAMA DEL EQUIPO</span>
       <select onchange="window._cadMes=this.value;rCadencia(document.getElementById('vc'))" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);outline:none;cursor:pointer">
+        <option value="todos"${sel==='todos'?' selected':''}>Todos los meses</option>
         <option value="actual"${sel==='actual'?' selected':''}>Este mes</option>
-        <option value="anterior"${sel==='anterior'?' selected':''}>Mes pasado</option>
-        <option value="todos"${sel==='todos'?' selected':''}>Todos los meses (promedio)</option>
         ${mesesDisp.map(mk=>{const _p=mk.split('-');const _l=new Date(+_p[0],+_p[1]-1,1).toLocaleDateString('es-MX',{month:'long',year:'numeric'});return `<option value="${mk}"${sel===mk?' selected':''}>${_l}</option>`;}).join('')}
       </select>
       <select onchange="window._cadEng=this.value;rCadencia(document.getElementById('vc'))" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);outline:none;cursor:pointer">
