@@ -3020,6 +3020,7 @@ function rModal(){
     ${cE(p)||isG()?`<button onclick="renombrarProyecto('${p.id}')" title="Renombrar proyecto" style="background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:5px;color:var(--muted);font-size:13px;line-height:1;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">✏️</button>`:''}
   </div>
     <div class="mh-sub"><span style="font-family:var(--font-m);font-size:10px;background:var(--surface2);padding:1px 5px;border-radius:3px">${p.id}</span>
+    ${isG()?`<button onclick="corregirIdProyecto('${p.id}')" title="Corregir clave" style="background:none;border:none;cursor:pointer;padding:1px 4px;border-radius:4px;color:var(--muted);font-size:10px;line-height:1" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">✏️</button>`:''}
     <span style="background:${ec.bg};color:${ec.tc};padding:1px 7px;border-radius:99px;font-size:10px;font-weight:700">${ec.init}</span>
     <span style="font-size:11px">${NOMBRES[p.eng]||p.eng}</span>
     ${fT(p.fase)}<span class="tag${ed?' ok':' gray'}" style="font-size:9px">${ed?'Editable':'Lectura'}</span>
@@ -4765,6 +4766,33 @@ function reactivarProyecto(pid){
   sv2(av);
   toast(`"${p.name}" reactivado ✓`);
 }
+function corregirIdProyecto(pid){
+  const p=PROJ.find(x=>x.id===pid); if(!p) return;
+  if(!isG()){alert('Solo el gerente puede corregir la clave del proyecto.');return;}
+  let nuevo=prompt('Corregir clave de "'+p.name+'".\n\nClave actual: '+p.id+'\nEscribe la nueva clave (ej. PROJ4 o solo 4):', p.id);
+  if(nuevo===null) return;
+  nuevo=(nuevo||'').trim().toUpperCase();
+  if(/^\d+$/.test(nuevo)) nuevo='PROJ'+nuevo;
+  if(!/^PROJ\d+$/.test(nuevo)){alert('La clave debe ser PROJ seguido de un número. Ej: PROJ4');return;}
+  if(nuevo===p.id) return;
+  if(PROJ.some(x=>x.id===nuevo)){alert('Ya existe un proyecto con la clave '+nuevo+'.\nMueve primero ese proyecto o elige otra clave.');return;}
+  if(!confirm('¿Cambiar la clave de '+p.id+' a '+nuevo+'?\n\nSe actualizará el proyecto y su folio de bono.\nAsegúrate de tener respaldo de Firebase antes de continuar.')) return;
+  const viejo=p.id;
+  try{
+    localStorage.removeItem(VER+viejo);
+    let del=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
+    if(!del.includes(viejo)) del.push(viejo);
+    del=del.filter(x=>x!==nuevo);
+    localStorage.setItem(VER+'__deleted',JSON.stringify(del));
+  }catch(e){}
+  p.id=nuevo;
+  (p.act||[]).forEach(a=>{if(a.proj===viejo)a.proj=nuevo;});
+  addAct(p,'edit','Clave corregida de '+viejo+' a '+nuevo);
+  saveProj(p);
+  toast('Clave cambiada a '+nuevo);
+  cM(); oP(nuevo);
+}
+
 function eliminarProyecto(pid){
   const p=PROJ.find(x=>x.id===pid);if(!p||!isG())return;
   if(!confirm(`ELIMINAR DEFINITIVAMENTE\n\n"${p.name}"\n\nEsta accion borrara el proyecto permanentemente. NO se puede deshacer.\n\nEstas seguro?`))return;
