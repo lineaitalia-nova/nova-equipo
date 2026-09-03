@@ -734,12 +734,12 @@ tr:hover td{background:var(--bg);cursor:pointer}
 
 <!-- MODAL PROBLEMA -->
 <div class="modal-bg" id="listas-modal-bg" onclick="if(event.target===this)closeListas()">
-  <div style="background:var(--w,#fff);border-radius:12px;max-width:660px;width:94%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(15,21,53,.3)">
+  <div style="background:var(--w,#fff);border-radius:12px;max-width:860px;width:96%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(15,21,53,.3)">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#0f1535;border-radius:12px 12px 0 0">
       <span style="color:#fff;font-weight:700;font-size:15px">⚙ Administrar listas</span>
       <span onclick="closeListas()" style="color:#fff;cursor:pointer;font-size:20px;line-height:1">×</span>
     </div>
-    <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
       <div>
         <div style="font-weight:700;font-size:13px;color:var(--tx);margin-bottom:6px">Asesores comerciales</div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
@@ -756,6 +756,14 @@ tr:hover td{background:var(--bg);cursor:pointer}
           <button onclick="window.addResponsable()" style="font-size:11px;padding:4px 12px;border:none;border-radius:5px;background:#2563eb;color:#fff;cursor:pointer;font-weight:600">Agregar</button>
         </div>
         <div id="lst-responsables" style="max-height:340px;overflow:auto;border:1px solid var(--br);border-radius:6px"></div>
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:13px;color:var(--tx);margin-bottom:6px">Sucursales</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input id="nv-sucursal" placeholder="Nombre (ej. Santa Fe)" style="flex:1;font-size:12px;padding:6px 8px;border:1px solid var(--br);border-radius:5px">
+          <button onclick="window.addSucursal()" style="font-size:11px;padding:4px 12px;border:none;border-radius:5px;background:#2563eb;color:#fff;cursor:pointer;font-weight:600">Agregar</button>
+        </div>
+        <div id="lst-sucursales" style="max-height:340px;overflow:auto;border:1px solid var(--br);border-radius:6px"></div>
       </div>
     </div>
     <div style="padding:0 16px 16px;font-size:11px;color:var(--tx3)">Quitar a alguien solo lo saca de los menús para folios nuevos; no afecta los folios existentes ni el historial.</div>
@@ -917,7 +925,9 @@ function mergeState(local, remote){
   var asesores=((local.asesoresTs||0)>=(remote.asesoresTs||0))?(local.asesores||remote.asesores):(remote.asesores||local.asesores);
   var responsablesTs=Math.max(local.responsablesTs||0, remote.responsablesTs||0);
   var responsables=((local.responsablesTs||0)>=(remote.responsablesTs||0))?(local.responsables||remote.responsables):(remote.responsables||local.responsables);
-  return { folios: folios, problemas: probs, del: del, reactivaciones: (local.reactivaciones||remote.reactivaciones||[]), asesores: asesores, asesoresTs: asesoresTs, responsables: responsables, responsablesTs: responsablesTs };
+  var sucursalesTs=Math.max(local.sucursalesTs||0, remote.sucursalesTs||0);
+  var sucursales=((local.sucursalesTs||0)>=(remote.sucursalesTs||0))?(local.sucursales||remote.sucursales):(remote.sucursales||local.sucursales);
+  return { folios: folios, problemas: probs, del: del, reactivaciones: (local.reactivaciones||remote.reactivaciones||[]), asesores: asesores, asesoresTs: asesoresTs, responsables: responsables, responsablesTs: responsablesTs, sucursales: sucursales, sucursalesTs: sucursalesTs };
 }
 
 function normalizeFolios(arr){
@@ -939,9 +949,11 @@ function applyMerged(m, rerender){
   if(m.reactivaciones) STATE.reactivaciones = m.reactivaciones;
   if(m.asesores){ STATE.asesores=m.asesores; STATE.asesoresTs=m.asesoresTs||STATE.asesoresTs||0; }
   if(m.responsables){ STATE.responsables=m.responsables; STATE.responsablesTs=m.responsablesTs||STATE.responsablesTs||0; }
+  if(m.sucursales){ STATE.sucursales=m.sucursales; STATE.sucursalesTs=m.sucursalesTs||STATE.sucursalesTs||0; }
   if(window.seedListas) window.seedListas();
   if(window.fillResponsableSelects) window.fillResponsableSelects();
   if(window.fillAsesorSelect) window.fillAsesorSelect();
+  if(window.fillSucursalSelects) window.fillSucursalSelects();
   window.STATE = STATE;
   try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e) {}
   if(rerender){
@@ -1206,6 +1218,12 @@ function seedListas(){
     STATE.asesoresTs=1;
   }
   if(!STATE.responsables){ STATE.responsables=RESP_BASE.slice(); STATE.responsablesTs=1; }
+  if(!STATE.sucursales){
+    var sbase=[{v:'CDMX',n:'CDMX'},{v:'MTY',n:'Monterrey'},{v:'QRO',n:'Querétaro'},{v:'AGS',n:'Aguascalientes'},{v:'LEON',n:'León'},{v:'GDL',n:'Guadalajara'}];
+    var seen={}; sbase.forEach(function(s){seen[s.v]=1;});
+    (STATE.folios||[]).forEach(function(f){ var v=((f.sucursal||'')+'').trim(); if(v && !seen[v]){ seen[v]=1; sbase.push({v:v,n:v}); } });
+    STATE.sucursales=sbase; STATE.sucursalesTs=1;
+  }
 }
 window.seedListas=seedListas;
 function _esc(s){ return (''+s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
@@ -1230,6 +1248,26 @@ function fillResponsableSelects(curIng){
   if(dsh){ var dv=dsh.value; dsh.innerHTML='<option value="">Todos</option>'+arr.map(function(r){return '<option value="'+_esc(r.v)+'">'+_esc(r.n)+'</option>';}).join(''); dsh.value=dv||''; }
 }
 window.fillResponsableSelects=fillResponsableSelects;
+function fillSucursalSelects(cur){
+  var arr=(STATE.sucursales||[]);
+  var fs=document.getElementById('f-sucursal');
+  if(fs){ var v=(cur!==undefined)?cur:fs.value; var has=arr.some(function(s){return s.v===v;});
+    fs.innerHTML='<option value="">— Seleccionar —</option>'+arr.map(function(s){return '<option value="'+_esc(s.v)+'">'+_esc(s.n)+'</option>';}).join('')+((v&&!has)?'<option value="'+_esc(v)+'">'+_esc(v)+'</option>':'');
+    fs.value=v||''; }
+  var flt=document.getElementById('fl-suc');
+  if(flt){ var fv=flt.value; flt.innerHTML='<option value="">Todas</option>'+arr.map(function(s){return '<option value="'+_esc(s.v)+'">'+_esc(s.n)+'</option>';}).join(''); flt.value=fv||''; }
+}
+window.fillSucursalSelects=fillSucursalSelects;
+window.addSucursal=function(){
+  var i=document.getElementById('nv-sucursal'); if(!i)return; var v=(i.value||'').trim(); if(!v)return;
+  STATE.sucursales=STATE.sucursales||[];
+  if(!STATE.sucursales.some(function(s){return s.v===v||s.n===v;})) STATE.sucursales.push({v:v,n:v});
+  STATE.sucursalesTs=Date.now(); i.value=''; saveState(); renderListas(); fillSucursalSelects();
+};
+window.removeSucursal=function(v){
+  STATE.sucursales=(STATE.sucursales||[]).filter(function(s){return s.v!==v;});
+  STATE.sucursalesTs=Date.now(); saveState(); renderListas(); fillSucursalSelects();
+};
 function renderListas(){
   var a=document.getElementById('lst-asesores');
   if(a){ a.innerHTML=(STATE.asesores||[]).map(function(n){
@@ -1239,6 +1277,10 @@ function renderListas(){
   if(r){ r.innerHTML=(STATE.responsables||[]).map(function(o){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 9px;border-bottom:1px solid var(--bg2);font-size:12px"><span>'+_esc(o.n)+' <span style="color:var(--tx3)">('+_esc(o.v)+')</span></span><span onclick="window.removeResponsable(&quot;'+_esc(o.v)+'&quot;)" title="Quitar" style="cursor:pointer;color:var(--rd);font-weight:700;padding:0 6px">×</span></div>';
   }).join('')||'<div style="padding:10px;color:var(--tx3);font-size:12px">Sin responsables</div>'; }
+  var sc=document.getElementById('lst-sucursales');
+  if(sc){ sc.innerHTML=(STATE.sucursales||[]).map(function(o){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 9px;border-bottom:1px solid var(--bg2);font-size:12px"><span>'+_esc(o.n)+'</span><span onclick="window.removeSucursal(&quot;'+_esc(o.v)+'&quot;)" title="Quitar" style="cursor:pointer;color:var(--rd);font-weight:700;padding:0 6px">×</span></div>';
+  }).join('')||'<div style="padding:10px;color:var(--tx3);font-size:12px">Sin sucursales</div>'; }
 }
 window.openListas=function(){ if(!(typeof CU!=='undefined'&&CU&&CU.rol==='GERENTE'))return; renderListas(); var m=document.getElementById('listas-modal-bg'); if(m)m.classList.add('open'); };
 window.closeListas=function(){ var m=document.getElementById('listas-modal-bg'); if(m)m.classList.remove('open'); };
@@ -1661,7 +1703,8 @@ window.openModal = function(id) {
   var fte=document.getElementById('f-tipoerror'); if(fte) fte.value=folio&&folio.tipoError?folio.tipoError:'';
   window.toggleErrorFields();
   var fno=document.getElementById('f-nota'); if(fno) fno.value=folio?folio.nota||'':'';
-  var fsuc=document.getElementById('f-sucursal'); if(fsuc) fsuc.value=folio?folio.sucursal||'':'';
+  var _curSuc=folio?(folio.sucursal||''):''; if(window.fillSucursalSelects) window.fillSucursalSelects(_curSuc);
+  var fsuc=document.getElementById('f-sucursal'); if(fsuc) fsuc.value=_curSuc||'';
   var fpe=document.getElementById('f-precio'); if(fpe) fpe.value=folio&&folio.precio?folio.precio:'';
   var fpd=document.getElementById('f-pedido'); if(fpd) fpd.value=folio?folio.pedido||'sin_pedido':'sin_pedido';
   var btnEl=document.getElementById('btn-eliminar'); if(btnEl) btnEl.style.display=id?'inline-flex':'none';
