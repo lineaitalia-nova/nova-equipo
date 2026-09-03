@@ -232,6 +232,7 @@ tr:hover td{background:var(--bg);cursor:pointer}
     <button class="btn btn-sec" onclick="openModal()">+ Nuevo folio</button>
     <button class="btn btn-sec" onclick="doLogout()" style="font-size:11px">Salir</button>
     <button class="btn btn-sec" onclick="window.descargarRespaldo()" style="font-size:11px" title="Descargar respaldo del estado actual">⬇ Respaldar</button>
+    <button id="btn-listas" class="btn btn-sec" onclick="window.openListas()" style="font-size:11px;display:none" title="Administrar asesores y responsables">⚙ Listas</button>
     <button class="btn btn-prim" onclick="enviarReporte()">📊 Reporte</button>
   </div>
 </div>
@@ -732,6 +733,34 @@ tr:hover td{background:var(--bg);cursor:pointer}
 </div>
 
 <!-- MODAL PROBLEMA -->
+<div class="modal-bg" id="listas-modal-bg" onclick="if(event.target===this)closeListas()">
+  <div style="background:var(--w,#fff);border-radius:12px;max-width:660px;width:94%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(15,21,53,.3)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#0f1535;border-radius:12px 12px 0 0">
+      <span style="color:#fff;font-weight:700;font-size:15px">⚙ Administrar listas</span>
+      <span onclick="closeListas()" style="color:#fff;cursor:pointer;font-size:20px;line-height:1">×</span>
+    </div>
+    <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div>
+        <div style="font-weight:700;font-size:13px;color:var(--tx);margin-bottom:6px">Asesores comerciales</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <input id="nv-asesor" placeholder="Nombre del asesor" style="flex:1;font-size:12px;padding:6px 8px;border:1px solid var(--br);border-radius:5px">
+          <button onclick="window.addAsesor()" style="font-size:11px;padding:4px 12px;border:none;border-radius:5px;background:#2563eb;color:#fff;cursor:pointer;font-weight:600">Agregar</button>
+        </div>
+        <div id="lst-asesores" style="max-height:340px;overflow:auto;border:1px solid var(--br);border-radius:6px"></div>
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:13px;color:var(--tx);margin-bottom:6px">Responsables (ing. de producto)</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+          <input id="nv-resp-v" placeholder="Clave (KEVIN)" style="width:100px;font-size:12px;padding:6px 8px;border:1px solid var(--br);border-radius:5px">
+          <input id="nv-resp-n" placeholder="Nombre completo" style="flex:1;min-width:120px;font-size:12px;padding:6px 8px;border:1px solid var(--br);border-radius:5px">
+          <button onclick="window.addResponsable()" style="font-size:11px;padding:4px 12px;border:none;border-radius:5px;background:#2563eb;color:#fff;cursor:pointer;font-weight:600">Agregar</button>
+        </div>
+        <div id="lst-responsables" style="max-height:340px;overflow:auto;border:1px solid var(--br);border-radius:6px"></div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px;font-size:11px;color:var(--tx3)">Quitar a alguien solo lo saca de los menús para folios nuevos; no afecta los folios existentes ni el historial.</div>
+  </div>
+</div>
 <div class="modal-bg" id="prob-modal-bg" onclick="if(event.target===this)closeProbModal()">
 <div class="modal">
   <div class="modal-h">
@@ -884,7 +913,11 @@ function mergeState(local, remote){
   // limpiar tombstones de más de 30 días
   var cut = Date.now() - 30*24*3600*1000;
   Object.keys(del).forEach(function(id){ if(del[id] < cut) delete del[id]; });
-  return { folios: folios, problemas: probs, del: del, reactivaciones: (local.reactivaciones||remote.reactivaciones||[]) };
+  var asesoresTs=Math.max(local.asesoresTs||0, remote.asesoresTs||0);
+  var asesores=((local.asesoresTs||0)>=(remote.asesoresTs||0))?(local.asesores||remote.asesores):(remote.asesores||local.asesores);
+  var responsablesTs=Math.max(local.responsablesTs||0, remote.responsablesTs||0);
+  var responsables=((local.responsablesTs||0)>=(remote.responsablesTs||0))?(local.responsables||remote.responsables):(remote.responsables||local.responsables);
+  return { folios: folios, problemas: probs, del: del, reactivaciones: (local.reactivaciones||remote.reactivaciones||[]), asesores: asesores, asesoresTs: asesoresTs, responsables: responsables, responsablesTs: responsablesTs };
 }
 
 function normalizeFolios(arr){
@@ -904,6 +937,11 @@ function applyMerged(m, rerender){
   STATE.problemas = m.problemas || STATE.problemas || [];
   STATE.del = m.del || {};
   if(m.reactivaciones) STATE.reactivaciones = m.reactivaciones;
+  if(m.asesores){ STATE.asesores=m.asesores; STATE.asesoresTs=m.asesoresTs||STATE.asesoresTs||0; }
+  if(m.responsables){ STATE.responsables=m.responsables; STATE.responsablesTs=m.responsablesTs||STATE.responsablesTs||0; }
+  if(window.seedListas) window.seedListas();
+  if(window.fillResponsableSelects) window.fillResponsableSelects();
+  if(window.fillAsesorSelect) window.fillAsesorSelect();
   window.STATE = STATE;
   try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e) {}
   if(rerender){
@@ -1154,6 +1192,78 @@ window.saveProblema = function(){
   });
   saveState(); window.closeProbModal(); alert('Problema registrado.');
 };
+// ── LISTAS ADMINISTRABLES (asesores / responsables) ──
+var RESP_BASE = [
+  {v:'ROMO',n:'Enrique Romo'},{v:'ALEXIS',n:'Alexis Esparza'},{v:'OBED',n:'Obed Zavala'},
+  {v:'ENRIQUE',n:'Enrique (otro)'},{v:'LUIS',n:'Luis López'},{v:'FRANCISCO',n:'Francisco de la Rosa'},
+  {v:'EVERARDO',n:'Everardo Aguayo'},{v:'RAMON',n:'Ramón Barraza'}
+];
+function seedListas(){
+  if(!STATE.asesores){
+    var set={};
+    (STATE.folios||[]).forEach(function(f){ var v=((f.vendedor||f.asesor||'')+'').trim(); if(v) set[v]=1; });
+    STATE.asesores=Object.keys(set).sort(function(a,b){return a.localeCompare(b);});
+    STATE.asesoresTs=1;
+  }
+  if(!STATE.responsables){ STATE.responsables=RESP_BASE.slice(); STATE.responsablesTs=1; }
+}
+window.seedListas=seedListas;
+function _esc(s){ return (''+s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function fillAsesorSelect(cur){
+  var sel=document.getElementById('f-asesor'); if(!sel) return;
+  var v=(cur!==undefined)?cur:sel.value;
+  var arr=(STATE.asesores||[]).slice();
+  if(v && arr.indexOf(v)<0) arr.push(v);
+  sel.innerHTML='<option value="">— Seleccionar asesor —</option>'+arr.map(function(a){return '<option value="'+_esc(a)+'">'+_esc(a)+'</option>';}).join('');
+  sel.value=v||'';
+}
+window.fillAsesorSelect=fillAsesorSelect;
+function fillResponsableSelects(curIng){
+  var arr=(STATE.responsables||[]);
+  var fi=document.getElementById('f-ing');
+  if(fi){ var v=(curIng!==undefined)?curIng:fi.value; var has=arr.some(function(r){return r.v===v;});
+    fi.innerHTML='<option value="">— Asignar —</option>'+arr.map(function(r){return '<option value="'+_esc(r.v)+'">'+_esc(r.n)+'</option>';}).join('')+((v&&!has)?'<option value="'+_esc(v)+'">'+_esc(v)+'</option>':'');
+    fi.value=v||''; }
+  var flt=document.getElementById('fl-ing');
+  if(flt){ var fv=flt.value; flt.innerHTML='<option value="">Todos</option>'+arr.map(function(r){return '<option value="'+_esc(r.v)+'">'+_esc(r.v)+'</option>';}).join(''); flt.value=fv||''; }
+  var dsh=document.getElementById('dash-ing');
+  if(dsh){ var dv=dsh.value; dsh.innerHTML='<option value="">Todos</option>'+arr.map(function(r){return '<option value="'+_esc(r.v)+'">'+_esc(r.n)+'</option>';}).join(''); dsh.value=dv||''; }
+}
+window.fillResponsableSelects=fillResponsableSelects;
+function renderListas(){
+  var a=document.getElementById('lst-asesores');
+  if(a){ a.innerHTML=(STATE.asesores||[]).map(function(n){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 9px;border-bottom:1px solid var(--bg2);font-size:12px"><span>'+_esc(n)+'</span><span onclick="window.removeAsesor(&quot;'+_esc(n).replace(/'/g,"\\'")+'&quot;)" title="Quitar" style="cursor:pointer;color:var(--rd);font-weight:700;padding:0 6px">×</span></div>';
+  }).join('')||'<div style="padding:10px;color:var(--tx3);font-size:12px">Sin asesores</div>'; }
+  var r=document.getElementById('lst-responsables');
+  if(r){ r.innerHTML=(STATE.responsables||[]).map(function(o){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 9px;border-bottom:1px solid var(--bg2);font-size:12px"><span>'+_esc(o.n)+' <span style="color:var(--tx3)">('+_esc(o.v)+')</span></span><span onclick="window.removeResponsable(&quot;'+_esc(o.v)+'&quot;)" title="Quitar" style="cursor:pointer;color:var(--rd);font-weight:700;padding:0 6px">×</span></div>';
+  }).join('')||'<div style="padding:10px;color:var(--tx3);font-size:12px">Sin responsables</div>'; }
+}
+window.openListas=function(){ if(!(typeof CU!=='undefined'&&CU&&CU.rol==='GERENTE'))return; renderListas(); var m=document.getElementById('listas-modal-bg'); if(m)m.classList.add('open'); };
+window.closeListas=function(){ var m=document.getElementById('listas-modal-bg'); if(m)m.classList.remove('open'); };
+window.addAsesor=function(){
+  var i=document.getElementById('nv-asesor'); if(!i)return; var v=(i.value||'').trim(); if(!v)return;
+  STATE.asesores=STATE.asesores||[];
+  if(STATE.asesores.indexOf(v)<0){ STATE.asesores.push(v); STATE.asesores.sort(function(a,b){return a.localeCompare(b);}); }
+  STATE.asesoresTs=Date.now(); i.value=''; saveState(); renderListas(); fillAsesorSelect();
+};
+window.removeAsesor=function(n){
+  STATE.asesores=(STATE.asesores||[]).filter(function(x){return x!==n;});
+  STATE.asesoresTs=Date.now(); saveState(); renderListas(); fillAsesorSelect();
+};
+window.addResponsable=function(){
+  var vi=document.getElementById('nv-resp-v'), ni=document.getElementById('nv-resp-n'); if(!vi||!ni)return;
+  var v=(vi.value||'').trim().toUpperCase(), n=(ni.value||'').trim(); if(!v||!n)return;
+  STATE.responsables=STATE.responsables||[];
+  if(!STATE.responsables.some(function(r){return r.v===v;})) STATE.responsables.push({v:v,n:n});
+  STATE.responsablesTs=Date.now(); vi.value='';ni.value=''; saveState(); renderListas(); fillResponsableSelects();
+};
+window.removeResponsable=function(v){
+  STATE.responsables=(STATE.responsables||[]).filter(function(r){return r.v!==v;});
+  STATE.responsablesTs=Date.now(); saveState(); renderListas(); fillResponsableSelects();
+};
+
 window.renderList = function() {
   var tipo = (document.getElementById('fl-tipo')||{}).value||'';
   var ing  = (document.getElementById('fl-ing')||{}).value||'';
@@ -1536,9 +1646,11 @@ window.openModal = function(id) {
   var fid=document.getElementById('f-id'); if(fid){fid.value=folio?folio.id:'';}
   var fti=document.getElementById('f-tipo'); if(fti) fti.value=folio?folio.tipo:'';
   var ffe=document.getElementById('f-fecha'); if(ffe) ffe.value=folio?folio.fecha:'';
-  var fin=document.getElementById('f-ing'); if(fin) fin.value=folio?folio.ing:'';
+  var _curIng=folio?folio.ing:''; if(window.fillResponsableSelects) window.fillResponsableSelects(_curIng);
+  var fin=document.getElementById('f-ing'); if(fin) fin.value=_curIng||'';
   var fpr=document.getElementById('f-proyecto'); if(fpr) fpr.value=folio?folio.proyecto||folio.cliente||'':'';
-  var fas=document.getElementById('f-asesor'); if(fas) fas.value=folio?folio.vendedor||folio.asesor||'':'';
+  var _curAs=folio?(folio.vendedor||folio.asesor||''):''; if(window.fillAsesorSelect) window.fillAsesorSelect(_curAs);
+  var fas=document.getElementById('f-asesor'); if(fas) fas.value=_curAs||'';
   var fst=document.getElementById('f-status'); if(fst) fst.value=folio?folio.status:'pendiente';
   var fga=document.getElementById('f-garantia'); if(fga) fga.value=folio&&folio.garantia?'true':'false';
   var fca=document.getElementById('f-causa'); if(fca) fca.value=folio&&folio.causa?folio.causa:'';
@@ -1653,7 +1765,7 @@ window.openPanelIng = function(id) {
   var stLabels={pendiente:'Pendiente',en_proceso:'En proceso',terminado:'Terminado',problema:'Con problema'};
   var stColors={pendiente:'var(--tx3)',en_proceso:'var(--ac)',terminado:'var(--gn)',problema:'var(--rd)'};
   var st=f.status||'pendiente';
-  var ingOpts=['','ROMO','ALEXIS','OBED','EVERARDO','FRANCISCO','RAMON'];
+  var ingOpts=[''].concat((STATE.responsables||[]).map(function(r){return r.v;}));
   var ingSelect='<select id="ing-resp-sel" style="font-size:11px;padding:3px 6px;border:1px solid var(--br);border-radius:4px;background:var(--w);color:var(--tx)">'
     +ingOpts.map(function(o){return '<option value="'+o+'"'+(o===f.ing?' selected':'')+'>'+( o||'— Sin asignar —')+'</option>';}).join('')
     +'</select>';
@@ -1927,6 +2039,7 @@ window.doLogin = function() {
   var lgBg=document.getElementById('login-bg'); if(lgBg) lgBg.style.display='none';
   var unEl=document.getElementById('usr-name'); if(unEl) unEl.textContent=found.n;
   var urEl=document.getElementById('usr-rol'); if(urEl) urEl.textContent=found.rol;
+  var blst=document.getElementById('btn-listas'); if(blst) blst.style.display=(found.rol==='GERENTE')?'':'none';
   window.applyPermisos();
   // Cargar desde Firebase o localStorage (el más reciente gana)
   fbLoad(function() {
