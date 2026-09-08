@@ -986,7 +986,8 @@ function fbSync(){
     fbGet().then(function(remote){
       var merged = mergeState(STATE, remote);
       applyMerged(merged, true);
-      var body = JSON.stringify(Object.assign({}, merged, {_ts: Date.now()}));
+      var myTs = Date.now();
+      var body = JSON.stringify(Object.assign({}, merged, {_ts: myTs}));
       var headers = {'Content-Type':'application/json'};
       if(FB_ETAG) headers['if-match'] = FB_ETAG;
       return fetch(FB_URL + '/state.json', {method:'PUT', headers:headers, body:body}).then(function(pr){
@@ -998,7 +999,7 @@ function fbSync(){
             return fetch(FB_URL + '/state.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(Object.assign({}, m2, {_ts:Date.now()}))});
           });
         }
-        if(pr.ok){ FB_ON = true; updateFBIndicator(true); } else { updateFBIndicator(false); }
+        if(pr.ok){ FB_ON = true; updateFBIndicator(true); LAST_TS = myTs; } else { updateFBIndicator(false); }
       });
     }).catch(function(e){ updateFBIndicator(false); })
       .then(function(){ _syncing = false; if(_syncQueued){ _syncQueued = false; setTimeout(fbSync, 150); } });
@@ -1006,24 +1007,36 @@ function fbSync(){
 }
 
 // Poll: SOLO lee y combina lo de otros. Nunca escribe (cada quien sube lo suyo al guardar).
+// OPTIMIZADO (sep 2026): antes bajaba /state.json completo (~610 KB) cada 7 s solo para
+// comparar si algo habia cambiado. Eso consumia ~2.5 GB por usuario por jornada y reventó
+// la cuota de Firebase (159 GB en 8 dias). Ahora consulta primero /state/_ts.json (~13 bytes)
+// y baja el state completo unicamente cuando alguien mas guardo algo.
+var LAST_TS = 0;
 function fbPoll(){
-  fetch(FB_URL + '/state.json').then(function(r){ FB_ON = true; updateFBIndicator(true); return r.json(); })
-    .then(function(remote){
-      if(!remote) return;
-      function sig(list){ return (list||[]).length + '|' + (list||[]).map(function(f){return f.id+':'+(f._m||0)+':'+f.status;}).sort().join(','); }
-      var before = sig(STATE.folios);
-      var merged = mergeState(STATE, remote);
-      var mf = normalizeFolios(merged.folios.slice());
-      if(before !== sig(mf)){ applyMerged(merged, true); }
-    }).catch(function(){ updateFBIndicator(false); });
+  fetch(FB_URL + '/state/_ts.json').then(function(r){
+    FB_ON = true; updateFBIndicator(true); return r.json();
+  }).then(function(ts){
+    if(!ts || ts === LAST_TS) return;   // nadie cambio nada: no bajamos el state
+    LAST_TS = ts;
+    return fetch(FB_URL + '/state.json').then(function(r){ return r.json(); })
+      .then(function(remote){
+        if(!remote) return;
+        function sig(list){ return (list||[]).length + '|' + (list||[]).map(function(f){return f.id+':'+(f._m||0)+':'+f.status;}).sort().join(','); }
+        var before = sig(STATE.folios);
+        var merged = mergeState(STATE, remote);
+        var mf = normalizeFolios(merged.folios.slice());
+        if(before !== sig(mf)){ applyMerged(merged, true); }
+      });
+  }).catch(function(){ updateFBIndicator(false); });
 }
-setInterval(fbPoll, 7000);
+setInterval(fbPoll, 15000);
 
 // Carga inicial: el servidor es la base; se combinan cambios locales no sincronizados.
 function fbLoad(cb){
   var localData = null;
   try { var ls = localStorage.getItem(LS_KEY); if(ls) localData = JSON.parse(ls); } catch(e){}
   fbGet().then(function(remote){
+    if(remote && remote._ts) LAST_TS = remote._ts;
     var hasRemote = remote && remote.folios && remote.folios.length > 0;
     var hasLocal  = localData && localData.folios && localData.folios.length > 0;
     var merged;
