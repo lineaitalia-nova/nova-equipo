@@ -696,7 +696,16 @@ function fbPush(){
   const data={};
   keys.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
   data['__deleted']=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
-  fetch(FB_NPD+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+  const myTs=Date.now();
+  data['_ts']=myTs;                                // centinela para el poll optimizado
+  // PATCH en lugar de PUT (sep 2026). PUT reemplazaba el nodo /npd COMPLETO con lo que
+  // tuviera el localStorage de este navegador: si una pestaña iba atrasada o arrancaba
+  // vacia, su guardado borraba silenciosamente los proyectos que no conocia. PATCH solo
+  // actualiza las claves que se envian y deja intacto todo lo demas. El borrado de
+  // proyectos sigue funcionando porque se maneja con la lista __deleted, no con la
+  // ausencia de la clave.
+  fetch(FB_NPD+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(()=>{NPD_LAST_TS=myTs;})                 // tu propio guardado no dispara recarga
     .catch(e=>{});
 }
 
@@ -705,7 +714,9 @@ async function fbPull(){
     const r=await fetch(FB_NPD+'.json');
     const data=await r.json();
     if(!data)return false;
+    if(data._ts) NPD_LAST_TS=data._ts;
     Object.entries(data).forEach(([k,v])=>{
+      if(k==='_ts')return;                         // centinela, no es un proyecto
       if(k==='__deleted'){localStorage.setItem(VER+'__deleted',JSON.stringify(v));return;}
       // Merge inteligente: solo sobreescribir si Firebase tiene versión más reciente
       try{
@@ -722,15 +733,35 @@ async function fbPull(){
   }catch(e){return false;}
 }
 
+// OPTIMIZADO (sep 2026): antes cada sincronizacion bajaba /npd completo (~1.16 MB).
+// Ahora consulta primero /npd/_ts.json (~13 bytes) y solo baja todo cuando alguien mas
+// guardo algo.
+var NPD_LAST_TS = 0;
+async function fbPullIfChanged(){
+  try{
+    const r=await fetch(FB_NPD+'/_ts.json');
+    const ts=await r.json();
+    if(ts===null||ts===undefined){
+      // El nodo _ts todavia no existe (se crea en el primer guardado). Sincroniza una
+      // sola vez y luego espera, en lugar de bajar /npd completo cada 30 s.
+      if(NPD_LAST_TS===0){NPD_LAST_TS=-1;return await fbPull();}
+      return false;
+    }
+    if(ts===NPD_LAST_TS) return false;             // nadie cambio nada: no bajamos nada
+    NPD_LAST_TS=ts;
+    return await fbPull();
+  }catch(e){return false;}
+}
+
 function loadAll(){
   fbPull().then(()=>{_loadFromStorage();}).catch(()=>{_loadFromStorage();});
-  // Auto-sync cada 60s para detectar cambios de otros usuarios
+  // Auto-sync cada 30s para detectar cambios de otros usuarios (con centinela)
   if(!window._autoSyncInterval){
     window._autoSyncInterval=setInterval(()=>{
-      fbPull().then(ok=>{
+      fbPullIfChanged().then(ok=>{
         if(ok){_loadFromStorage();render();}
       });
-    },60000);
+    },30000);
   }
 }
 
@@ -2949,6 +2980,23 @@ function guardarNuevoProyecto(){
   if(!name){toast('El nombre es obligatorio');document.getElementById('np-name')?.focus();return;}
   if(!fecha){toast('La fecha objetivo es obligatoria');return;}
   if(PROJ.find(p=>p.id===id)){toast(`Ya existe el proyecto "${id}". Elige otro ID.`);return;}
+  // FIX (sep 2026): si el ID estuvo borrado antes, seguia en la lista negra __deleted y el
+  // proyecto nuevo se guardaba en Firebase pero se filtraba al recargar, sin ningun aviso.
+  // La funcion de renombrar ya limpiaba la lista; la de crear no. Ahora avisa si hay datos
+  // huerfanos en ese ID antes de reutilizarlo.
+  try{
+    let del=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
+    if(del.includes(id)){
+      let nombreViejo='';
+      try{const h=localStorage.getItem(VER+id);if(h)nombreViejo=JSON.parse(h).name||'';}catch(e){}
+      const aviso = nombreViejo
+        ? `El ID ${id} pertenecio antes al proyecto "${nombreViejo}", que fue borrado pero cuyos datos todavia existen.\n\nSi continuas, esos datos se reemplazan por el proyecto nuevo y no se podran recuperar.\n\n¿Continuar?`
+        : `El ID ${id} estuvo borrado antes.\n\n¿Reutilizarlo para este proyecto nuevo?`;
+      if(!confirm(aviso)) return;
+      del=del.filter(x=>x!==id);
+      localStorage.setItem(VER+'__deleted',JSON.stringify(del));
+    }
+  }catch(e){}
   const raw={id,name,eng,fechaFinal:fecha,avance:0,estatus,fase:'Diseño',fechaFase:fecha,skus:[]};
   const proj=mkProj(raw);
   proj.categoria=cat;
@@ -5354,10 +5402,9 @@ function guardarComentarioDesv(pid, f, i, val){
 // ─── INIT ────────────────────────────────────────────────────────────
 loadAll();
 rLogin();
-// Auto-sync cada 30 segundos
-setInterval(()=>{
-  if(cu){fbPull().then(()=>{_loadFromStorage();render();});}
-},30000);
+// Auto-sync duplicado ELIMINADO (sep 2026): loadAll() ya sincroniza cada 30 s usando el
+// centinela. Este segundo intervalo volvia a bajar /npd completo (~1.16 MB) cada 30 s,
+// duplicando el consumo sin ningun beneficio.
 
 // ─── CALENDARIO DE PROYECTOS ────────────────────────────────────────
 const PROJ_PALETTE=[
