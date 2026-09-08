@@ -603,23 +603,79 @@ function showToast(msg,dur=2800){const t=document.getElementById('toast');t.text
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ══ SYNC POR USUARIO — cada quien tiene su propia fila ═══════
+// Indice ligero de cambios (sep 2026). Mapa {uid: _savedAt} guardado en /meta/users.
+// Permite que gsPull sepa QUIEN cambio sin descargar los 9 MB de /usuarios.
+const TS_KEY = LS_KEY + '_ts';
+function _loadTsMap(){try{return JSON.parse(localStorage.getItem(TS_KEY)||'{}');}catch(e){return {};}}
+function _saveTsMap(m){try{localStorage.setItem(TS_KEY,JSON.stringify(m));}catch(e){}}
+
+// REGLA DE PROPIEDAD (sep 2026) ─────────────────────────────────────────────────
+// Antes cada usuario guardaba la lista COMPLETA del equipo en su propio nodo: 15 copias
+// de las mismas ~1,950 tareas, 746 kB por nodo. Por eso cualquier guardado obligaba a los
+// demas a descargar 746 kB, y por eso /usuarios pesaba 9 MB.
+// Ahora cada quien guarda solo lo suyo. Se conservan tres casos, y el tercero es el que
+// garantiza que ninguna tarea pueda quedarse sin dueño:
+//   1. Las asignadas a mi.
+//   2. Las que yo cree hace menos de 7 dias — respaldo por si la propagacion al
+//      destinatario fallo. Pasados los 7 dias ya vive en el nodo de su responsable.
+//   3. Las que no tienen responsable: esas las conserva TODO EL MUNDO, a proposito.
+// Hoy los 15 nodos tienen todas las tareas, asi que una tarea solo podria perderse si los
+// 15 la descartaran a la vez. El caso 3 lo hace imposible.
+function _misTareas(){
+  const yo=SESSION&&SESSION.id;
+  const RETENCION=7*24*60*60*1000;
+  const ahora=Date.now();
+  return (DB.tareas||[]).filter(t=>{
+    if(!t)return false;
+    if(!t.assignedTo)return true;
+    if(t.assignedTo===yo)return true;
+    if(t.createdBy===yo&&(ahora-(t.updatedAt||t.createdAt||0))<RETENCION)return true;
+    return false;
+  });
+}
+
 function gsPush(){
   if(!FB_URL||!SESSION)return;
   setSyncTxt('Guardando...');
-  const userData={tareas:DB.tareas,reportes:DB.reportes,prototipos:DB.prototipos||[],eval_progreso:DB.eval_progreso||{},_savedAt:Date.now()};
+  const ts=Date.now();
+  const mias=_misTareas();
+  // GUARDA DE SEGURIDAD (sep 2026): nunca sobreescribir el nodo con una lista vacia si esta
+  // sesion todavia no ha sincronizado. Una pestaña recien abierta (o de incognito) arranca
+  // sin datos, y un guardado prematuro borraria las tareas del usuario en Firebase. Si el
+  // usuario de verdad no tiene tareas, el guardado procede en cuanto haya sincronizado una vez.
+  if(!mias.length&&!window._gsSyncOk){setSyncTxt('Esperando sincronizacion...');return;}
+  const userData={tareas:mias,reportes:DB.reportes,prototipos:DB.prototipos||[],eval_progreso:DB.eval_progreso||{},_savedAt:ts};
   fetch(FB_URL+'/usuarios/'+SESSION.id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(userData)})
     .then(()=>{
       setSyncTxt('Guardado');
+      // Avisar en el indice que este usuario cambio (escritura de unos pocos bytes)
+      fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[SESSION.id]:ts})}).catch(()=>{});
+      // No volver a bajar nuestro propio nodo en la siguiente sincronizacion
+      const m=_loadTsMap();m[SESSION.id]=ts;_saveTsMap(m);
       // También propagar tareas reasignadas al nodo del destinatario
       _pushDelegadas();
     })
     .catch(()=>setSyncTxt('Sin conexion'));
 }
 
+// Marca de la ultima propagacion de delegadas, para no reenviar lo mismo cada vez.
+const DELEG_KEY = LS_KEY + '_delegts';
+function _loadDelegTs(){try{return parseInt(localStorage.getItem(DELEG_KEY)||'0',10)||0;}catch(e){return 0;}}
+function _saveDelegTs(v){try{localStorage.setItem(DELEG_KEY,String(v));}catch(e){}}
+
 function _pushDelegadas(){
+  // OPTIMIZADO (sep 2026): antes propagaba TODAS las tareas reasignadas en cada guardado.
+  // Como DB.tareas contiene las tareas de todo el equipo, eso significaba descargar y
+  // reescribir el nodo completo (~750 KB) de cada destinatario en cada guardado — unos
+  // 2.9 MB de descarga medidos, aunque solo hubieras tocado una tarea tuya.
+  // Ahora solo se propaga lo que cambio desde la ultima propagacion, asi que un guardado
+  // normal no toca a nadie, y uno con delegacion toca solo al destinatario que corresponde.
+  const desde=_loadDelegTs();
+  const cambio=t=>Math.max(t.delegatedAt||0,t.updatedAt||0);
   // Tareas donde assignedTo !== SESSION.id — propagar al nodo del destinatario
-  const reasignadas=DB.tareas.filter(t=>t.assignedTo&&t.assignedTo!==SESSION.id&&t.delegatedAt);
+  const reasignadas=DB.tareas.filter(t=>t.assignedTo&&t.assignedTo!==SESSION.id&&t.delegatedAt&&cambio(t)>desde);
   if(!reasignadas.length)return;
+  const maxTs=reasignadas.reduce((m,t)=>Math.max(m,cambio(t)),desde);
   // Agrupar por destinatario
   const porDest={};
   reasignadas.forEach(t=>{
@@ -627,9 +683,9 @@ function _pushDelegadas(){
     porDest[t.assignedTo].push(t);
   });
   // Para cada destinatario, hacer PATCH de sus tareas delegadas
-  Object.entries(porDest).forEach(([destId,tareas])=>{
+  const trabajos=Object.entries(porDest).map(([destId,tareas])=>{
     // Leer nodo del destinatario, agregar/actualizar las tareas delegadas
-    fetch(FB_URL+'/usuarios/'+destId+'.json')
+    return fetch(FB_URL+'/usuarios/'+destId+'.json')
       .then(r=>r.json())
       .then(ud=>{
         if(!ud)ud={};
@@ -643,20 +699,63 @@ function _pushDelegadas(){
           }
         });
         ud.tareas=Object.values(map);
-        return fetch(FB_URL+'/usuarios/'+destId+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ud)});
-      })
-      .catch(()=>{});
+        return fetch(FB_URL+'/usuarios/'+destId+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ud)})
+          .then(()=>{
+            // Avisar en el indice que el nodo del destinatario cambio. Sin esto, los demas
+            // no se enterarian de la tarea delegada hasta su siguiente sincronizacion completa.
+            return fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[destId]:Date.now()})});
+          });
+      });
   });
+  // La marca solo avanza si TODAS las propagaciones salieron bien. Si alguna falla se
+  // reintenta en el siguiente guardado: la fusion por id es idempotente, no duplica nada.
+  Promise.all(trabajos).then(()=>{_saveDelegTs(maxTs);}).catch(()=>{});
 }
 
 async function gsPull(){
   if(!FB_URL||!SESSION)return;
   setSyncTxt('Sincronizando...');
   try{
-    const r=await fetch(FB_URL+'/usuarios.json');
-    const allUsers=await r.json();
-    if(!allUsers){setSyncTxt('Sin datos');return;}
-    let allTareas=[];let allReportes=[];let allPrototipos=[];let myEval={};let latestSaved=0;
+    // ── OPTIMIZADO (sep 2026) ────────────────────────────────────────────────
+    // Antes: fetch('/usuarios.json') bajaba los 15 nodos completos — 9.0 MB medidos —
+    // cada 60 segundos. Son 540 MB por hora por sesion abierta, y fue lo que reventó
+    // la cuota de Firebase. Ahora se lee el indice /meta/users (unos cientos de bytes)
+    // y solo se descargan los nodos cuyo _savedAt cambio desde la ultima sincronizacion.
+    // No se modifica NADA de lo que se guarda, solo lo que se lee: ninguna tarea corre
+    // riesgo con este cambio.
+    const tsPrev=_loadTsMap();
+    let tsNow={};
+    try{const mr=await fetch(FB_URL+'/meta/users.json');tsNow=(await mr.json())||{};}catch(e){tsNow={};}
+
+    // Sin indice todavia, o primera sincronizacion de este navegador: se baja todo una vez.
+    const completa=!Object.keys(tsPrev).length||!Object.keys(tsNow).length;
+    const cambiados=completa?null:Object.keys(tsNow).filter(uid=>tsNow[uid]!==tsPrev[uid]);
+
+    let allUsers={};
+    if(completa){
+      const r=await fetch(FB_URL+'/usuarios.json');
+      allUsers=(await r.json())||{};
+      if(!Object.keys(allUsers).length){setSyncTxt('Sin datos');return;}
+      // Sembrar el indice con los _savedAt recien leidos para que la proxima ya sea incremental
+      const seed={};
+      Object.entries(allUsers).forEach(([uid,ud])=>{if(ud&&ud._savedAt)seed[uid]=ud._savedAt;});
+      if(Object.keys(seed).length){
+        tsNow=Object.assign({},seed,tsNow);
+        fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(seed)}).catch(()=>{});
+      }
+    }else if(cambiados.length){
+      const res=await Promise.all(cambiados.map(uid=>
+        fetch(FB_URL+'/usuarios/'+uid+'.json').then(r=>r.json()).then(v=>[uid,v]).catch(()=>[uid,null])
+      ));
+      res.forEach(([uid,v])=>{if(v)allUsers[uid]=v;});
+    }
+    // Si no cambio nadie, allUsers queda vacio y se conserva lo que ya hay en memoria.
+
+    // En modo incremental se parte de lo que ya tenemos y se fusiona lo que llego.
+    let allTareas=completa?[]:(DB.tareas||[]).slice();
+    let allReportes=completa?[]:(DB.reportes||[]).slice();
+    let allPrototipos=completa?[]:(DB.prototipos||[]).slice();
+    let myEval={};let latestSaved=completa?0:(DB._savedAt||0);
     Object.entries(allUsers).forEach(([userId,ud])=>{
       try{
         if(!ud)return;
@@ -698,7 +797,13 @@ async function gsPull(){
     DB.prototipos=dedupeLatest(allPrototipos);
     if(Object.keys(myEval).length>0)DB.eval_progreso=myEval;
     if(latestSaved>0)DB._savedAt=latestSaved;
-    saveLocal();setSyncTxt('Sincronizado');renderView(currentView);updateBadges();
+    saveLocal();
+    // El indice se persiste SOLO despues de que los datos quedaron guardados. Si
+    // saveLocal() fallara (cuota de localStorage), esta linea no se ejecuta y la
+    // siguiente sincronizacion vuelve a descargar todo. Falla del lado seguro.
+    if(Object.keys(tsNow).length)_saveTsMap(tsNow);
+    window._gsSyncOk=true;   // habilita el guardado: ya tenemos datos reales del servidor
+    setSyncTxt('Sincronizado');renderView(currentView);updateBadges();
     pullDelegadas();
   }catch(e){setSyncTxt('Datos locales');}
 }
