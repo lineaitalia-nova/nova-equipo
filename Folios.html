@@ -857,7 +857,10 @@ function arrToObj(a) {
 }
 
 // ── FIREBASE CONFIG ──
-var FB_URL = 'https://nova-lineaitalia-2-default-rtdb.firebaseio.com/folios';
+// Entorno (sep 2026): abierto desde disco o localhost escribe en /_test; publicado en
+// GitHub Pages escribe en produccion. Evita que una prueba local toque datos reales.
+var FB_ENV = (location.protocol==='file:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) ? '/_test' : '';
+var FB_URL = 'https://nova-lineaitalia-2-default-rtdb.firebaseio.com' + FB_ENV + '/folios';
 var FB_ON = false; // se activa si Firebase responde
 
 // ── STATE ──

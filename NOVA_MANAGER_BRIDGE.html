@@ -1076,7 +1076,8 @@ function load(){
 // ══════════════════════════════════════════════════════════════
 function syncNPD(){
   // Sync from Firebase NPD Manager (nova-lineaitalia-2)
-  const FB_NPD='https://nova-lineaitalia-2-default-rtdb.firebaseio.com';
+  // Entorno (sep 2026): desde disco o localhost lee/escribe en /_test, no en produccion.
+  const FB_NPD='https://nova-lineaitalia-2-default-rtdb.firebaseio.com'+((location.protocol==='file:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname))?'/_test':'');
   fetch(FB_NPD+'/proyectos.json')
     .then(r=>r.json())
     .then(data=>{
@@ -3096,7 +3097,8 @@ function saveSnapshot(manual=false){
 })();
 // ══ FIREBASE BRIDGE ════════════════════════════════════════════
 // Conecta NOVA Gerencial con NOVA Equipo via Firebase
-const FB_BRIDGE='https://nova-lineaitalia-2-default-rtdb.firebaseio.com';
+// Entorno (sep 2026): desde disco o localhost lee/escribe en /_test, no en produccion.
+const FB_BRIDGE='https://nova-lineaitalia-2-default-rtdb.firebaseio.com'+((location.protocol==='file:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname))?'/_test':'');
 
 const NOMBRE_A_ID={
   'Enrique Romo':'enrique',
