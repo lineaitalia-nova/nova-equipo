@@ -857,9 +857,10 @@ function arrToObj(a) {
 }
 
 // ── FIREBASE CONFIG ──
-// Entorno (sep 2026): abierto desde disco o localhost escribe en /_test; publicado en
-// GitHub Pages escribe en produccion. Evita que una prueba local toque datos reales.
-var FB_ENV = (location.protocol==='file:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) ? '/_test' : '';
+// Entorno (sep 2026): SOLO el host publicado escribe en produccion. Cualquier otro
+// origen (disco, localhost, data:, un visor, una copia) cae en /_test. La lista es
+// blanca a proposito: si el origen no se reconoce, el riesgo es no tocar produccion.
+var FB_ENV = (location.hostname==='lineaitalia-nova.github.io') ? '' : '/_test';
 var FB_URL = 'https://nova-lineaitalia-2-default-rtdb.firebaseio.com' + FB_ENV + '/folios';
 var FB_ON = false; // se activa si Firebase responde
 
