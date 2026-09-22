@@ -251,6 +251,7 @@ tbody tr:hover td{background:var(--surface2)}
 <div id="toast"></div>
 <div id="print-area"></div>
 
+<script src="fallas.js"></script>
 <script src="fb-auth.js"></script>
 <script>
 // ─── DATOS BASE ──────────────────────────────────────────────────────
@@ -684,22 +685,22 @@ const FB_ENV=(location.hostname==='lineaitalia-nova.github.io')?'':'/_test';
 const FB_NPD='https://nova-lineaitalia-2-default-rtdb.firebaseio.com'+FB_ENV+'/npd';
 
 function saveProj(p){
-  try{p.lu=new Date().toISOString();localStorage.setItem(VER+p.id,JSON.stringify(p));autoBackup();fbPush();}catch(e){}
+  try{p.lu=new Date().toISOString();localStorage.setItem(VER+p.id,JSON.stringify(p));autoBackup();fbPush();}catch(e){Falla.critica('guardar el proyecto',e);}
 }
 function autoBackup(){
   try{const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
     const data={ts:new Date().toISOString(),v:VER,items:{}};
-    keys.forEach(k=>{try{data.items[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
+    keys.forEach(k=>{try{data.items[k]=JSON.parse(localStorage.getItem(k));}catch(e){Falla.critica('crear el respaldo automático',e);}});
     localStorage.setItem('li_autobackup',JSON.stringify(data));
-  }catch(e){}
+  }catch(e){Falla.critica('crear el respaldo automático',e);}
 }
-function saveUsers(){try{localStorage.setItem(VER+'users',JSON.stringify(USERS));fbPush();}catch(e){}}
+function saveUsers(){try{localStorage.setItem(VER+'users',JSON.stringify(USERS));fbPush();}catch(e){Falla.critica('guardar los usuarios',e);}}
 
 function fbPush(){
   if(!FB_NPD)return;
   const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
   const data={};
-  keys.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem(k));}catch(e){}});
+  keys.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem(k));}catch(e){Falla.critica('sincronizar con Firebase',e);}});
   data['__deleted']=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
   const myTs=Date.now();
   data['_ts']=myTs;                                // centinela para el poll optimizado
@@ -711,7 +712,7 @@ function fbPush(){
   // ausencia de la clave.
   FB.fetch(FB_NPD+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
     .then(()=>{NPD_LAST_TS=myTs;})                 // tu propio guardado no dispara recarga
-    .catch(e=>{});
+    .catch(e=>Falla.critica('sincronizar proyectos con Firebase',e));
 }
 
 async function fbPull(){
@@ -789,12 +790,12 @@ function _loadFromStorage(){
     const deleted = JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
     PROJ = RAW
       .filter(r=>!deleted.includes(r.id))
-      .map(r=>{const s=localStorage.getItem(VER+r.id);if(s){try{const p=JSON.parse(s);if(!p.aprob||!p.aprob.g)p.aprob={g:{s:'pendiente',f:''}};return p;}catch(e){}}return mkProj(r);});
+      .map(r=>{const s=localStorage.getItem(VER+r.id);if(s){try{const p=JSON.parse(s);if(!p.aprob||!p.aprob.g)p.aprob={g:{s:'pendiente',f:''}};return p;}catch(e){Falla.registrar('cargar los datos guardados',e);}}return mkProj(r);});
     Object.keys(localStorage).forEach(k=>{
       if(k.startsWith(VER)&&k!==VER+'users'&&k!==VER+'__deleted'){
         const id=k.replace(VER,'');
         if(!RAW.find(r=>r.id===id)&&!deleted.includes(id)){
-          try{const p=JSON.parse(localStorage.getItem(k));if(p&&p.id)PROJ.push(p);}catch(e){}
+          try{const p=JSON.parse(localStorage.getItem(k));if(p&&p.id)PROJ.push(p);}catch(e){Falla.registrar('cargar los datos guardados',e);}
         }
       }
     });
@@ -862,7 +863,7 @@ function _loadFromStorage(){
     if(p.avance!==newAvance||p.fase!==faseActual||migrated){
       p.avance=newAvance;
       p.fase=faseActual;
-      try{localStorage.setItem(VER+p.id,JSON.stringify(p));}catch(e){}
+      try{localStorage.setItem(VER+p.id,JSON.stringify(p));}catch(e){Falla.critica('cargar los datos guardados',e);}
     }
   });
 }
@@ -1073,7 +1074,7 @@ async function bonosPull(){
   try{const r=await FB.fetch(FB_BONOS+'.json');const d=await r.json();window._bonosData=(d&&typeof d==='object')?d:{};}catch(e){window._bonosData={};}
 }
 function bonosPush(){
-  try{FB.fetch(FB_BONOS+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._bonosData||{})}).catch(()=>{});}catch(e){}
+  try{FB.fetch(FB_BONOS+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._bonosData||{})}).catch(e=>Falla.critica('guardar bonos',e));}catch(e){Falla.critica('guardar bonos',e);}
 }
 function bonoOf(pid){return (window._bonosData||{})[pid]||null;}
 
@@ -2993,7 +2994,7 @@ function guardarNuevoProyecto(){
     let del=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
     if(del.includes(id)){
       let nombreViejo='';
-      try{const h=localStorage.getItem(VER+id);if(h)nombreViejo=JSON.parse(h).name||'';}catch(e){}
+      try{const h=localStorage.getItem(VER+id);if(h)nombreViejo=JSON.parse(h).name||'';}catch(e){Falla.registrar('guardar el proyecto',e);}
       const aviso = nombreViejo
         ? `El ID ${id} pertenecio antes al proyecto "${nombreViejo}", que fue borrado pero cuyos datos todavia existen.\n\nSi continuas, esos datos se reemplazan por el proyecto nuevo y no se podran recuperar.\n\n¿Continuar?`
         : `El ID ${id} estuvo borrado antes.\n\n¿Reutilizarlo para este proyecto nuevo?`;
@@ -3001,7 +3002,7 @@ function guardarNuevoProyecto(){
       del=del.filter(x=>x!==id);
       localStorage.setItem(VER+'__deleted',JSON.stringify(del));
     }
-  }catch(e){}
+  }catch(e){Falla.critica('guardar el proyecto',e);}
   const raw={id,name,eng,fechaFinal:fecha,avance:0,estatus,fase:'Diseño',fechaFase:fecha,skus:[]};
   const proj=mkProj(raw);
   proj.categoria=cat;
@@ -3201,11 +3202,11 @@ function rModal(){
         <div style="font-size:10px;font-weight:700;color:${fd.tc};margin-bottom:4px">${f}</div>
         ${canEdit?`
           <input type="date" value="${ffInicio}" min="2020-01-01" max="2035-12-31" title="Fecha inicio" 
-            onclick="try{this.showPicker()}catch(e){}"
+            onclick="try{this.showPicker()}catch(e){Falla.registrar('canEdit',e);}"
             onchange="updFechaFase('${p.id}','${f}','inicio',this.value)"
             style="font-size:9px;padding:2px 4px;border:1px solid ${fd.c}55;border-radius:3px;background:white;color:var(--navy);width:100%;margin-bottom:3px;font-family:var(--font-b);cursor:pointer"/>
           <input type="date" value="${ffFin}" min="2020-01-01" max="2035-12-31" title="Fecha fin"
-            onclick="try{this.showPicker()}catch(e){}"
+            onclick="try{this.showPicker()}catch(e){Falla.registrar('canEdit',e);}"
             onchange="updFechaFase('${p.id}','${f}','fin',this.value)"
             style="font-size:9px;padding:2px 4px;border:1px solid ${fd.c}55;border-radius:3px;background:white;color:var(--navy);width:100%;margin-bottom:4px;font-family:var(--font-b);cursor:pointer"/>
         `:hasDates?`<div style="font-size:9px;color:${fd.tc};margin-bottom:4px">${fmtD(ff.inicio)}<br/>→ ${fmtD(ff.fin)}</div>`
@@ -4837,7 +4838,7 @@ function corregirIdProyecto(pid){
     if(!del.includes(viejo)) del.push(viejo);
     del=del.filter(x=>x!==nuevo);
     localStorage.setItem(VER+'__deleted',JSON.stringify(del));
-  }catch(e){}
+  }catch(e){Falla.critica('cambiar la clave del proyecto',e);}
   p.id=nuevo;
   (p.act||[]).forEach(a=>{if(a.proj===viejo)a.proj=nuevo;});
   addAct(p,'edit','Clave corregida de '+viejo+' a '+nuevo);
@@ -4927,7 +4928,7 @@ function restaurarAutoBackup(){
     const n=Object.keys(ab.items).length;
     const ts=new Date(ab.ts).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     if(!confirm('¿Restaurar el auto-respaldo del '+ts+'?\n\n'+n+' registros serán restaurados.'))return;
-    Object.entries(ab.items).forEach(([k,v])=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}});
+    Object.entries(ab.items).forEach(([k,v])=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){Falla.critica('restaurar el respaldo',e);}});
     toast('Auto-respaldo restaurado ('+n+' registros) ✓');
     setTimeout(()=>{loadAll();sv2('inicio');},1000);
   }catch(e){toast('Error: '+e.message);}

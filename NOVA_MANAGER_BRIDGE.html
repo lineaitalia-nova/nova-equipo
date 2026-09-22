@@ -883,6 +883,7 @@ nav{flex:1;overflow-y:auto;padding:6px 8px}
 </div>
 
 
+<script src="fallas.js"></script>
 <script src="equipo.js"></script>
 <script src="fb-auth.js"></script>
 <script>
@@ -1038,10 +1039,10 @@ const REVIEW_STEPS=[
 let tasks=[],projects=[],reviewDone=[],blockLogs={},currentView='dashboard';
 
 function save(){
-  try{localStorage.setItem(KEY+'_t',JSON.stringify(tasks));}catch{}
-  try{localStorage.setItem(KEY+'_p',JSON.stringify(projects));}catch{}
-  try{localStorage.setItem(KEY+'_rv',JSON.stringify(reviewDone));}catch{}
-  try{localStorage.setItem(KEY+'_bl',JSON.stringify(blockLogs));}catch{}
+  try{localStorage.setItem(KEY+'_t',JSON.stringify(tasks));}catch(e){Falla.critica('guardar tus tareas y proyectos',e);}
+  try{localStorage.setItem(KEY+'_p',JSON.stringify(projects));}catch(e){Falla.critica('guardar tus tareas y proyectos',e);}
+  try{localStorage.setItem(KEY+'_rv',JSON.stringify(reviewDone));}catch(e){Falla.critica('guardar tus tareas y proyectos',e);}
+  try{localStorage.setItem(KEY+'_bl',JSON.stringify(blockLogs));}catch(e){Falla.critica('guardar tus tareas y proyectos',e);}
 }
 
 function load(){
@@ -1056,7 +1057,7 @@ function load(){
     if(!localStorage.getItem(KEY+'_bl')){
       localStorage.setItem(KEY+'_bl', JSON.stringify({"_edits": {"1_lunes": "🔒 NPD profundo — Ivy Lee #1 y #2", "0_lunes": "🎯 Planear día + NOVA", "6_martes": "📌 FIJO: Junta Innovación", "5_martes": "🔒 Trabajo Profundo T1 — aprobación diseño / dirección"}}));
     }
-  }catch(e){}
+  }catch(e){Falla.critica('cargar tus tareas y proyectos',e);}
   // Migrate avance from 0-1 to 0-100 format (one-time)
   try{
     const raw = localStorage.getItem(KEY+'_t');
@@ -1067,7 +1068,7 @@ function load(){
         localStorage.setItem(KEY+'_t', JSON.stringify(migrated));
       }
     }
-  }catch(e){}
+  }catch(e){Falla.critica('cargar tus tareas y proyectos',e);}
   try{tasks=JSON.parse(localStorage.getItem(KEY+'_t'))||JSON.parse(JSON.stringify(DT));}catch{tasks=JSON.parse(JSON.stringify(DT));}
   try{projects=JSON.parse(localStorage.getItem(KEY+'_p'))||JSON.parse(JSON.stringify(DP));}catch{projects=JSON.parse(JSON.stringify(DP));}
   try{reviewDone=JSON.parse(localStorage.getItem(KEY+'_rv'))||[];}catch{reviewDone=[];}
@@ -1717,7 +1718,7 @@ const DEFAULT_ROCAS=[
 ];
 
 function getRocas(){try{return JSON.parse(localStorage.getItem('nova6_rocas'))||JSON.parse(JSON.stringify(DEFAULT_ROCAS));}catch{return JSON.parse(JSON.stringify(DEFAULT_ROCAS));}}
-function saveRocasData(r){try{localStorage.setItem('nova6_rocas',JSON.stringify(r));}catch{}}
+function saveRocasData(r){try{localStorage.setItem('nova6_rocas',JSON.stringify(r));}catch(e){Falla.critica('guardar las Rocas',e);}}
 
 const ROCA_E={
   'En proceso':{c:'#2563EB',bg:'#DBEAFE',icon:'🔵'},
@@ -2560,7 +2561,7 @@ function rBiblioteca(){
 
   // Load saved progress
   let progreso={};
-  try{ progreso=JSON.parse(localStorage.getItem('nova_biblioteca')||'{}'); }catch(e){}
+  try{ progreso=JSON.parse(localStorage.getItem('nova_biblioteca')||'{}'); }catch(e){Falla.registrar('rBiblioteca',e);}
 
   function calcNivel(id, respuestas){
     const libro=LIBROS.find(l=>l.id===id);
@@ -3010,7 +3011,7 @@ function getSnapshots(){
   try{return JSON.parse(localStorage.getItem('nova6_snaps'))||[];}catch{return[];}
 }
 function saveSnapshots(snaps){
-  try{localStorage.setItem('nova6_snaps',JSON.stringify(snaps));}catch{}
+  try{localStorage.setItem('nova6_snaps',JSON.stringify(snaps));}catch(e){Falla.critica('guardar el historial',e);}
 }
 
 function saveSnapshot(manual=false){
@@ -3045,8 +3046,8 @@ function saveSnapshot(manual=false){
 (function init(){
   load();
   populateRespDropdowns();
-  try{populateMetaSelect('nt-meta','');}catch{}
-  try{populateMetaSelect('et-meta','');}catch{}
+  try{populateMetaSelect('nt-meta','');}catch(e){Falla.registrar('init',e);}
+  try{populateMetaSelect('et-meta','');}catch(e){Falla.registrar('init',e);}
   rDash();
   updateBadges();
   // Good Morning — una vez por sesión
@@ -3148,7 +3149,7 @@ async function fbPullDelegadas(){
 async function fbDeleteDelegada(id){
   try{
     await FB.fetch(FB_BRIDGE+'/delegadas/g_'+id+'.json',{method:'DELETE'});
-  }catch(e){}
+  }catch(e){Falla.registrar('fbDeleteDelegada',e);}
 }
 
 // ══ MI EVALUACIÓN ══════════════════════════════════════════════
