@@ -883,6 +883,7 @@ nav{flex:1;overflow-y:auto;padding:6px 8px}
 </div>
 
 
+<script src="fb-auth.js"></script>
 <script>
 'use strict';
 // ══════════════════════════════════════════════════════════════
@@ -3083,7 +3084,7 @@ async function fbPushDelegada(task){
     tipo: task.tipo,
   };
   try{
-    await fetch(FB_BRIDGE+'/delegadas/'+('g_'+task.id)+'.json',{
+    await FB.fetch(FB_BRIDGE+'/delegadas/'+('g_'+task.id)+'.json',{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload)
@@ -3095,7 +3096,7 @@ async function fbPushDelegada(task){
 async function fbPullDelegadas(){
   console.log('fbPullDelegadas iniciando...');
   try{
-    const r = await fetch(FB_BRIDGE+'/delegadas.json');
+    const r = await FB.fetch(FB_BRIDGE+'/delegadas.json');
     if(!r.ok){console.warn('Firebase error:',r.status);return;}
     const data = await r.json();
     console.log('Firebase delegadas:', JSON.stringify(data));
@@ -3129,7 +3130,7 @@ async function fbPullDelegadas(){
 // Delete from Firebase when task is deleted locally
 async function fbDeleteDelegada(id){
   try{
-    await fetch(FB_BRIDGE+'/delegadas/g_'+id+'.json',{method:'DELETE'});
+    await FB.fetch(FB_BRIDGE+'/delegadas/g_'+id+'.json',{method:'DELETE'});
   }catch(e){}
 }
 
@@ -3395,13 +3396,13 @@ async function fbBackupDiario(){
     // localStorage es por origen: file:// y https:// no comparten estado.
     let ultimoTotal = 0;
     try{
-      const rl = await fetch(FB_BRIDGE + '/backups/rene.json?shallow=true');
+      const rl = await FB.fetch(FB_BRIDGE + '/backups/rene.json?shallow=true');
       if(rl.ok){
         const dias = await rl.json();
         if(dias){
           const fechas = Object.keys(dias).sort();
           const ult = fechas[fechas.length-1];
-          const rt = await fetch(FB_BRIDGE + '/backups/rene/' + ult + '/total.json');
+          const rt = await FB.fetch(FB_BRIDGE + '/backups/rene/' + ult + '/total.json');
           if(rt.ok) ultimoTotal = Number(await rt.json()) || 0;
         }
       }
@@ -3424,7 +3425,7 @@ async function fbBackupDiario(){
       proyectos: projects || []
     };
 
-    const r = await fetch(FB_BRIDGE + '/backups/rene/' + hoy + '.json', {
+    const r = await FB.fetch(FB_BRIDGE + '/backups/rene/' + hoy + '.json', {
       method: 'PUT',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(payload)

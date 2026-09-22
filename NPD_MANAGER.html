@@ -251,6 +251,7 @@ tbody tr:hover td{background:var(--surface2)}
 <div id="toast"></div>
 <div id="print-area"></div>
 
+<script src="fb-auth.js"></script>
 <script>
 // ─── DATOS BASE ──────────────────────────────────────────────────────
 const TODAY = new Date();
@@ -708,14 +709,14 @@ function fbPush(){
   // actualiza las claves que se envian y deja intacto todo lo demas. El borrado de
   // proyectos sigue funcionando porque se maneja con la lista __deleted, no con la
   // ausencia de la clave.
-  fetch(FB_NPD+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+  FB.fetch(FB_NPD+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
     .then(()=>{NPD_LAST_TS=myTs;})                 // tu propio guardado no dispara recarga
     .catch(e=>{});
 }
 
 async function fbPull(){
   try{
-    const r=await fetch(FB_NPD+'.json');
+    const r=await FB.fetch(FB_NPD+'.json');
     const data=await r.json();
     if(!data)return false;
     if(data._ts) NPD_LAST_TS=data._ts;
@@ -743,7 +744,7 @@ async function fbPull(){
 var NPD_LAST_TS = 0;
 async function fbPullIfChanged(){
   try{
-    const r=await fetch(FB_NPD+'/_ts.json');
+    const r=await FB.fetch(FB_NPD+'/_ts.json');
     const ts=await r.json();
     if(ts===null||ts===undefined){
       // El nodo _ts todavia no existe (se crea en el primer guardado). Sincroniza una
@@ -1069,10 +1070,10 @@ function desmarcarPagado(pid){
 // Nodo /bonos — HERMANO de /npd, aparte. Solo lo lee/escribe la pestaña del Gerente.
 const FB_BONOS = FB_NPD.replace(/\/npd$/,'/bonos');
 async function bonosPull(){
-  try{const r=await fetch(FB_BONOS+'.json');const d=await r.json();window._bonosData=(d&&typeof d==='object')?d:{};}catch(e){window._bonosData={};}
+  try{const r=await FB.fetch(FB_BONOS+'.json');const d=await r.json();window._bonosData=(d&&typeof d==='object')?d:{};}catch(e){window._bonosData={};}
 }
 function bonosPush(){
-  try{fetch(FB_BONOS+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._bonosData||{})}).catch(()=>{});}catch(e){}
+  try{FB.fetch(FB_BONOS+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._bonosData||{})}).catch(()=>{});}catch(e){}
 }
 function bonoOf(pid){return (window._bonosData||{})[pid]||null;}
 
