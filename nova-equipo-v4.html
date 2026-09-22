@@ -550,9 +550,14 @@ input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) bri
 
 <div class="toast" id="toast"></div>
 
+<script src="fb-auth.js"></script>
 <script>
 // ══ CONFIG ═══════════════════════════════════════════════════
-const FB_URL='https://nova-lineaitalia-2-default-rtdb.firebaseio.com';
+// Entorno (sep 2026): SOLO el host publicado escribe en produccion. Cualquier otro
+// origen (disco, localhost, data:, un visor, una copia) cae en /_test. La lista es
+// blanca a proposito: si el origen no se reconoce, el riesgo es no tocar produccion.
+const FB_ENV=(location.hostname==='lineaitalia-nova.github.io')?'':'/_test';
+const FB_URL='https://nova-lineaitalia-2-default-rtdb.firebaseio.com'+FB_ENV;
 const LS_KEY='nova_li_v2';
 
 // ══ USUARIOS ═════════════════════════════════════════════════
@@ -645,11 +650,11 @@ function gsPush(){
   // usuario de verdad no tiene tareas, el guardado procede en cuanto haya sincronizado una vez.
   if(!mias.length&&!window._gsSyncOk){setSyncTxt('Esperando sincronizacion...');return;}
   const userData={tareas:mias,reportes:DB.reportes,prototipos:DB.prototipos||[],eval_progreso:DB.eval_progreso||{},_savedAt:ts};
-  fetch(FB_URL+'/usuarios/'+SESSION.id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(userData)})
+  FB.fetch(FB_URL+'/usuarios/'+SESSION.id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(userData)})
     .then(()=>{
       setSyncTxt('Guardado');
       // Avisar en el indice que este usuario cambio (escritura de unos pocos bytes)
-      fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[SESSION.id]:ts})}).catch(()=>{});
+      FB.fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[SESSION.id]:ts})}).catch(()=>{});
       // No volver a bajar nuestro propio nodo en la siguiente sincronizacion
       const m=_loadTsMap();m[SESSION.id]=ts;_saveTsMap(m);
       // También propagar tareas reasignadas al nodo del destinatario
@@ -685,7 +690,7 @@ function _pushDelegadas(){
   // Para cada destinatario, hacer PATCH de sus tareas delegadas
   const trabajos=Object.entries(porDest).map(([destId,tareas])=>{
     // Leer nodo del destinatario, agregar/actualizar las tareas delegadas
-    return fetch(FB_URL+'/usuarios/'+destId+'.json')
+    return FB.fetch(FB_URL+'/usuarios/'+destId+'.json')
       .then(r=>r.json())
       .then(ud=>{
         if(!ud)ud={};
@@ -699,11 +704,11 @@ function _pushDelegadas(){
           }
         });
         ud.tareas=Object.values(map);
-        return fetch(FB_URL+'/usuarios/'+destId+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ud)})
+        return FB.fetch(FB_URL+'/usuarios/'+destId+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ud)})
           .then(()=>{
             // Avisar en el indice que el nodo del destinatario cambio. Sin esto, los demas
             // no se enterarian de la tarea delegada hasta su siguiente sincronizacion completa.
-            return fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[destId]:Date.now()})});
+            return FB.fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[destId]:Date.now()})});
           });
       });
   });
@@ -725,7 +730,7 @@ async function gsPull(){
     // riesgo con este cambio.
     const tsPrev=_loadTsMap();
     let tsNow={};
-    try{const mr=await fetch(FB_URL+'/meta/users.json');tsNow=(await mr.json())||{};}catch(e){tsNow={};}
+    try{const mr=await FB.fetch(FB_URL+'/meta/users.json');tsNow=(await mr.json())||{};}catch(e){tsNow={};}
 
     // Sin indice todavia, o primera sincronizacion de este navegador: se baja todo una vez.
     const completa=!Object.keys(tsPrev).length||!Object.keys(tsNow).length;
@@ -733,7 +738,7 @@ async function gsPull(){
 
     let allUsers={};
     if(completa){
-      const r=await fetch(FB_URL+'/usuarios.json');
+      const r=await FB.fetch(FB_URL+'/usuarios.json');
       allUsers=(await r.json())||{};
       if(!Object.keys(allUsers).length){setSyncTxt('Sin datos');return;}
       // Sembrar el indice con los _savedAt recien leidos para que la proxima ya sea incremental
@@ -741,11 +746,11 @@ async function gsPull(){
       Object.entries(allUsers).forEach(([uid,ud])=>{if(ud&&ud._savedAt)seed[uid]=ud._savedAt;});
       if(Object.keys(seed).length){
         tsNow=Object.assign({},seed,tsNow);
-        fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(seed)}).catch(()=>{});
+        FB.fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(seed)}).catch(()=>{});
       }
     }else if(cambiados.length){
       const res=await Promise.all(cambiados.map(uid=>
-        fetch(FB_URL+'/usuarios/'+uid+'.json').then(r=>r.json()).then(v=>[uid,v]).catch(()=>[uid,null])
+        FB.fetch(FB_URL+'/usuarios/'+uid+'.json').then(r=>r.json()).then(v=>[uid,v]).catch(()=>[uid,null])
       ));
       res.forEach(([uid,v])=>{if(v)allUsers[uid]=v;});
     }
@@ -787,7 +792,7 @@ async function gsPull(){
     // Cargar lista de eliminadas desde Firebase
     let deletedIds=new Set();
     try{
-      const dr=await fetch(FB_URL+'/deleted.json');
+      const dr=await FB.fetch(FB_URL+'/deleted.json');
       const deletedData=await dr.json();
       if(deletedData)Object.keys(deletedData).forEach(k=>deletedIds.add(k));
     }catch(e){}
@@ -2428,7 +2433,7 @@ function deleteTask(id){
   saveLocal();gsPush();
   // También borrar del nodo de deleted en Firebase para persistencia global
   if(FB_URL){
-    fetch(FB_URL+'/deleted/'+id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,deletedAt:Date.now()})});
+    FB.fetch(FB_URL+'/deleted/'+id+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,deletedAt:Date.now()})});
   }
   DB.tareas=DB.tareas.filter(x=>x.id!==id);
   saveLocal();renderView(currentView);updateBadges();
@@ -2659,7 +2664,7 @@ initLogin();
 async function pullDelegadas(){
   if(!FB_URL||!SESSION) return;
   try{
-    const r = await fetch(FB_URL+'/delegadas.json');
+    const r = await FB.fetch(FB_URL+'/delegadas.json');
     if(!r.ok) return;
     const data = await r.json();
     if(!data) return;
@@ -2693,7 +2698,7 @@ async function pullDelegadas(){
 async function pushAvanceDelegada(task){
   if(!task.fromRene || !FB_URL) return;
   try{
-    await fetch(FB_URL+'/delegadas/'+task.id+'.json',{
+    await FB.fetch(FB_URL+'/delegadas/'+task.id+'.json',{
       method:'PATCH',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({

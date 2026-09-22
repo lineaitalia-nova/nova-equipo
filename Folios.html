@@ -811,6 +811,7 @@ tr:hover td{background:var(--bg);cursor:pointer}
   </div>
 </div>
 
+<script src="fb-auth.js"></script>
 <script>
 'use strict';
 
@@ -857,7 +858,11 @@ function arrToObj(a) {
 }
 
 // ── FIREBASE CONFIG ──
-var FB_URL = 'https://nova-lineaitalia-2-default-rtdb.firebaseio.com/folios';
+// Entorno (sep 2026): SOLO el host publicado escribe en produccion. Cualquier otro
+// origen (disco, localhost, data:, un visor, una copia) cae en /_test. La lista es
+// blanca a proposito: si el origen no se reconoce, el riesgo es no tocar produccion.
+var FB_ENV = (location.hostname==='lineaitalia-nova.github.io') ? '' : '/_test';
+var FB_URL = 'https://nova-lineaitalia-2-default-rtdb.firebaseio.com' + FB_ENV + '/folios';
 var FB_ON = false; // se activa si Firebase responde
 
 // ── STATE ──
@@ -973,7 +978,7 @@ function updateFBIndicator(online){
 
 // GET remoto pidiendo el ETag (para control de concurrencia)
 function fbGet(){
-  return fetch(FB_URL + '/state.json', { headers: {'X-Firebase-ETag':'true'} })
+  return FB.fetch(FB_URL + '/state.json', { headers: {'X-Firebase-ETag':'true'} })
     .then(function(r){ FB_ETAG = r.headers.get('ETag'); FB_ON = true; updateFBIndicator(true); return r.json(); });
 }
 
@@ -990,13 +995,13 @@ function fbSync(){
       var body = JSON.stringify(Object.assign({}, merged, {_ts: myTs}));
       var headers = {'Content-Type':'application/json'};
       if(FB_ETAG) headers['if-match'] = FB_ETAG;
-      return fetch(FB_URL + '/state.json', {method:'PUT', headers:headers, body:body}).then(function(pr){
+      return FB.fetch(FB_URL + '/state.json', {method:'PUT', headers:headers, body:body}).then(function(pr){
         if(pr.status === 412 && tries < 4){ return attempt(tries+1); }
         if(pr.status === 412){
           // último recurso: recombinar con lo más reciente y escribir sin condición
           return fbGet().then(function(r2){
             var m2 = mergeState(STATE, r2); applyMerged(m2, true);
-            return fetch(FB_URL + '/state.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(Object.assign({}, m2, {_ts:Date.now()}))});
+            return FB.fetch(FB_URL + '/state.json', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(Object.assign({}, m2, {_ts:Date.now()}))});
           });
         }
         if(pr.ok){ FB_ON = true; updateFBIndicator(true); LAST_TS = myTs; } else { updateFBIndicator(false); }
@@ -1013,12 +1018,12 @@ function fbSync(){
 // y baja el state completo unicamente cuando alguien mas guardo algo.
 var LAST_TS = 0;
 function fbPoll(){
-  fetch(FB_URL + '/state/_ts.json').then(function(r){
+  FB.fetch(FB_URL + '/state/_ts.json').then(function(r){
     FB_ON = true; updateFBIndicator(true); return r.json();
   }).then(function(ts){
     if(!ts || ts === LAST_TS) return;   // nadie cambio nada: no bajamos el state
     LAST_TS = ts;
-    return fetch(FB_URL + '/state.json').then(function(r){ return r.json(); })
+    return FB.fetch(FB_URL + '/state.json').then(function(r){ return r.json(); })
       .then(function(remote){
         if(!remote) return;
         function sig(list){ return (list||[]).length + '|' + (list||[]).map(function(f){return f.id+':'+(f._m||0)+':'+f.status;}).sort().join(','); }
