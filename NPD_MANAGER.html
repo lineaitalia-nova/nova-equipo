@@ -512,7 +512,7 @@ const RAW = [
 ];
 
 // ─── STATE ──────────────────────────────────────────────────────────
-let PROJ=[], USERS=[], cu=null, av='inicio', stm=null;
+let PROJ=[], USERS=[], cu=null, av='inicio';
 function render(){sv2(av);}
 let fEng='todos', srch='', fFase='todos', fEst='todos', fAnio='todos';
 let cpid=null, amt='resumen';
@@ -867,7 +867,30 @@ function _loadFromStorage(){
     }
   });
 }
-function sch(p){clearTimeout(stm);stm=setTimeout(()=>{saveProj(p);toast('Guardado ✓');},800);}
+// Guardado diferido, un temporizador POR PROYECTO (sep 2026).
+//
+// Antes era uno solo compartido: clearTimeout(stm) cancelaba el guardado pendiente
+// de CUALQUIER proyecto. Editar algo en un proyecto y pasar a otro antes de 800 ms
+// descartaba lo primero en silencio -- la nota aparecia en pantalla porque ya estaba
+// en memoria, y se perdia al recargar. Es justo lo que pasa en la revision de los
+// lunes, entrando y saliendo de proyecto en proyecto.
+//
+// Con una clave por proyecto, el guardado de uno ya no puede cancelar el de otro.
+// Editar varias cosas del MISMO proyecto se sigue agrupando en un guardado, que era
+// el proposito original del retardo.
+const stms = {};
+function sch(p){
+  if(!p||!p.id) return;
+  clearTimeout(stms[p.id]);
+  stms[p.id]=setTimeout(()=>{delete stms[p.id];saveProj(p);toast('Guardado ✓');},800);
+}
+// Si cierran la pestana o recargan con algo pendiente, se guarda antes de salir.
+window.addEventListener('beforeunload',()=>{
+  for(const id of Object.keys(stms)){
+    clearTimeout(stms[id]); delete stms[id];
+    const p=PROJ.find(x=>x.id===id); if(p) saveProj(p);
+  }
+});
 function addAct(p,tipo,msg){const e={proj:p.id,pn:p.name,tipo,msg,who:cu?.nombre||'?',ts:new Date().toISOString()};p.act=[e,...(p.act||[])].slice(0,30);}
 
 // ─── LOGIN ──────────────────────────────────────────────────────────
