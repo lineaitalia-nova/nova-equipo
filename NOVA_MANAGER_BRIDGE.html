@@ -883,13 +883,19 @@ nav{flex:1;overflow-y:auto;padding:6px 8px}
 </div>
 
 
+<script src="equipo.js"></script>
 <script src="fb-auth.js"></script>
 <script>
 'use strict';
 // ══════════════════════════════════════════════════════════════
 //  EQUIPO & CONSTANTES
 // ══════════════════════════════════════════════════════════════
-const EQUIPO=["Enrique Romo","René Esparza","Obed Zavala","Alexis Esparza","Paulina Román","Ramón Barraza","Francisco de la Rosa","Everardo Aguayo","Taller de Innovación","Brenda Yañez","Luis Rubén López"];
+// Antes esta lista se escribia a mano aqui y traia 11 nombres, varios con el
+// apellido equivocado. Faltaban cinco personas del equipo -- Frida Paola, Luis
+// Carlo, Karina Valeria, Danna Paola y Natalia Estefania -- que por no estar
+// aqui no aparecian en ningun desplegable y no podian recibir tareas.
+// Ahora sale del padron compartido (equipo.js), que es la unica fuente.
+const EQUIPO=EQ.paraSelect().map(p=>p.nombre);
 const AC={Innovación:"#7C3AED",Ingeniería:"#2563EB",Folios:"#D97706",Costos:"#16A34A",Diseño:"#DB2777"};
 const AB={Innovación:"#EDE9FE",Ingeniería:"#DBEAFE",Folios:"#FEF3C7",Costos:"#DCFCE7",Diseño:"#FCE7F3"};
 const EC={Completada:"#16A34A","En progreso":"#2563EB",Pendiente:"#D97706",Bloqueada:"#DC2626",Terminado:"#16A34A",Cancelada:"#64748B"};
@@ -2002,7 +2008,19 @@ function importData(input){
 // ══════════════════════════════════════════════════════════════
 function openM(id){document.getElementById(id).classList.add('open');}
 function closeM(id){document.getElementById(id).classList.remove('open');}
-function setV(id,val){const s=document.getElementById(id);if(!s)return;for(const o of s.options){if(o.value===val||o.text===val){s.value=o.value;break;}}}
+function setV(id,val){
+  const s=document.getElementById(id);if(!s)return;
+  for(const o of s.options){if(o.value===val||o.text===val){s.value=o.value;return;}}
+  // Los desplegables de responsable ('-r') pueden recibir un nombre historico que
+  // ya no coincide letra por letra con el del padron: una tarea guardada como
+  // "Alexis Esparza" contra la opcion "Raul Alexis Esparza". Sin esto, al editarla
+  // el campo aparecia vacio y al guardar se perdia el responsable.
+  if(!/-r$/.test(id))return;
+  const p=(window.EQ&&EQ.resolver(val));
+  if(!p)return;
+  const canonico=EQ.nombre(p);
+  for(const o of s.options){if(o.value===canonico){s.value=o.value;return;}}
+}
 
 function populateRespDropdowns(){
   const opts='<option value="">— Seleccionar —</option>'+EQUIPO.map(n=>`<option value="${n}">${n}</option>`).join('');
@@ -3042,25 +3060,24 @@ function saveSnapshot(manual=false){
 const FB_ENV=(location.hostname==='lineaitalia-nova.github.io')?'':'/_test';
 const FB_BRIDGE='https://nova-lineaitalia-2-default-rtdb.firebaseio.com'+FB_ENV;
 
-const NOMBRE_A_ID={
-  'Enrique Romo':'enrique',
-  'René Esparza':'rene',
-  'Obed Zavala':'kevin',
-  'Alexis Esparza':'alexis',
-  'Paulina Román':'paulina',
-  'Ramón Barraza':'ramon',
-  'Francisco de la Rosa':'paco',
-  'Everardo Aguayo':'everardo',
-  'Taller de Innovación':'rene',
-  'Brenda Yañez':'brenda',
-  'Luis Rubén López':'luisrub',
-};
+// NOMBRE_A_ID se retiro (sep 2026). Era una tabla de 11 entradas mantenida a mano
+// para traducir nombres del Bridge a ids de Nova, y solo funcionaba si el nombre
+// coincidia letra por letra. Cualquier variante -- un acento, un apellido distinto,
+// alguien fuera de la lista -- caia en el `return` de abajo y la tarea delegada se
+// perdia sin error ni aviso. Ahora resuelve el padron compartido, que conoce todas
+// las formas en que cada persona aparece escrita.
 
 // Push a delegated task (Tipo 2) to Firebase so team can see it
 async function fbPushDelegada(task){
   if(task.tipo!=='Tipo 2') return; // Only delegate T2
-  const userId = NOMBRE_A_ID[task.responsable];
-  if(!userId) return;
+  const userId = EQ.destinatario(task.responsable);
+  if(!userId){
+    // Ya no deberia ocurrir, pero si un dia llega un responsable desconocido es
+    // preferible enterarse que perder la delegacion en silencio.
+    console.warn('[bridge] responsable sin correspondencia en el padron:',task.responsable);
+    showToast('⚠️ No se pudo delegar: "'+task.responsable+'" no está en el padrón');
+    return;
+  }
   const payload={
     id: 'g_'+task.id,
     desc: task.tarea,
