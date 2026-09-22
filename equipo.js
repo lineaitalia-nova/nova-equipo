@@ -60,6 +60,14 @@
               nombres:['Everardo Aguayo','Everardo Aguayo Sandoval'] } },
     { id:'karina', nombre:'Karina Valeria', apellido:'Pérez', area:'Ingeniería', rol:'becario', color:'#DDD6FE',
       alias:{ npd:[], folios:[], nombres:['Karina Valeria','Karina Valeria Pérez','Karina'] } },
+    // Alta de sep 2026. Ingeniero de producto enfocado a folios: aparece en el
+    // tablero de Folios con carga propia bajo el codigo SEBASTIAN, que Rene dio
+    // de alta desde la app. Se registra aqui para que su nombre salga igual en
+    // todas las pantallas, no solo en Folios.
+    { id:'sebastian', nombre:'Sebastián', apellido:'González', area:'Ingeniería', rol:'ingeniero', color:'#6D28D9',
+      enfoque:'Folios',
+      alias:{ npd:[], folios:['SEBASTIAN'],
+              nombres:['Sebastián González','Sebastian Gonzalez','Sebastián','Sebastian'] } },
 
     // ── Costos y Folios ──
     { id:'brenda', nombre:'Brenda', apellido:'Yañez', area:'Costos', rol:'coordinador', color:'#2DD4BF',
