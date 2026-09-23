@@ -559,10 +559,18 @@ const diasHabiles = (desde, hasta) => {
   }
   return sign * (count - 1); // -1 porque no contamos el día actual
 };
-// dNF: calcula días hábiles usando fechaFinal del proyecto (no fechaFase)
-// Retorna null si terminado/pausado/cancelado
+// dNF: dias habiles que faltan para la FECHA FINAL comprometida del proyecto.
+// Es otro reloj que el de la fase (finFaseActual / vencimientoDe), a proposito:
+// alimenta el rumbo del bono y la columna "Dias habiles" de Control de proyectos,
+// que preguntan por el cierre del proyecto, no por la fase en curso.
+// Devuelve null cuando ya no hay compromiso vivo que medir: terminado, cancelado
+// o detenido por Gerencia.
+// La lista traia ademas 'Fuera de línea' con acento, y el estatus se guarda como
+// 'Fuera de linea' sin el, asi que esa entrada nunca excluyo nada. Se retira en
+// vez de corregirle el acento: un proyecto atrasado es justo del que mas importa
+// saber cuanto le queda al cierre, y asi el codigo dice lo que ya hacia.
 const dNF  = (p) => {
-  if(!p||['Terminado','Cancelado','En pausa','Fuera de línea'].includes(p.estatus)) return null;
+  if(!p||['Terminado','Cancelado','En pausa'].includes(p.estatus)) return null;
   const fe=p.fechaFinal||p.fe||'';
   const d=pd(fe);
   return d?diasHabiles(TODAY, d):null;
@@ -2069,7 +2077,6 @@ function renderRepFiltro(){
   }
   h+=`<div class="${sel!=='todos'?'':''}">`;
   lista.forEach(p=>{
-    const d=dNF(p);
     h+=`<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border2);border-top:none;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'" onclick="oP('${p.id}')">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px">${p.name}</div>
@@ -2383,8 +2390,10 @@ function rMisProyectos(c, filtro){
     </div>`;
   } else {
     lista.forEach(p=>{
-      const d=dNF(p);
-      const isRisk=d!==null&&d<=7;
+      // El marco rojo sigue al mismo reloj que el chip de la tarjeta: la fase.
+      // Antes miraba la fecha final del proyecto, asi que una tarjeta podia decir
+      // "Vencida 26d" y verse igual que una en tiempo.
+      const isRisk=vencidoActivo(p)||saludFase(p)?.nivel==='ambar';
       const isTerm=p.estatus==='Terminado';
       const cardCls=isTerm?'proj-card term':isRisk?'proj-card risk':'proj-card enc';
       // Barra de avance
@@ -3689,11 +3698,14 @@ function imprimirReporteEjecutivo(){
   const fecha=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const fc=new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
 
+  // Esta salud mide la FECHA FINAL del proyecto, no la fase. Va junto a la columna
+  // "Fecha final" y por eso no dice "vencido" a secas: esa palabra ya significa
+  // "fase vencida" en el resto de la app y aqui diria otra cosa con el mismo nombre.
   function pSalud(p){
     if(p.estatus==='Terminado') return{ico:'✅',col:'#16a34a',lbl:'Terminado'};
     const d=dNF(p);
     if(d===null) return{ico:'⚪',col:'#9ca3af',lbl:'Sin fecha'};
-    if(d<0) return{ico:'🔴',col:'#dc2626',lbl:Math.abs(d)+'d vencido'};
+    if(d<0) return{ico:'🔴',col:'#dc2626',lbl:Math.abs(d)+'d sobre la fecha final'};
     if(d<=3) return{ico:'🔴',col:'#dc2626',lbl:`⚠ ${d}d restantes`};
     if(d<=7) return{ico:'🟠',col:'#ea580c',lbl:`⚠ ${d}d restantes`};
     if(d<=21) return{ico:'🟡',col:'#d97706',lbl:`${d}d restantes`};
