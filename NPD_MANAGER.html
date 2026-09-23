@@ -2663,6 +2663,54 @@ function rCadencia(c){
     }
   }
 
+  // ---- ¿Qué se movió desde la última junta? y ¿Qué no se movió? (sep 2026) ----
+  // Direccion dijo que no veia cadencia en los proyectos. El portafolio si se mueve
+  // -- 7 de 9 activos tocados por semana, cientos de eventos registrados -- pero el
+  // reporte mostraba ESTADO (fecha, avance, estatus, fase), y esas cuatro cosas casi
+  // no cambian de lunes a lunes. Se reportaba el saldo cuando pedian el estado de
+  // cuenta. Estos dos bloques muestran el CAMBIO, que es de lo que trata una junta
+  // de seguimiento.
+  const _desde = new Date(TODAY.getTime() - 7*86400000);
+  const _esExterno = txt => /plantilla|prototipo|herramienta|dispositivo|herramental/i.test(txt||'');
+  const _mov = _roadProjs.map(p=>({
+    p,
+    ev:(p.act||[]).filter(a=>a&&a.ts&&new Date(a.ts)>=_desde)
+        .sort((a,b)=>new Date(a.ts)-new Date(b.ts))
+  })).filter(x=>x.ev.length).sort((a,b)=>b.ev.length-a.ev.length);
+  const _quietos = _roadProjs.filter(p=>!(p.act||[]).some(a=>a&&a.ts&&new Date(a.ts)>=_desde))
+    .map(p=>{
+      const ult=(p.act||[]).filter(a=>a&&a.ts).sort((a,b)=>new Date(b.ts)-new Date(a.ts))[0];
+      return {p, dias: ult?Math.round((TODAY-new Date(ult.ts))/86400000):null};
+    }).sort((a,b)=>(b.dias||999)-(a.dias||999));
+
+  const movHtml = _mov.length ? _mov.map(x=>{
+    const eng=(USERS.find(u=>u.perfil===x.p.eng)||{}).nombre||'';
+    return `<div style="border-left:3px solid ${FD[x.p.fase]?.c||'var(--border)'};padding:10px 0 10px 12px;margin-bottom:12px">
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:700;color:var(--text)">${x.p.name}</span>
+        <span style="font-size:11px;color:var(--muted)">${eng}</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--muted)">${x.ev.length} movimiento${x.ev.length>1?'s':''}</span>
+      </div>
+      ${x.ev.slice(-6).map(a=>`<div style="display:flex;align-items:baseline;gap:8px;font-size:11px;margin-bottom:3px">
+        <span style="width:48px;flex:none;color:var(--muted);font-family:var(--font-m)">${new Date(a.ts).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span>
+        <span style="flex:1;color:var(--text)">${(a.msg||'').replace(/"/g,'')}${_esExterno(a.msg)?' <span style="font-size:9px;background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:99px;font-weight:700">taller</span>':''}</span>
+        <span style="flex:none;color:var(--muted);font-size:10px">${a.who||''}</span>
+      </div>`).join('')}
+      ${x.ev.length>6?`<div style="font-size:10px;color:var(--muted);margin-top:3px">+ ${x.ev.length-6} movimientos más</div>`:''}
+    </div>`;
+  }).join('') : `<div style="padding:14px;color:var(--muted);font-size:12px">Sin movimientos registrados en los últimos 7 días.</div>`;
+
+  const quietosHtml = _quietos.length ? _quietos.map(q=>{
+    const eng=(USERS.find(u=>u.perfil===q.p.eng)||{}).nombre||'';
+    const fuera=q.p.estatus==='Fuera de linea';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:6px;background:var(--surface2);border-left:3px solid ${fuera?'var(--bad)':'var(--warn)'};font-size:12px">
+      <span style="flex:1;color:var(--text)">${q.p.name} <span style="color:var(--muted);font-size:11px">· ${eng}</span></span>
+      <span style="color:var(--muted);font-size:10px">${q.p.fase} · ${q.p.avance||0}%</span>
+      <span style="color:${fuera?'var(--bad)':'var(--warn)'};font-size:10px;font-weight:700;min-width:96px;text-align:right">${fuera?'fuera de línea':'en línea'}</span>
+      <span style="color:var(--muted);font-size:10px;min-width:74px;text-align:right">${q.dias===null?'sin registro':q.dias+' d sin tocar'}</span>
+    </div>`;
+  }).join('') : `<div style="padding:14px;color:var(--muted);font-size:12px">Todos los proyectos activos tuvieron movimiento. ✓</div>`;
+
   c.innerHTML = `
   <div style="max-width:1100px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
@@ -2682,6 +2730,18 @@ function rCadencia(c){
       <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Cuándo llega cada producto al mercado</div>
       <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Ordenado por fecha de lanzamiento comprometida</div>
       ${roadmapHtml}
+    </div>
+
+    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
+      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Qué se movió desde la última junta</div>
+      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Últimos 7 días · lo marcado como <span style="font-size:9px;background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:99px;font-weight:700">taller</span> es trabajo externo de plantillas o prototipos</div>
+      ${movHtml}
+    </div>
+
+    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
+      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Sin movimiento</div>
+      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Proyectos activos sin un solo registro en los últimos 7 días</div>
+      ${quietosHtml}
     </div>
 
     <!--
