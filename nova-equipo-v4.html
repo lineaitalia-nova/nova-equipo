@@ -550,6 +550,7 @@ input[type="date"].input::-webkit-calendar-picker-indicator{filter:invert(1) bri
 
 <div class="toast" id="toast"></div>
 
+<script src="fallas.js"></script>
 <script src="fb-auth.js"></script>
 <script>
 // ══ CONFIG ═══════════════════════════════════════════════════
@@ -602,7 +603,7 @@ function todayStr(){return new Date().toISOString().split('T')[0];}
 function weekStr(){const d=new Date();const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);const m=new Date(d);m.setDate(diff);return m.toISOString().split('T')[0];}
 function fmtDate(s){if(!s)return'—';const[y,m,d]=s.split('-');const ms=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];return`${d} ${ms[parseInt(m)-1]}`;}
 function isOverdue(t){return t.status!=='done'&&t.due&&new Date(t.due)<new Date();}
-function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)DB=JSON.parse(r);}catch(e){}}
+function loadLocal(){try{const r=localStorage.getItem(LS_KEY);if(r)DB=JSON.parse(r);}catch(e){Falla.registrar('loadLocal',e);}}
 function saveLocal(){DB._savedAt=Date.now();localStorage.setItem(LS_KEY,JSON.stringify(DB));}
 function showToast(msg,dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
@@ -612,7 +613,7 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 // Permite que gsPull sepa QUIEN cambio sin descargar los 9 MB de /usuarios.
 const TS_KEY = LS_KEY + '_ts';
 function _loadTsMap(){try{return JSON.parse(localStorage.getItem(TS_KEY)||'{}');}catch(e){return {};}}
-function _saveTsMap(m){try{localStorage.setItem(TS_KEY,JSON.stringify(m));}catch(e){}}
+function _saveTsMap(m){try{localStorage.setItem(TS_KEY,JSON.stringify(m));}catch(e){Falla.critica('guardar las marcas de sincronización',e);}}
 
 // REGLA DE PROPIEDAD (sep 2026) ─────────────────────────────────────────────────
 // Antes cada usuario guardaba la lista COMPLETA del equipo en su propio nodo: 15 copias
@@ -654,7 +655,7 @@ function gsPush(){
     .then(()=>{
       setSyncTxt('Guardado');
       // Avisar en el indice que este usuario cambio (escritura de unos pocos bytes)
-      FB.fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[SESSION.id]:ts})}).catch(()=>{});
+      FB.fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[SESSION.id]:ts})}).catch(e=>Falla.critica('avisar mi cambio al resto del equipo',e));
       // No volver a bajar nuestro propio nodo en la siguiente sincronizacion
       const m=_loadTsMap();m[SESSION.id]=ts;_saveTsMap(m);
       // También propagar tareas reasignadas al nodo del destinatario
@@ -666,7 +667,7 @@ function gsPush(){
 // Marca de la ultima propagacion de delegadas, para no reenviar lo mismo cada vez.
 const DELEG_KEY = LS_KEY + '_delegts';
 function _loadDelegTs(){try{return parseInt(localStorage.getItem(DELEG_KEY)||'0',10)||0;}catch(e){return 0;}}
-function _saveDelegTs(v){try{localStorage.setItem(DELEG_KEY,String(v));}catch(e){}}
+function _saveDelegTs(v){try{localStorage.setItem(DELEG_KEY,String(v));}catch(e){Falla.critica('guardar la marca de tareas delegadas',e);}}
 
 function _pushDelegadas(){
   // OPTIMIZADO (sep 2026): antes propagaba TODAS las tareas reasignadas en cada guardado.
@@ -714,7 +715,7 @@ function _pushDelegadas(){
   });
   // La marca solo avanza si TODAS las propagaciones salieron bien. Si alguna falla se
   // reintenta en el siguiente guardado: la fusion por id es idempotente, no duplica nada.
-  Promise.all(trabajos).then(()=>{_saveDelegTs(maxTs);}).catch(()=>{});
+  Promise.all(trabajos).then(()=>{_saveDelegTs(maxTs);}).catch(e=>Falla.critica('propagar avances de tareas delegadas',e));
 }
 
 async function gsPull(){
@@ -746,7 +747,7 @@ async function gsPull(){
       Object.entries(allUsers).forEach(([uid,ud])=>{if(ud&&ud._savedAt)seed[uid]=ud._savedAt;});
       if(Object.keys(seed).length){
         tsNow=Object.assign({},seed,tsNow);
-        FB.fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(seed)}).catch(()=>{});
+        FB.fetch(FB_URL+'/meta/users.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(seed)}).catch(e=>Falla.registrar('sembrar índice de sellos de usuarios',e));
       }
     }else if(cambiados.length){
       const res=await Promise.all(cambiados.map(uid=>
@@ -769,7 +770,7 @@ async function gsPull(){
         if(ud.prototipos&&Array.isArray(ud.prototipos))allPrototipos=[...allPrototipos,...ud.prototipos];
         if(userId===SESSION.id&&ud.eval_progreso)myEval=ud.eval_progreso;
         if(ud._savedAt&&ud._savedAt>latestSaved)latestSaved=ud._savedAt;
-      }catch(e){}
+      }catch(e){Falla.registrar('gsPull',e);}
     });
     // Dedupe: la versión con delegatedAt más reciente gana siempre
     // Si no hay delegatedAt, usa updatedAt como criterio
@@ -795,7 +796,7 @@ async function gsPull(){
       const dr=await FB.fetch(FB_URL+'/deleted.json');
       const deletedData=await dr.json();
       if(deletedData)Object.keys(deletedData).forEach(k=>deletedIds.add(k));
-    }catch(e){}
+    }catch(e){Falla.registrar('dedupeLatest',e);}
     // Filtrar eliminadas y reasignadas: usar assignedTo más reciente
     DB.tareas=dedupeLatest(allTareas).filter(t=>!t.deleted&&!deletedIds.has(t.id));
     DB.reportes=dedupeLatest(allReportes);

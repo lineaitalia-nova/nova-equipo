@@ -811,6 +811,7 @@ tr:hover td{background:var(--bg);cursor:pointer}
   </div>
 </div>
 
+<script src="fallas.js"></script>
 <script src="fb-auth.js"></script>
 <script>
 'use strict';
@@ -881,7 +882,7 @@ function loadState() {
       }
       return d;
     }
-  } catch(e) {}
+  } catch(e){Falla.registrar('loadState',e);}
   return {folios: FOLIOS_BASE.map(arrToObj), problemas: PROBLEMAS_BASE.slice(), del:{}, reactivaciones: []};
 }
 
@@ -960,7 +961,7 @@ function applyMerged(m, rerender){
   if(window.fillAsesorSelect) window.fillAsesorSelect();
   if(window.fillSucursalSelects) window.fillSucursalSelects();
   window.STATE = STATE;
-  try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e) {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e){Falla.critica('aplicar los cambios recibidos',e);}
   if(rerender){
     if(window.renderList) window.renderList();
     if(window.renderKPIs) window.renderKPIs();
@@ -1039,7 +1040,7 @@ setInterval(fbPoll, 15000);
 // Carga inicial: el servidor es la base; se combinan cambios locales no sincronizados.
 function fbLoad(cb){
   var localData = null;
-  try { var ls = localStorage.getItem(LS_KEY); if(ls) localData = JSON.parse(ls); } catch(e){}
+  try { var ls = localStorage.getItem(LS_KEY); if(ls) localData = JSON.parse(ls); } catch(e){Falla.registrar('fbLoad',e);}
   fbGet().then(function(remote){
     if(remote && remote._ts) LAST_TS = remote._ts;
     var hasRemote = remote && remote.folios && remote.folios.length > 0;
@@ -1060,7 +1061,7 @@ function fbLoad(cb){
 }
 
 function saveState(){
-  try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e) {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify(STATE)); } catch(e){Falla.critica('guardar los folios',e);}
   fbSync();
 }
 window.saveState = saveState;
