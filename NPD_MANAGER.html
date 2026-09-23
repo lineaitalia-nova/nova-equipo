@@ -719,6 +719,97 @@ const vencido       = p => !!vencimientoDe(p)?.vencida;
 const vencidoActivo = p => p?.estatus!=='En pausa' && vencido(p);
 const vencidoPausa  = p => p?.estatus==='En pausa' && vencido(p);
 
+// ─── RITMO Y CREDIBILIDAD DE FECHA (sep 2026) ───────────────────────
+// El reporte presentaba fechas de lanzamiento sin decir si se sostienen. Nueve de
+// diez no se sostenian contra el ritmo historico de la propia empresa, y una de
+// ellas salia en ambar como "en 1 d" estando al 52% de avance. Presentar eso
+// cuesta la credibilidad de la hoja completa, no solo de ese renglon.
+
+// Cuanto tarda cada fase, segun los proyectos que YA cerraron. La vara es la
+// historia de la casa: no hay estandar externo que pese mas que eso.
+function medianasDeFase(){
+  const term=PROJ.filter(p=>p.estatus==='Terminado');
+  const m={};
+  FK_PROYECTO.forEach(f=>{
+    const ds=term.map(p=>{
+      const x=p.fechasFase?.[f];
+      if(!x||!x.inicio||!x.fin) return null;
+      const d=Math.round((pd(x.fin)-pd(x.inicio))/86400000);
+      return d>0?d:null;
+    }).filter(Boolean).sort((a,b)=>a-b);
+    m[f]=ds.length?{n:ds.length,dias:ds[Math.floor(ds.length/2)]}:null;
+  });
+  return m;
+}
+
+// Una fecha es creible si el tiempo que queda alcanza para las fases que faltan,
+// al ritmo al que esta empresa las ha hecho antes. Es una vara generosa: suma
+// medianas de fase activa e ignora el tiempo muerto entre fases, que es lo que
+// separa los 95 dias de fase de los 227 que dura el proyecto mediano de verdad.
+function credibilidad(p,med){
+  const fin=p?.fechasFase?.['Lanzamiento']?.fin;
+  if(!fin) return null;
+  const i=FK_PROYECTO.indexOf(p.fase);
+  if(i<0) return null;
+  // La fase en curso se cobra solo por lo que le falta (sep 2026). Sumar la
+  // mediana completa daba la misma fecha a un proyecto al 85% de su fase y a uno
+  // al 0%: once de trece caian en el mismo mes, y eso no lo cree nadie.
+  const hechoDe = f => { const ts=(p.tp&&p.tp[f])||[];
+    return ts.length ? ts.filter(t=>t&&t.e==='Completado').length/ts.length : 0; };
+  let necesita=0, hayDatos=false;
+  FK_PROYECTO.slice(i).forEach((f,k)=>{
+    const m=med[f]?med[f].dias:0;
+    if(med[f]) hayDatos=true;
+    necesita += k===0 ? Math.round(m*(1-hechoDe(f))) : m;
+  });
+  if(!hayDatos) return null;
+  const quedan=Math.round((pd(fin)-TODAY)/86400000);
+  const listo=new Date(TODAY.getTime()+necesita*86400000);
+  return {quedan, necesita, listo, brecha:necesita-quedan,
+    nivel: quedan>=necesita?'sostiene':(quedan>=Math.round(necesita*0.7)?'apretada':'no sostiene')};
+}
+
+// Lanzamientos cerrados por ano y lo que el pipeline promete para el resto.
+// La proyeccion NO se extrapola del ritmo (sep 2026): se cuenta cuantos proyectos
+// vivos tienen fecha realista dentro del ano. Extrapolando, el bloque de arriba
+// decia 7 mientras el roadmap de abajo implicaba 15 -- dos respuestas distintas a
+// la misma pregunta en la misma hoja.
+function ritmoDeLanzamientos(med){
+  const term=PROJ.filter(p=>p.estatus==='Terminado');
+  const anioDe=p=>String(p.fechasFase?.['Lanzamiento']?.fin||p.fechaFinal||'').slice(0,4);
+  const y=TODAY.getFullYear(), meses=TODAY.getMonth()+1;
+  const esteAnio=term.filter(p=>anioDe(p)===String(y)).length;
+  const anterior=term.filter(p=>anioDe(p)===String(y-1)).length;
+  const finAnio=new Date(y,11,31);
+  const vivos=PROJ.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
+  const crs=med?vivos.map(p=>credibilidad(p,med)).filter(Boolean):[];
+  const pipeline=crs.filter(cr=>cr.listo<=finAnio).length;
+  return {y, esteAnio, anterior, meses,
+    ritmo: meses?esteAnio/meses:0,
+    ritmoAnterior: anterior/12,
+    pipeline, proyeccion: esteAnio+pipeline, vivos:vivos.length};
+}
+
+// ¿Cabe el plan? Agrupa los proyectos vivos por el mes en el que realmente
+// estarian listos y lo compara con lo que esta empresa ha demostrado que cierra
+// por mes. Es el dato que el reporte tenia enfrente y no decia.
+function capacidadDelPlan(med){
+  const vivos=PROJ.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
+  const porMes={};
+  vivos.forEach(p=>{ const cr=credibilidad(p,med); if(!cr) return;
+    const k=cr.listo.getFullYear()+'-'+String(cr.listo.getMonth()+1).padStart(2,'0');
+    (porMes[k]=porMes[k]||[]).push(p); });
+  const meses=Object.keys(porMes).sort();
+  if(!meses.length) return null;
+  const total=meses.reduce((s,k)=>s+porMes[k].length,0);
+  const ventana=meses.length;
+  const pide=total/ventana;
+  const r=ritmoDeLanzamientos();
+  const demostrado=Math.max(r.ritmo, r.ritmoAnterior);
+  return {porMes, meses, total, ventana, pide, demostrado,
+    veces: demostrado>0?pide/demostrado:null};
+}
+
 // "Fuera de linea" deja de capturarse a mano (sep 2026). Antes Rene lo movia proyecto
 // por proyecto al notar el atraso, y mientras no lo hiciera un proyecto podia decir
 // "En linea" llevando 299 dias de retraso. Ahora se enciende y se apaga solo al
@@ -762,6 +853,42 @@ function autoBackup(){
   }catch(e){Falla.critica('crear el respaldo automático',e);}
 }
 function saveUsers(){try{localStorage.setItem(VER+'users',JSON.stringify(USERS));fbPush();}catch(e){Falla.critica('guardar los usuarios',e);}}
+
+// ─── DECISIONES PARA DIRECCION (sep 2026) ───────────────────────────
+// El reporte terminaba sin pedir nada. Un reporte ejecutivo que no pide una
+// decision es un informe de actividades: se escucha, se agradece y no pasa nada.
+// Aqui se escriben las pocas cosas que Gerencia necesita que Direccion resuelva,
+// con fecha de respuesta, para que la junta cierre con acuerdos y no con avances.
+// Se guarda con el prefijo VER, asi que fbPush la sincroniza sin nada extra.
+function decisiones(){
+  try{ const a=JSON.parse(localStorage.getItem(VER+'decisiones')||'[]'); return Array.isArray(a)?a:[]; }
+  catch(e){ Falla.registrar('leer las decisiones',e); return []; }
+}
+function guardarDecisiones(arr){
+  try{ localStorage.setItem(VER+'decisiones',JSON.stringify(arr)); fbPush(); }
+  catch(e){ Falla.critica('guardar las decisiones',e); }
+}
+function addDecision(){
+  const t=(document.getElementById('dec-txt')?.value||'').trim();
+  if(!t){ toast('Escribe qué necesitas que resuelvan'); return; }
+  const arr=decisiones();
+  arr.push({id:'D'+Date.now(), texto:t,
+    proyecto:(document.getElementById('dec-proj')?.value||''),
+    fecha:(document.getElementById('dec-fecha')?.value||''),
+    estado:'pendiente', creadoEn:Date.now(), autor:cu?.nombre||''});
+  guardarDecisiones(arr); rCadencia(document.getElementById('vc')); toast('Decisión agregada ✓');
+}
+function cerrarDecision(id){
+  const arr=decisiones(); const d=arr.find(x=>x.id===id); if(!d) return;
+  d.estado = d.estado==='resuelta'?'pendiente':'resuelta';
+  d.resueltaEn = d.estado==='resuelta'?Date.now():null;
+  guardarDecisiones(arr); rCadencia(document.getElementById('vc'));
+}
+function borrarDecision(id){
+  if(!confirm('¿Quitar esta decisión del reporte?')) return;
+  guardarDecisiones(decisiones().filter(x=>x.id!==id));
+  rCadencia(document.getElementById('vc'));
+}
 
 // Claves de localStorage que corresponden a proyectos ya borrados (sep 2026).
 // Se usa para dos cosas: no volver a subirlas y limpiarlas del navegador.
@@ -2664,7 +2791,12 @@ function rCadencia(c){
   }
 
   // ---- Roadmap del portafolio (Gantt por fases · un renglón por proyecto) ----
-  const _roadProjs = PROJ.filter(p=>(p.estatus==='En linea'||p.estatus==='Fuera de linea') && (selEng==='todos'||p.eng===selEng));
+  // Los pausados SI entran (sep 2026). Antes se excluian, y el peor atraso del
+  // portafolio --Modulos Directivos, 76 dias-- era invisible en el reporte por
+  // estar en pausa. Una pausa es una decision de Gerencia, no una razon para que
+  // el producto desaparezca del tablero de Direccion.
+  const _roadProjs = PROJ.filter(p=>p.estatus!=='Terminado' && p.estatus!=='Cancelado' && (selEng==='todos'||p.eng===selEng));
+  const _med = medianasDeFase();
   let roadmapHtml='';
   {
     // Se excluye Seguimiento: el proyecto llega al mercado en Lanzamiento, y el
@@ -2702,7 +2834,8 @@ function rCadencia(c){
           // Sigue disponible al pasar el cursor.
           return `<div style="position:absolute;left:${s}%;width:${w}%;top:0;height:22px;background:${ph.fd.c};opacity:${op};border-radius:5px" title="${ph.f}: ${fmtD(toISO(ph.ini))} → ${fmtD(toISO(ph.fin))} · ${fp}%"></div>`;
         }).join('');
-        // La etiqueta de la derecha es el golpe: cuando llega al mercado, y si ya se paso.
+        // La etiqueta de la derecha es el golpe: cuando llega al mercado, y --lo que
+        // faltaba-- si esa fecha se sostiene contra el ritmo historico de la casa.
         const _d = r.lanzFin ? Math.round((r.lanzFin-TODAY)/86400000) : null;
         let etq='—', col='var(--muted)', bg='transparent';
         if(_d!==null){
@@ -2710,13 +2843,24 @@ function rCadencia(c){
           else if(_d<=14){ etq=`en ${_d} d`; col='var(--warn)'; bg='var(--warn-bg)'; }
           else { etq=r.lanzFin.toLocaleDateString('es-MX',{month:'short',year:'2-digit'}); }
         }
-        return `<div style="display:flex;align-items:center;height:28px;margin-bottom:6px">
-          <span style="width:150px;flex:none;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px" title="${r.p.name}">${r.p.name}<span style="display:block;font-size:9px;font-weight:400;color:var(--muted)">${(USERS.find(u=>u.perfil===r.p.eng)||{}).nombre||''}</span></span>
-          <div style="position:relative;flex:1;height:22px;background:var(--surface2);border-radius:5px">
+        const cr=credibilidad(r.p,_med);
+        const crCol = !cr?'var(--muted)':cr.nivel==='sostiene'?'var(--ok)':cr.nivel==='apretada'?'var(--warn)':'var(--bad)';
+        // Cuando la fecha no se sostiene, lo util no es el hueco en dias sino la
+        // fecha que SI se sostiene: hoy + lo que historicamente falta. Eso es lo
+        // que Direccion puede anotar en su calendario.
+        const crTxt = !cr?'' : cr.nivel==='sostiene' ? 'la fecha se sostiene'
+                    : `realista: ${new Date(TODAY.getTime()+cr.necesita*86400000).toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}`;
+        const enPausa = r.p.estatus==='En pausa';
+        return `<div style="display:flex;align-items:center;min-height:32px;margin-bottom:6px">
+          <span style="width:150px;flex:none;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px" title="${r.p.name}">${r.p.name}${enPausa?' <span style="font-size:8px;font-weight:700;color:var(--warn);background:var(--warn-bg);padding:1px 5px;border-radius:99px;vertical-align:middle">en pausa</span>':''}<span style="display:block;font-size:9px;font-weight:400;color:var(--muted)">${(USERS.find(u=>u.perfil===r.p.eng)||{}).nombre||''}</span></span>
+          <div style="position:relative;flex:1;height:22px;background:var(--surface2);border-radius:5px;${enPausa?'opacity:.45':''}">
             <div style="position:absolute;left:${_todayPct}%;top:-4px;bottom:-4px;width:2px;background:#dc2626;z-index:2"></div>
             ${segs}
           </div>
-          <span style="width:108px;flex:none;text-align:right;padding-left:8px"><span style="font-size:10px;font-weight:700;color:${col};background:${bg};padding:3px 8px;border-radius:var(--r);white-space:nowrap">${etq}</span></span>
+          <span style="width:132px;flex:none;text-align:right;padding-left:8px">
+            <span style="font-size:10px;font-weight:700;color:${col};background:${bg};padding:3px 8px;border-radius:var(--r);white-space:nowrap">${etq}</span>
+            ${crTxt?`<span style="display:block;font-size:9px;color:${crCol};font-weight:600;margin-top:2px">${crTxt}</span>`:''}
+          </span>
         </div>`;
       }).join('');
       const _leg=FK_PROYECTO.map(f=>FD[f]?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:9px;height:9px;border-radius:2px;background:${FD[f].c}"></span>${f}</span>`:'').join('')+`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:14px;height:2px;background:#dc2626;display:inline-block"></span>hoy</span>`;
@@ -2745,33 +2889,170 @@ function rCadencia(c){
       return {p, dias: ult?Math.round((TODAY-new Date(ult.ts))/86400000):null};
     }).sort((a,b)=>(b.dias||999)-(a.dias||999));
 
+  // Un titular por proyecto, no el log (sep 2026). "Validacion de tiempos
+  // preliminares -> Completado" es excelente para el 1 a 1 y es ruido en la junta
+  // de Direccion: nadie puede decidir nada con eso. Arriba va la frase, el detalle
+  // queda plegado para cuando alguien pregunte.
   const movHtml = _mov.length ? _mov.map(x=>{
     const eng=(USERS.find(u=>u.perfil===x.p.eng)||{}).nombre||'';
-    return `<div style="border-left:3px solid ${FD[x.p.fase]?.c||'var(--border)'};padding:10px 0 10px 12px;margin-bottom:12px">
-      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+    const taller=x.ev.filter(a=>_esExterno(a.msg)).length;
+    const cruces=x.ev.filter(a=>/→\s*Completado/.test(a.msg||'')&&/^(Diseño|Desarrollo|Implementacion|Lanzamiento)\s·/.test(a.msg||'')).length;
+    const partes=[];
+    if(cruces) partes.push(`${cruces} tarea${cruces>1?'s':''} cerrada${cruces>1?'s':''}`);
+    if(taller) partes.push(`${taller} de taller`);
+    const titular = partes.length? partes.join(' · ') : `${x.ev.length} registro${x.ev.length>1?'s':''}`;
+    return `<div style="border-left:3px solid ${FD[x.p.fase]?.c||'var(--border)'};padding:9px 0 9px 12px;margin-bottom:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
         <span style="font-size:13px;font-weight:700;color:var(--text)">${x.p.name}</span>
-        <span style="font-size:11px;color:var(--muted)">${eng}</span>
-        <span style="margin-left:auto;font-size:10px;color:var(--muted)">${x.ev.length} movimiento${x.ev.length>1?'s':''}</span>
+        <span style="font-size:11px;color:var(--muted)">${eng} · ${x.p.fase}</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text2,#475569);font-weight:600">${titular}${taller?` <span style="font-size:9px;background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:99px;font-weight:700">taller</span>`:''}</span>
       </div>
-      ${x.ev.slice(-6).map(a=>`<div style="display:flex;align-items:baseline;gap:8px;font-size:11px;margin-bottom:3px">
-        <span style="width:48px;flex:none;color:var(--muted);font-family:var(--font-m)">${new Date(a.ts).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span>
-        <span style="flex:1;color:var(--text)">${(a.msg||'').replace(/"/g,'')}${_esExterno(a.msg)?' <span style="font-size:9px;background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:99px;font-weight:700">taller</span>':''}</span>
-        <span style="flex:none;color:var(--muted);font-size:10px">${a.who||''}</span>
-      </div>`).join('')}
-      ${x.ev.length>6?`<div style="font-size:10px;color:var(--muted);margin-top:3px">+ ${x.ev.length-6} movimientos más</div>`:''}
+      <details style="margin-top:5px">
+        <summary style="font-size:10px;color:var(--muted);cursor:pointer">ver los ${x.ev.length} movimientos</summary>
+        <div style="margin-top:5px">
+        ${x.ev.slice(-8).map(a=>`<div style="display:flex;align-items:baseline;gap:8px;font-size:11px;margin-bottom:3px">
+          <span style="width:48px;flex:none;color:var(--muted);font-family:var(--font-m)">${new Date(a.ts).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span>
+          <span style="flex:1;color:var(--text)">${(a.msg||'').replace(/"/g,'')}${_esExterno(a.msg)?' <span style="font-size:9px;background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:99px;font-weight:700">taller</span>':''}</span>
+          <span style="flex:none;color:var(--muted);font-size:10px">${a.who||''}</span>
+        </div>`).join('')}
+        </div>
+      </details>
     </div>`;
   }).join('') : `<div style="padding:14px;color:var(--muted);font-size:12px">Sin movimientos registrados en los últimos 7 días.</div>`;
 
   const quietosHtml = _quietos.length ? _quietos.map(q=>{
     const eng=(USERS.find(u=>u.perfil===q.p.eng)||{}).nombre||'';
-    const fuera=q.p.estatus==='Fuera de linea';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:6px;background:var(--surface2);border-left:3px solid ${fuera?'var(--bad)':'var(--warn)'};font-size:12px">
-      <span style="flex:1;color:var(--text)">${q.p.name} <span style="color:var(--muted);font-size:11px">· ${eng}</span></span>
+    const pausa=q.p.estatus==='En pausa';
+    // Contra la fecha de LLEGADA AL MERCADO, igual que el roadmap de arriba. Medir
+    // aqui el fin de la fase en curso daba dos numeros distintos para el mismo
+    // proyecto en la misma pantalla: "venció hace 76 d" arriba y "119 d" abajo.
+    const _lz=q.p.fechasFase?.['Lanzamiento']?.fin;
+    const _dz=_lz?Math.round((pd(_lz)-TODAY)/86400000):null;
+    const cons = _dz!==null&&_dz<0 ? `${Math.abs(_dz)} d encima de su llegada al mercado`
+               : _dz!==null ? `llega en ${_dz} d`
+               : (pausa?'detenido por Gerencia':'sin fecha de llegada');
+    const col = _dz!==null&&_dz<0 ? 'var(--bad)' : pausa ? 'var(--warn)' : 'var(--muted)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:var(--surface2);border-left:3px solid ${col};border-radius:0 var(--r) var(--r) 0;font-size:12px;flex-wrap:wrap">
+      <span style="flex:1;min-width:150px;color:var(--text);font-weight:600">${q.p.name}
+        <span style="color:var(--muted);font-size:11px;font-weight:400">· ${eng}</span>
+        ${pausa?'<span style="font-size:8px;font-weight:700;color:var(--warn);background:var(--warn-bg);padding:1px 5px;border-radius:99px;vertical-align:middle">en pausa</span>':''}
+      </span>
       <span style="color:var(--muted);font-size:10px">${q.p.fase} · ${q.p.avance||0}%</span>
-      <span style="color:${fuera?'var(--bad)':'var(--warn)'};font-size:10px;font-weight:700;min-width:96px;text-align:right">${fuera?'fuera de línea':'en línea'}</span>
-      <span style="color:var(--muted);font-size:10px;min-width:74px;text-align:right">${q.dias===null?'sin registro':q.dias+' d sin tocar'}</span>
+      <span style="color:${col};font-size:10px;font-weight:700;min-width:118px;text-align:right">${cons}</span>
+      <span style="color:var(--muted);font-size:10px;min-width:80px;text-align:right">${q.dias===null?'sin registro':'sin tocar '+q.dias+' d'}</span>
     </div>`;
-  }).join('') : `<div style="padding:14px;color:var(--muted);font-size:12px">Todos los proyectos activos tuvieron movimiento. ✓</div>`;
+  }).join('') : `<div style="padding:14px;color:var(--muted);font-size:12px">Todos los proyectos vivos tuvieron movimiento. ✓</div>`;
+
+  // ---- El año en un renglón ----
+  // El objetivo 2026 es maximizar lanzamientos y el reporte no lo medía por ningún
+  // lado: vivía en el dashboard personal de Gerencia. Es el titular, va primero.
+  const _r = ritmoDeLanzamientos(_med);
+  // Este bloque contesta DONDE VAS, no si el plan cabe: eso lo contesta el de
+  // capacidad, abajo. Separarlos evita que la hoja celebre un pipeline de 15
+  // mientras el renglon siguiente explica que no es posible.
+  const _dif = _r.ritmo - _r.ritmoAnterior;
+  const _rCol = _dif < -0.05 ? 'var(--bad)' : _dif > 0.05 ? 'var(--ok)' : 'var(--warn)';
+  const _rFrase = !_r.anterior
+    ? `Primer año con registro de cierres.`
+    : `Vas a ${_r.ritmo.toFixed(2)} lanzamientos por mes contra ${_r.ritmoAnterior.toFixed(2)} en ${_r.y-1}` +
+      (_dif < -0.05 ? `. El motor va más lento que el año pasado.`
+       : _dif > 0.05 ? `. El motor va más rápido que el año pasado.`
+       : `, prácticamente el mismo ritmo.`);
+  const _cifra=(v,l,s,col)=>`<div style="flex:1;min-width:120px">
+      <div style="font-family:var(--font-d);font-size:34px;font-weight:800;line-height:1;color:${col||'var(--text)'}">${v}</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:4px">${l}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:1px">${s}</div>
+    </div>`;
+  const anioHtml=`<div style="background:var(--surface);border:1px solid var(--border2);border-left:4px solid ${_rCol};border-radius:var(--r2);padding:16px 18px;margin-bottom:4px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px">El año · productos puestos en el mercado</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+      ${_cifra(_r.esteAnio,'lanzados en '+_r.y,'al cierre de '+TODAY.toLocaleDateString('es-MX',{month:'long'}))}
+      ${_cifra(_r.pipeline,'prometidos para este año','proyectos vivos con fecha realista antes de diciembre 31')}
+      ${_cifra(_r.anterior,'cerró '+(_r.y-1),'año completo')}
+    </div>
+    <div style="font-size:12px;font-weight:600;color:${_rCol};margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">${_rFrase}</div>
+  </div>`;
+
+  // ---- ¿Cabe el plan? ----
+  // El reporte tenia este dato enfrente y no lo decia: los proyectos vivos
+  // aterrizan casi todos en el mismo par de meses. Comparar lo que pide el plan
+  // contra lo que la empresa ha demostrado convierte un atraso en una decision
+  // de portafolio, que es de Direccion y no de Gerencia.
+  const _cap = capacidadDelPlan(_med);
+  let capHtml='';
+  if(_cap && _cap.veces){
+    const apretado=_cap.veces>=1.5;
+    const col=apretado?'var(--bad)':_cap.veces>=1?'var(--warn)':'var(--ok)';
+    const maxMes=Math.max(..._cap.meses.map(k=>_cap.porMes[k].length));
+    const barras=_cap.meses.map(k=>{
+      const n=_cap.porMes[k].length;
+      const [yy,mm]=k.split('-');
+      const lbl=new Date(+yy,+mm-1,1).toLocaleDateString('es-MX',{month:'short',year:'2-digit'});
+      const nombres=_cap.porMes[k].map(p=>p.name).join(' · ');
+      return `<div style="display:flex;align-items:center;gap:9px;margin-bottom:5px" title="${nombres}">
+        <span style="width:54px;flex:none;font-size:10px;color:var(--muted);font-weight:600">${lbl}</span>
+        <span style="height:15px;width:${Math.round(n/maxMes*190)}px;background:${n/_cap.demostrado>=1.5?'var(--bad)':'var(--navy)'};border-radius:3px;display:inline-block"></span>
+        <span style="font-size:11px;font-weight:700;color:var(--text)">${n}</span>
+        <span style="font-size:10px;color:var(--muted)">${n===1?'lanzamiento':'lanzamientos'}</span>
+      </div>`;}).join('');
+    capHtml=`<div style="background:var(--surface);border:1px solid var(--border2);border-left:4px solid ${col};border-radius:var(--r2);padding:16px 18px;margin-top:12px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px">¿Cabe el plan?</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px">
+        ${_cifra(_cap.demostrado.toFixed(1),'por mes demostrado','tu mejor año, el real')}
+        ${_cifra(_cap.pide.toFixed(1),'por mes que pide el plan',_cap.total+' proyectos en '+_cap.ventana+' mes'+(_cap.ventana>1?'es':''),col)}
+        ${_cifra(_cap.veces.toFixed(0)+'×','por encima de tu ritmo','si todo saliera como está planeado',col)}
+      </div>
+      ${barras}
+      <div style="font-size:12px;font-weight:600;color:${col};margin-top:12px;padding-top:12px;border-top:1px solid var(--border2)">
+        ${apretado
+          ? `Los ${_cap.total} proyectos vivos aterrizan en ${_cap.ventana} mes${_cap.ventana>1?'es':''}. Esto no es un calendario, es una pila: hay que decidir cuáles van primero.`
+          : `El plan cabe dentro del ritmo demostrado.`}
+      </div>
+    </div>`;
+  }
+
+  // ---- Las fechas que no se sostienen, en una frase ----
+  const _crList=_roadProjs.map(p=>({p,cr:credibilidad(p,_med)})).filter(x=>x.cr);
+  const _noSost=_crList.filter(x=>x.cr.nivel==='no sostiene');
+  const credHtml = _crList.length ? `<div style="margin-top:12px;padding:11px 14px;background:${_noSost.length?'var(--bad-bg)':'var(--ok-bg)'};border-radius:var(--r2);font-size:11px;color:var(--text);line-height:1.6">
+      ${_noSost.length
+        ? `<strong style="color:var(--bad)">${_noSost.length} de ${_crList.length} fechas no se sostienen.</strong> La columna «realista» es hoy más lo que a esta empresa le ha tomado cerrar las fases que faltan: Diseño ${_med['Diseño']?.dias||'—'} d · Desarrollo ${_med['Desarrollo']?.dias||'—'} d · Implementación ${_med['Implementacion']?.dias||'—'} d · Lanzamiento ${_med['Lanzamiento']?.dias||'—'} d, medianas de ${_med['Diseño']?.n||0} proyectos ya cerrados. Es una vara generosa: cuenta solo días de fase activa, no el tiempo muerto entre fases.`
+        : `<strong style="color:var(--ok)">Las ${_crList.length} fechas se sostienen</strong> contra el ritmo histórico de la empresa.`}
+    </div>` : '';
+
+  // ---- Decisiones que necesito de Dirección ----
+  const _dec=decisiones();
+  const _pend=_dec.filter(d=>d.estado!=='resuelta');
+  const _res=_dec.filter(d=>d.estado==='resuelta');
+  const _nomProj=id=>(PROJ.find(p=>p.id===id)||{}).name||'';
+  const _filaDec=d=>{
+    const venc=d.fecha&&pd(d.fecha)<TODAY;
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:var(--surface2);border-left:3px solid ${d.estado==='resuelta'?'var(--ok)':'var(--navy)'};border-radius:0 var(--r) var(--r) 0;margin-bottom:7px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;color:var(--text);font-weight:600;line-height:1.45;${d.estado==='resuelta'?'text-decoration:line-through;opacity:.55':''}">${d.texto}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">
+          ${d.proyecto?_nomProj(d.proyecto)+' · ':''}${d.fecha?`respuesta para el ${fmtD(d.fecha)}`:'sin fecha de respuesta'}${venc&&d.estado!=='resuelta'?' <span style="color:var(--bad);font-weight:700">· vencida</span>':''}
+        </div>
+      </div>
+      ${isG()?`<button onclick="cerrarDecision('${d.id}')" title="${d.estado==='resuelta'?'Reabrir':'Marcar como resuelta'}" style="flex:none;background:none;border:1px solid var(--border2);border-radius:var(--r);padding:3px 9px;font-size:10px;cursor:pointer;color:var(--muted);font-family:var(--font-b)">${d.estado==='resuelta'?'reabrir':'resuelta'}</button>
+      <button onclick="borrarDecision('${d.id}')" title="Quitar" style="flex:none;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:0 2px">×</button>`:''}
+    </div>`;
+  };
+  const decHtml=`<div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
+    <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Qué necesito de Dirección</div>
+    <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Las decisiones que no puedo tomar solo, con fecha de respuesta</div>
+    ${_pend.length?_pend.map(_filaDec).join(''):`<div style="padding:13px;color:var(--muted);font-size:12px;background:var(--surface2);border-radius:var(--r2)">Sin decisiones pendientes. ${isG()?'Si llegas a la junta sin pedir nada, el reporte es un informe de actividades.':''}</div>`}
+    ${_res.length?`<details style="margin-top:8px"><summary style="font-size:10px;color:var(--muted);cursor:pointer">${_res.length} resuelta${_res.length>1?'s':''}</summary><div style="margin-top:7px">${_res.map(_filaDec).join('')}</div></details>`:''}
+    ${isG()?`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px;padding-top:11px;border-top:1px solid var(--border2)">
+      <input id="dec-txt" placeholder="Qué necesitas que Dirección resuelva" style="flex:1;min-width:230px;padding:7px 11px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
+      <select id="dec-proj" style="padding:7px 9px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
+        <option value="">Sin proyecto</option>
+        ${_roadProjs.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}
+      </select>
+      <input id="dec-fecha" type="date" style="padding:7px 9px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
+      <button onclick="addDecision()" style="padding:7px 15px;background:var(--navy);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b)">Agregar</button>
+    </div>`:''}
+  </div>`;
 
   c.innerHTML = `
   <div style="max-width:1100px">
@@ -2788,11 +3069,17 @@ function rCadencia(c){
       </select>
       <span style="font-size:11px;color:var(--muted)">${periodoLbl}</span>
     </div>
-    <div>
+    ${anioHtml}
+    ${capHtml}
+
+    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
       <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Cuándo llega cada producto al mercado</div>
-      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Ordenado por fecha de lanzamiento comprometida</div>
+      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Ordenado por fecha de lanzamiento comprometida · a la derecha, si esa fecha se sostiene contra lo que esta empresa ha tardado antes</div>
       ${roadmapHtml}
+      ${credHtml}
     </div>
+
+    ${decHtml}
 
     <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
       <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Qué se movió desde la última junta</div>
@@ -2801,8 +3088,8 @@ function rCadencia(c){
     </div>
 
     <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
-      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Sin movimiento</div>
-      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Proyectos activos sin un solo registro en los últimos 7 días</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Qué sigue atorado</div>
+      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Proyectos vivos sin un solo registro en los últimos 7 días${_quietos.length?' · cada uno necesita un dueño y una fecha de reactivación':''}</div>
       ${quietosHtml}
     </div>
 
@@ -2815,14 +3102,22 @@ function rCadencia(c){
       invita a una pregunta incomoda que el dato no puede contestar.
       Siguen siendo el instrumento de Gerencia para los 1 a 1, y viven en el Dashboard.
     -->
-    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:20px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+    <!--
+      El detalle por proyecto se pliega (sep 2026). Es el material de respaldo para
+      cuando alguien pregunta por un proyecto en particular, no parte del recorrido
+      de la junta: abierto, empujaba el reporte mas alla de lo que alguien lee de pie.
+    -->
+    <details style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:20px">
+      <summary style="cursor:pointer;font-size:12px;color:var(--muted);font-weight:600;list-style:none">
         <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--navy);padding:3px 9px;border-radius:99px">DETALLE POR PROYECTO</span>
+        <span style="margin-left:8px">abrir el respaldo · milestones y metas de un proyecto</span>
+      </summary>
+      <div style="display:flex;align-items:center;gap:10px;margin:12px 0;flex-wrap:wrap">
         <select onchange="window._cadProj=this.value;rCadencia(document.getElementById('vc'))" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);outline:none;cursor:pointer;max-width:320px">${_projOptions}</select>
         <span style="font-size:11px;color:var(--muted)">Milestones → Metas · acumulado</span>
       </div>
       ${detalleHtml}
-    </div>
+    </details>
   </div>`;
 }
 
