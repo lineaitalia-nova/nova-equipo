@@ -2607,7 +2607,17 @@ function rCadencia(c){
   const _roadProjs = PROJ.filter(p=>(p.estatus==='En linea'||p.estatus==='Fuera de linea') && (selEng==='todos'||p.eng===selEng));
   let roadmapHtml='';
   {
-    const _rows=_roadProjs.map(p=>({p,phases:FK.map(f=>{const {ini,fin}=getFaseDates(p,f);return{f,ini,fin,fd:FD[f]};}).filter(x=>x.ini&&x.fin)})).filter(r=>r.phases.length);
+    // Se excluye Seguimiento: el proyecto llega al mercado en Lanzamiento, y el
+    // monitoreo posterior no es parte del camino que a Direccion le interesa ver.
+    const _rows=_roadProjs.map(p=>({p,phases:FK_PROYECTO.map(f=>{const {ini,fin}=getFaseDates(p,f);return{f,ini,fin,fd:FD[f]};}).filter(x=>x.ini&&x.fin)})).filter(r=>r.phases.length)
+      // Ordenado por fecha de lanzamiento, no por nombre ni por id (sep 2026). La
+      // historia se lee de arriba abajo: lo vencido, lo inminente, lo lejano. Ordenado
+      // por nombre, el orden no decia nada.
+      .map(r=>{ const lanz=r.phases.filter(x=>x.f==='Lanzamiento')[0]; const ult=r.phases[r.phases.length-1];
+                return {...r, lanzFin:(lanz&&lanz.fin)||(ult&&ult.fin)||null}; })
+      .sort((a,b)=>(a.lanzFin?a.lanzFin.getTime():Infinity)-(b.lanzFin?b.lanzFin.getTime():Infinity));
+    // Proyectos activos sin una sola fecha: no se pierden, van como nota al pie.
+    const _sinFechas=_roadProjs.filter(p=>!_rows.some(r=>r.p.id===p.id));
     if(!_rows.length){
       roadmapHtml=`<div style="padding:16px;color:var(--muted);font-size:12px">Sin fechas de fase capturadas en los proyectos activos.</div>`;
     } else {
@@ -2625,20 +2635,31 @@ function rCadencia(c){
           const s=_pct(ph.ini),e=_pct(ph.fin),w=Math.max(1,e-s);
           const fp=fpct(r.p,ph.f);
           const op=fp===0?0.4:1;
-          const lbl=(w>7&&fp>0)?`<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:8px;font-weight:600;color:#fff;opacity:.8;white-space:nowrap">${fp}%</span>`:'';
-          return `<div style="position:absolute;left:${s}%;width:${w}%;top:0;height:22px;background:${ph.fd.c};opacity:${op};border-radius:5px" title="${ph.f}: ${fmtD(toISO(ph.ini))} → ${fmtD(toISO(ph.fin))} · ${fp}%">${lbl}</div>`;
+          // Sin el porcentaje dentro de la barra: "94% de Desarrollo" es dato de
+          // Gerencia, no de Direccion, y llenaba la grafica de numeros ilegibles.
+          // Sigue disponible al pasar el cursor.
+          return `<div style="position:absolute;left:${s}%;width:${w}%;top:0;height:22px;background:${ph.fd.c};opacity:${op};border-radius:5px" title="${ph.f}: ${fmtD(toISO(ph.ini))} → ${fmtD(toISO(ph.fin))} · ${fp}%"></div>`;
         }).join('');
+        // La etiqueta de la derecha es el golpe: cuando llega al mercado, y si ya se paso.
+        const _d = r.lanzFin ? Math.round((r.lanzFin-TODAY)/86400000) : null;
+        let etq='—', col='var(--muted)', bg='transparent';
+        if(_d!==null){
+          if(_d<0){ etq=`venció hace ${Math.abs(_d)} d`; col='var(--bad)'; bg='var(--bad-bg)'; }
+          else if(_d<=14){ etq=`en ${_d} d`; col='var(--warn)'; bg='var(--warn-bg)'; }
+          else { etq=r.lanzFin.toLocaleDateString('es-MX',{month:'short',year:'2-digit'}); }
+        }
         return `<div style="display:flex;align-items:center;height:28px;margin-bottom:6px">
-          <span style="width:124px;flex:none;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px" title="${r.p.name}">${r.p.name}</span>
+          <span style="width:150px;flex:none;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px" title="${r.p.name}">${r.p.name}<span style="display:block;font-size:9px;font-weight:400;color:var(--muted)">${(USERS.find(u=>u.perfil===r.p.eng)||{}).nombre||''}</span></span>
           <div style="position:relative;flex:1;height:22px;background:var(--surface2);border-radius:5px">
             <div style="position:absolute;left:${_todayPct}%;top:-4px;bottom:-4px;width:2px;background:#dc2626;z-index:2"></div>
             ${segs}
           </div>
-          <span style="width:46px;flex:none;text-align:right;font-size:15px;font-weight:800;color:var(--blue)">${r.p.avance||0}%</span>
+          <span style="width:108px;flex:none;text-align:right;padding-left:8px"><span style="font-size:10px;font-weight:700;color:${col};background:${bg};padding:3px 8px;border-radius:var(--r);white-space:nowrap">${etq}</span></span>
         </div>`;
       }).join('');
-      const _leg=FK.map(f=>FD[f]?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:9px;height:9px;border-radius:2px;background:${FD[f].c}"></span>${f}</span>`:'').join('')+`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:14px;height:2px;background:#dc2626;display:inline-block"></span>hoy</span>`;
-      roadmapHtml=`${_axis}${_rowsHtml}<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)">${_leg}</div>`;
+      const _leg=FK_PROYECTO.map(f=>FD[f]?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:9px;height:9px;border-radius:2px;background:${FD[f].c}"></span>${f}</span>`:'').join('')+`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)"><span style="width:14px;height:2px;background:#dc2626;display:inline-block"></span>hoy</span>`;
+      const _nota=_sinFechas.length?`<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border2);font-size:11px;color:var(--muted)"><span style="font-weight:600">Sin fecha de lanzamiento aún —</span> ${_sinFechas.map(p=>p.name).join(' · ')} <span style="opacity:.8">(pendientes de brief)</span></div>`:'';
+      roadmapHtml=`${_axis}${_rowsHtml}<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)">${_leg}</div>${_nota}`;
     }
   }
 
@@ -2657,21 +2678,21 @@ function rCadencia(c){
       </select>
       <span style="font-size:11px;color:var(--muted)">${periodoLbl}</span>
     </div>
-    <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 10px;display:flex;align-items:center;gap:6px">Cumplimiento de metas SMART por ingeniero</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px">${gauges||'<div style="color:var(--muted);font-size:12px;padding:20px">Sin metas registradas en las últimas 4 semanas.</div>'}</div>
-    <div style="display:flex;gap:16px;font-size:11px;color:var(--muted);flex-wrap:wrap;margin-bottom:24px">
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#16a34a"></span>≥ 80% al día</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#d97706"></span>60–79% atención</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#dc2626"></span>&lt; 60% en foco</span>
-    </div>
-    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:6px">
-      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 12px">Cumplimiento del equipo por semana <span style="font-size:11px;font-weight:400;color:var(--muted)">· ${periodoLbl}</span></div>
-      ${semanaHtml}
-    </div>
-    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:20px">
-      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 12px">Roadmap del portafolio <span style="font-size:11px;font-weight:400;color:var(--muted)">· proyectos activos · fases en el tiempo</span></div>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Cuándo llega cada producto al mercado</div>
+      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Ordenado por fecha de lanzamiento comprometida</div>
       ${roadmapHtml}
     </div>
+
+    <!--
+      El cumplimiento de metas SMART por ingeniero y el cumplimiento semanal se
+      retiraron de este reporte (sep 2026). Miden ACTIVIDAD del equipo, y a Direccion
+      le importa el RESULTADO: Fernando lo dijo textual — "a mi no me interesa si
+      hacen sus metas SMART, lo que me importa es ver en que se atora, como ayudamos".
+      Presentar 84% de cumplimiento junto a tres productos con un mes de retraso
+      invita a una pregunta incomoda que el dato no puede contestar.
+      Siguen siendo el instrumento de Gerencia para los 1 a 1, y viven en el Dashboard.
+    -->
     <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:20px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
         <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--navy);padding:3px 9px;border-radius:99px">DETALLE POR PROYECTO</span>
