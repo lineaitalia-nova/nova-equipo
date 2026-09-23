@@ -1002,27 +1002,33 @@ function rSB(){
   const risk=enRiesgoFase(act);
   const pAp=PROJ.filter(esperaCierre).length;
   let nav=[];
+  // Navegacion reorganizada (sep 2026). Cada pantalla con un solo trabajo:
+  //   'reporte'  era "Reporte ejecutivo" pero se habia vuelto la herramienta de control
+  //              (se entra al proyecto desde ahi) -> ahora se llama Control de proyectos
+  //   'cadencia' nacio por su claridad para leerse en junta -> es el Reporte ejecutivo
+  //   'aprobaciones' es el visto bueno de cierre, no un permiso para avanzar (eso son
+  //              los gates) -> Cierre de proyectos
+  //   'diagrama' y 'glosario' hacian el mismo trabajo (consulta e induccion) -> Proceso NPD
+  //   'calendario' se retira: mostraba cuando habia cosas, no quien estaba saturado.
+  //              Esa necesidad la cubre la carga por ingeniero del Dashboard.
   if(isDir()){
     nav=[
       {id:'inicio',        i:'⊞', l:'Dashboard',          b:0},
       {id:'proyectos',     i:'▤', l:'Todos los proyectos', b:0},
       {id:'cal-prototipos',i:'🔬',l:'Cal. Prototipos',     b:0},
-      {id:'diagrama',      i:'◈', l:'Diagrama de proceso', b:0},
+      {id:'diagrama',      i:'◈', l:'Proceso NPD',         b:0},
     ];
   } else if(isG()){
     nav=[
-      {id:'inicio',i:'⊞',l:isG()?'Dashboard':'Inicio',b:risk,bc:risk>0?'':'ok'},
+      {id:'inicio',i:'⊞',l:'Dashboard',b:risk,bc:risk>0?'':'ok'},
       {id:'proyectos',i:'▤',l:'Todos los proyectos',b:0},
-      {id:'reporte',i:'↗',l:'Reporte ejecutivo',b:0},
-      {id:'cadencia',i:'📈',l:'Cadencia',b:0},
-
-      {id:'aprobaciones',i:'✓',l:'Aprobaciones',b:pAp},
-      {id:'calendario',i:'📅',l:'Calendario',b:0},
+      {id:'cadencia',i:'↗',l:'Reporte ejecutivo',b:0},
+      {id:'reporte',i:'▦',l:'Control de proyectos',b:0},
+      {id:'aprobaciones',i:'✓',l:'Cierre de proyectos',b:pAp},
       {id:'cal-prototipos',i:'🔬',l:'Cal. Prototipos',b:0},
-      {id:'diagrama',i:'◈',l:'Diagrama de proceso',b:0},
+      {id:'diagrama',i:'◈',l:'Proceso NPD',b:0},
       {id:'usuarios',i:'⊙',l:'Gestión de usuarios',b:0},
       {id:'backup',i:'↓',l:'Respaldo de datos',b:0},
-      {id:'glosario',i:'📖',l:'Biblioteca NPD',b:0},
       {id:'compensacion',i:'💰',l:'Compensación',b:0},
     ];
   } else if(isArea()){
@@ -1032,17 +1038,17 @@ function rSB(){
     },0);
     nav=[
       {id:'mis-tareas-area',i:'✓',l:'Mis tareas pendientes',b:pendCount,bc:pendCount>0?'bad':'ok'},
-      {id:'diagrama',i:'◈',l:'Diagrama de proceso',b:0},
+      {id:'diagrama',i:'◈',l:'Proceso NPD',b:0},
     ];
   } else {
+    // El ingeniero deja de ver el Reporte ejecutivo (antes Cadencia): sus bloques
+    // estan escritos para Direccion. Sus propias metas SMART las conserva en Mi
+    // Dashboard, asi que no pierde nada suyo.
     nav=[
       {id:'mi-dashboard',i:'⊟',l:'Mi Dashboard',b:risk},
       {id:'mis-proyectos',i:'⊞',l:'Mis proyectos',b:risk},
-      {id:'cadencia',i:'📈',l:'Cadencia',b:0},
-      {id:'calendario',i:'📅',l:'Calendario',b:0},
       {id:'cal-prototipos',i:'🔬',l:'Cal. Prototipos',b:0},
-      {id:'diagrama',i:'◈',l:'Diagrama de proceso',b:0},
-      {id:'glosario',i:'📖',l:'Biblioteca NPD',b:0},
+      {id:'diagrama',i:'◈',l:'Proceso NPD',b:0},
     ];
   }
   document.getElementById('sb').innerHTML=`
@@ -1070,8 +1076,8 @@ function rSB(){
 function sv2(v){
   av=v;rSB();
   const m=document.getElementById('main');
-  const titles={inicio:'Inicio','mi-dashboard':'Mi Dashboard',proyectos:'Proyectos',reporte:'Reporte ejecutivo',cadencia:'Cadencia',aprobaciones:'Aprobaciones','mis-proyectos':'Mis proyectos',usuarios:'Gestión de usuarios',diagrama:'Diagrama del proceso NPD',backup:'Respaldo de datos','mis-tareas-area':`Tareas pendientes · ${cu?.nombre||''}`,calendario:'Calendario de proyectos','cal-prototipos':'Calendario de Prototipos',compensacion:'Compensación · Bono por Proyecto'};
-  const subs={inicio:TODAY.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),'mi-dashboard':cu?.nombre||'',proyectos:`${PROJ.length} proyectos en total`,reporte:'Vista filtrable por ingeniero',cadencia:'Ritmo del equipo · cumplimiento de metas y milestones',aprobaciones:'Revisión y liberación','mis-proyectos':cu?.nombre||'',usuarios:'Administrar accesos al sistema',diagrama:'Proceso de Desarrollo de Nuevos Productos · Línea Italia',backup:'Exporta, importa y respalda toda la información de tus proyectos','mis-tareas-area':cu?.role||'',calendario:'Visualiza tareas por proyecto en vista mensual · Detecta empalmes','cal-prototipos':'Prototipos programados · Carga semanal del taller',compensacion:'Bono por proyecto · Vista exclusiva del Gerente'};
+  const titles={inicio:'Dashboard','mi-dashboard':'Mi Dashboard',proyectos:'Proyectos',reporte:'Control de proyectos',cadencia:'Reporte ejecutivo',aprobaciones:'Cierre de proyectos','mis-proyectos':'Mis proyectos',usuarios:'Gestión de usuarios',diagrama:'Proceso NPD',backup:'Respaldo de datos','mis-tareas-area':`Tareas pendientes · ${cu?.nombre||''}`,'cal-prototipos':'Calendario de Prototipos',compensacion:'Compensación · Bono por Proyecto'};
+  const subs={inicio:TODAY.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),'mi-dashboard':cu?.nombre||'',proyectos:`${PROJ.length} proyectos en total`,reporte:'Seguimiento por ingeniero · entra al proyecto desde aquí',cadencia:'Ritmo del portafolio · para la junta de seguimiento',aprobaciones:'Visto bueno de cierre de proyecto','mis-proyectos':cu?.nombre||'',usuarios:'Administrar accesos al sistema',diagrama:'Cómo trabajamos · proceso, gates y conceptos',backup:'Exporta, importa y respalda toda la información de tus proyectos','mis-tareas-area':cu?.role||'','cal-prototipos':'Prototipos programados · Carga semanal del taller',compensacion:'Bono por proyecto · Vista exclusiva del Gerente'};
   m.innerHTML=`<div class="ph"><div class="ph-inner">
     <div><div class="ph-h2">${titles[v]}</div><p class="ph-sub">${subs[v]||''}</p></div>
     <div class="ph-acts">
@@ -1089,11 +1095,10 @@ function sv2(v){
   else if(v==='mi-dashboard') rMiDashboard(c);
   else if(v==='mis-proyectos') rMisProyectos(c);
   else if(v==='usuarios') rUsuarios(c);
-  else if(v==='diagrama') rDiagrama(c);
+  else if(v==='diagrama') rProcesoNPD(c);
   else if(v==='backup') rBackup(c);
-  else if(v==='glosario') rGlosario(c);
+  else if(v==='glosario') rProcesoNPD(c,'glosario');   // se conserva por enlaces antiguos
   else if(v==='mis-tareas-area') rMisTareasArea(c);
-  else if(v==='calendario') rCalendario(c);
   else if(v==='cal-prototipos') rCalPrototipos(c);
   else if(v==='compensacion') rCompensacion(c);
   // Live clock — top right, DM Mono, updates every second
@@ -2161,56 +2166,11 @@ function rMiDashboard(c){
     `<div style="margin-top:10px;font-size:12px;color:var(--muted);text-align:center;padding:8px">Sin metas definidas esta semana · <span style="color:var(--navy);cursor:pointer;font-weight:700" onclick="sv2('mis-proyectos')">Agregar en mis proyectos →</span></div>`}
   </div>`;
 
-  h+=`<div style="display:grid;grid-template-columns:1fr 320px;gap:12px;margin-bottom:12px">
-
-    <!-- Mis proyectos con avance -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Mis proyectos activos</div>
-        <button onclick="sv2('mis-proyectos')" style="font-size:11px;color:var(--navy);font-weight:700;border:none;background:none;cursor:pointer;font-family:var(--font-b)">Ver todos →</button>
-      </div>
-      ${act.length===0
-        ?`<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Sin proyectos activos asignados</div>`
-        :act.map(p=>{
-          const d=dNF(p);
-          const ms=getSigMS(p);
-          const msDias=ms?dN(ms.fecha,'activo'):null;
-          const msCol=msDias===null?'var(--muted)':msDias<0?'var(--bad)':msDias<=7?'var(--warn)':'var(--muted)';
-          const barCol=p.avance>=80?'var(--ok)':p.avance>=50?'var(--purple)':p.avance>=30?'var(--warn)':'var(--bad)';
-          const faseStyle=FD[p.fase];
-          return`<div onclick="oP('${p.id}')" style="padding:12px;border-radius:var(--r2);border:1px solid var(--border2);margin-bottom:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--navy)';this.style.background='var(--surface2)'" onmouseout="this.style.borderColor='var(--border2)';this.style.background=''">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
-              <div style="flex:1;min-width:0">
-                <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-                <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
-                  <span class="tag ${sC(p.estatus)}" style="font-size:9px">${sL(p.estatus)}</span>
-                  <span style="font-size:10px;font-weight:700;color:${faseStyle?.tc||'var(--muted)'};background:${faseStyle?.bg||'var(--surface2)'};padding:1px 7px;border-radius:99px">${p.fase}</span>
-                </div>
-              </div>
-              ${d!==null?`<span style="font-size:10px;font-weight:800;color:${d<0?'var(--bad)':d<=7?'var(--warn)':'var(--muted)'};white-space:nowrap;margin-left:8px">${d<0?Math.abs(d)+'d venc.':d+'d'}</span>`:''}
-            </div>
-            <!-- Barra de avance -->
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <div style="flex:1;height:8px;background:var(--surface2);border-radius:99px;overflow:hidden">
-                <div style="height:100%;background:${barCol};width:${p.avance}%;border-radius:99px;transition:width .3s"></div>
-              </div>
-              <span style="font-size:11px;font-weight:800;color:${barCol};min-width:32px;text-align:right">${p.avance}%</span>
-            </div>
-            <!-- Siguiente milestone -->
-            ${ms?`<div style="background:var(--surface2);border-radius:6px;padding:5px 8px;display:flex;align-items:center;justify-content:space-between">
-              <div style="min-width:0">
-                <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase">Siguiente milestone</div>
-                <div style="font-size:10px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ms.tarea}</div>
-              </div>
-              <div style="text-align:right;flex-shrink:0;margin-left:8px">
-                <div style="font-size:10px;font-weight:700;color:${msCol}">${fmtD(ms.fecha)}</div>
-                ${msDias!==null?`<div style="font-size:9px;color:${msCol}">${msDias<0?Math.abs(msDias)+'d atrás':msDias===0?'Hoy':msDias+'d'}</div>`:''}
-              </div>
-            </div>`:''}
-          </div>`;
-        }).join('')
-      }
-    </div>
+  // La lista de proyectos se retiro de Mi Dashboard (sep 2026): era la pantalla
+  // "Mis proyectos" completa, repetida aqui con su propio boton "Ver todos".
+  // Mi Dashboard responde "que me toca hoy" -- metas, siguiente gate, tareas urgentes.
+  // Los proyectos viven en su pantalla.
+  h+=`<div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px">
 
     <!-- Panel lateral: semáforo + alertas -->
     <div style="display:flex;flex-direction:column;gap:10px">
@@ -2326,21 +2286,10 @@ function rMisProyectos(c, filtro){
   else if(filtro==='riesgo') lista = rk;
   else if(filtro==='todos')  lista = mis.filter(p=>p.estatus!=='Cancelado');
 
-  // ── KPI strip ──
-  let h=`<div class="kpi-strip">
-    <div class="kc blue" style="cursor:pointer" onclick="rMisProyectos(document.getElementById('vc'),'curso')">
-      <div class="kc-lbl">En curso</div><div class="kc-val">${enc.length}</div><div class="kc-hint">proyectos activos</div>
-    </div>
-    <div class="kc ok">
-      <div class="kc-lbl">Terminados</div><div class="kc-val">${term.length}</div><div class="kc-hint">completados</div>
-    </div>
-    <div class="kc${rk.length>0?' bad':' ok'}" style="cursor:pointer" onclick="rMisProyectos(document.getElementById('vc'),'riesgo')">
-      <div class="kc-lbl">En riesgo</div><div class="kc-val">${rk.length}</div><div class="kc-hint">fase vencida</div>
-    </div>
-    <div class="kc blue">
-      <div class="kc-lbl">Avance promedio</div><div class="kc-val">${avg}%</div><div class="kc-hint">de todos mis proyectos</div>
-    </div>
-  </div>`;
+  // La tira de 4 KPIs se retiro (sep 2026): repetia los numeros de Mi Dashboard, y los
+  // conteos siguen visibles en las pestanas de filtro de aqui abajo. Esta pantalla es
+  // la lista de proyectos; el resumen vive en Mi Dashboard.
+  let h='';
 
   // ── Filtro tabs interactivos ──
   const tabs = [
@@ -2700,7 +2649,7 @@ function rReporte(c){
   _repFiltEng=filterVal; _repFiltEst=filterEst;
 
   let h=`<div style="background:var(--navy);border-radius:var(--r2);padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-    <div><div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:#fff">Reporte ejecutivo · Gerencia de Innovación y Diseño</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:1px">Linea Italia · NPD Manager</div></div>
+    <div><div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:#fff">Control de proyectos · Gerencia de Innovación y Diseño</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:1px">Linea Italia · NPD Manager</div></div>
     <div style="display:flex;align-items:center;gap:8px">
       <select id="rep-eng-sel" style="font-size:12px;padding:5px 9px;border:none;border-radius:var(--r);background:rgba(255,255,255,.15);color:#fff;font-family:var(--font-b);outline:none;cursor:pointer" onchange="_repFiltEng=this.value;rReporte(document.getElementById('vc'))">
         <option value="todos" style="color:#1a2233;background:#fff" ${filterVal==='todos'?'selected':''}>Todos los ingenieros</option>
@@ -2735,27 +2684,10 @@ function rReporte(c){
   const ef=baseProj.length?Math.round(term/baseProj.length*100):0;
   const avgAv=baseProj.filter(p=>p.estatus!=='Terminado').length?Math.round(baseProj.filter(p=>p.estatus!=='Terminado').reduce((s,p)=>s+p.avance,0)/baseProj.filter(p=>p.estatus!=='Terminado').length):0;
 
-  h+=`<div style="background:var(--navy);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px">
-    <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-      <span style="font-size:13px">📊</span> Panel de KPIs ${selEng?'del Ingeniero':'del Equipo'}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:8px">
-      ${[
-        {l:'Total Proyectos', v:baseProj.length,       s:'en el portafolio',              col:'#fff'},
-        {l:'Activos',         v:enL,                   s:'en línea',                      col:'#818cf8'},
-        {l:'En Pausa',        v:enP,                   s:'pausados',                      col:'#fbbf24'},
-        {l:'Terminados',      v:term,                  s:ef+'% del portafolio',           col:'#4ade80'},
-        {l:'Efectividad',     v:ef+'%',                s:`${term} de ${baseProj.length}`, col:ef>=70?'#4ade80':ef>=40?'#fbbf24':'#f87171'},
-        {l:'Fuera de Línea',  v:fueraL,                s:'con retraso',                   col:'#f87171'},
-        {l:'⚠ En Riesgo',    v:rk,                    s:'fase vencida',              col:rk>0?'#f87171':'#4ade80'},
-        {l:'Avance Prom.',    v:avgAv+'%',             s:'proyectos activos',             col:'#a78bfa'},
-      ].map(k=>`<div style="background:rgba(255,255,255,.07);border-radius:8px;padding:9px 10px;text-align:center">
-        <div style="font-size:9px;color:rgba(255,255,255,.5);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${k.l}</div>
-        <div style="font-size:22px;font-weight:800;font-family:var(--font-d);color:${k.col};line-height:1">${k.v}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">${k.s}</div>
-      </div>`).join('')}
-    </div>
-  </div>`;
+  // El panel de 8 KPIs se retiro de aqui (sep 2026). Repetia los mismos numeros del
+  // Dashboard, y esta pantalla dejo de ser un reporte: es la mesa de trabajo desde la
+  // que se entra al proyecto. Los indicadores viven en el Dashboard, que es donde se
+  // decide, y en el Reporte ejecutivo, que es donde se presenta.
 
   // ── TABLA POR INGENIERO — estilo imagen 2 ──
   const engsToShow = selEng ? [USERS.find(u=>u.perfil===selEng)].filter(Boolean) : engU;
@@ -2936,7 +2868,7 @@ function rAprobaciones(c){
   const aprobados=PROJ.filter(cerrado);
   let h='';
   if(pend.length){
-    h+=`<div class="sec"><div class="sec-head"><div class="sec-title">Pendientes de aprobación (${pend.length})</div></div>`;
+    h+=`<div class="sec"><div class="sec-head"><div class="sec-title">Esperan tu visto bueno (${pend.length})</div></div>`;
     pend.forEach(p=>{
       h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;margin-bottom:12px">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border2);background:var(--surface2);display:flex;align-items:center;gap:8px">
@@ -2960,7 +2892,7 @@ function rAprobaciones(c){
     h+=`</div>`;
   }
   if(aprobados.length){
-    h+=`<div class="sec"><div class="sec-head"><div class="sec-title" style="color:var(--ok)">Aprobados (${aprobados.length})</div></div>`;
+    h+=`<div class="sec"><div class="sec-head"><div class="sec-title" style="color:var(--ok)">Cerrados (${aprobados.length})</div></div>`;
     aprobados.forEach(p=>{
       h+=`<div style="background:var(--surface);border:1px solid rgba(30,158,94,.3);border-radius:var(--r2);padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="oP('${p.id}')">
         <span style="font-size:13px;font-weight:600;flex:1">${p.name}</span>
@@ -4047,6 +3979,25 @@ function updTareaS(pid,idx,estatus){
 }
 
 // ─── DIAGRAMA DE PROCESO NPD ─────────────────────────────────────────
+// Proceso NPD (sep 2026): el diagrama operativo y la biblioteca de conceptos hacian
+// el mismo trabajo -- material de consulta e induccion para alinear al equipo. Vivian
+// como dos secciones separadas del menu. Aqui comparten una sola, con dos pestanas:
+// el diagrama responde "que hacemos", la biblioteca "por que".
+let procesoTab = 'diagrama';
+function rProcesoNPD(c, tab){
+  if(tab) procesoTab = tab;
+  const pestana = (id, txt) =>
+    `<button class="btn sm${procesoTab===id?' primary':''}" style="margin-right:6px" onclick="rProcesoNPD(document.getElementById('vc'),'${id}')">${txt}</button>`;
+  const barra = document.createElement('div');
+  barra.style.cssText = 'margin-bottom:14px';
+  barra.innerHTML = pestana('diagrama','◈ Diagrama del proceso') + pestana('glosario','📖 Conceptos y gates');
+  const cuerpo = document.createElement('div');
+  c.innerHTML = '';
+  c.appendChild(barra);
+  c.appendChild(cuerpo);
+  if(procesoTab === 'glosario') rGlosario(cuerpo); else rDiagrama(cuerpo);
+}
+
 function rDiagrama(c){
   const TASK_DEPT={
     // DISEÑO
@@ -5575,271 +5526,10 @@ function buildDayMap(evs,year,month){
   return map;
 }
 
-function calHasOverlap(dayEvs){
-  const byEng={};
-  dayEvs.forEach(ev=>{
-    if(!byEng[ev.eng]) byEng[ev.eng]=new Set();
-    byEng[ev.eng].add(ev.pid);
-  });
-  return Object.values(byEng).some(s=>s.size>1);
-}
-
-function rCalendario(c){
-  // Init visibility: all projects visible by default
-  const myProjs=isG()||isArea()?PROJ:PROJ.filter(p=>p.eng===cu?.perfil);
-  myProjs.forEach(p=>{
-    if(_calProjVisible[p.id]===undefined) _calProjVisible[p.id]=true;
-  });
-
-  c.innerHTML=`
-  <!-- Modal day detail -->
-  <div id="cal-modal" onclick="if(event.target===this)this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:flex-start;justify-content:center;padding-top:60px">
-    <div style="background:#fff;border-radius:14px;max-width:500px;width:92%;max-height:76vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35)">
-      <div id="cal-modal-inner" style="padding:22px"></div>
-    </div>
-  </div>
-
-  ${isG()?`<!-- Filtro por ingeniero (solo Gerente) -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2)">
-    <span style="font-size:11px;font-weight:700;color:var(--navy);font-family:var(--font-d);white-space:nowrap">👤 Ver ingeniero:</span>
-    <select onchange="_calFiltEng=this.value;_calProjVisible={};refreshCal()"
-      style="padding:6px 12px;border:1.5px solid var(--border2);border-radius:var(--r);font-size:12px;font-weight:700;font-family:var(--font-b);background:var(--surface);color:var(--navy);cursor:pointer;min-width:200px">
-      <option value="todos">Todos los ingenieros</option>
-      ${USERS.filter(u=>u.role==='Ingeniero de Producto').map(u=>`<option value="${u.perfil}"${_calFiltEng===u.perfil?' selected':''}>${u.nombre}</option>`).join('')}
-    </select>
-  </div>`:''}
-
-  <div style="display:flex;gap:16px;align-items:flex-start">
-    <!-- LEFT PANEL: mini calendar + project legend -->
-    <div style="width:200px;flex-shrink:0">
-
-      <!-- Mini calendar -->
-      <div style="background:var(--navy);border-radius:10px;overflow:hidden;margin-bottom:12px;box-shadow:0 2px 8px rgba(26,31,60,.18)">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 10px 6px">
-          <button onclick="calPrevMonth()" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;width:24px;height:24px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">‹</button>
-          <span id="mini-mes-lbl" style="font-family:var(--font-d);font-weight:700;font-size:12px;color:#fff;letter-spacing:.03em"></span>
-          <button onclick="calNextMonth()" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;width:24px;height:24px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">›</button>
-        </div>
-        <div id="mini-cal-grid" style="padding:0 8px 8px"></div>
-      </div>
-
-      <!-- Project toggles -->
-      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;overflow:hidden">
-        <div style="background:var(--navy);padding:8px 12px;font-size:11px;font-weight:700;font-family:var(--font-d);color:#fff;letter-spacing:.04em">MIS PROYECTOS</div>
-        <div id="proj-toggle-list" style="padding:6px 0;max-height:340px;overflow-y:auto"></div>
-      </div>
-    </div>
-
-    <!-- RIGHT: main calendar -->
-    <div style="flex:1;min-width:0">
-      <!-- Nav bar -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <button onclick="calPrevMonth()" style="padding:6px 12px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);cursor:pointer;font-weight:700;font-size:13px">‹</button>
-        <span id="main-mes-lbl" style="font-family:var(--font-d);font-weight:800;font-size:16px;color:var(--navy);min-width:180px;text-align:center"></span>
-        <button onclick="calNextMonth()" style="padding:6px 12px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);cursor:pointer;font-weight:700;font-size:13px">›</button>
-        <button onclick="_calYear=TODAY.getFullYear();_calMonth=TODAY.getMonth();refreshCal()" style="padding:6px 14px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font-b);margin-left:4px">Hoy</button>
-        <div id="cal-overlap-badge" style="margin-left:auto"></div>
-      </div>
-
-      <!-- Grid -->
-      <div id="main-cal-grid" style="border:1px solid var(--border2);border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)"></div>
-    </div>
-  </div>`;
-
-  window.calPrevMonth=function(){_calMonth--;if(_calMonth<0){_calMonth=11;_calYear--;}refreshCal();};
-  window.calNextMonth=function(){_calMonth++;if(_calMonth>11){_calMonth=0;_calYear++;}refreshCal();};
-
-  window.toggleProjCal=function(pid){
-    _calProjVisible[pid]=!(_calProjVisible[pid]!==false);
-    refreshCal();
-  };
-
-  window.openCalDay=function(day){
-    const evs=getCalEvents();
-    const dayMap=buildDayMap(evs,_calYear,_calMonth);
-    const dayEvs=dayMap[day]||[];
-    if(!dayEvs.length) return;
-
-    const fecha=new Date(_calYear,_calMonth,day).toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    const hasOv=calHasOverlap(dayEvs);
-
-    // Group by project
-    const byProj={};
-    dayEvs.forEach(e=>{if(!byProj[e.pid])byProj[e.pid]=[];byProj[e.pid].push(e);});
-
-    let html=`<div style="border-bottom:1px solid var(--border2);padding-bottom:12px;margin-bottom:14px">
-      <div style="font-size:17px;font-weight:800;font-family:var(--font-d);color:var(--navy);text-transform:capitalize">${fecha}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:3px">${dayEvs.length} tarea${dayEvs.length!==1?'s':''} activa${dayEvs.length!==1?'s':''}</div>
-      ${hasOv?`<div style="margin-top:8px;padding:7px 10px;background:var(--warn-bg);border-radius:var(--r);border:1px solid rgba(217,119,6,.3);font-size:11px;font-weight:700;color:var(--warn)">⚠ Empalme — un ingeniero tiene tareas en múltiples proyectos hoy</div>`:''}
-    </div>`;
-
-    Object.keys(byProj).forEach(pid=>{
-      const pevs=byProj[pid];
-      const col=pevs[0].color;
-      const pname=pevs[0].pnombre;
-      html+=`<div style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <div style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0"></div>
-          <div style="font-weight:800;font-size:13px;color:var(--navy);font-family:var(--font-d)">${pname}</div>
-          ${pevs[0].engNombre?`<div style="margin-left:auto;font-size:10px;font-weight:700;background:rgba(26,31,60,.08);color:var(--navy);padding:2px 8px;border-radius:99px">${pevs[0].engNombre}</div>`:''}
-        </div>
-        ${pevs.map(e=>{
-          const sc=e.estatus==='Completado'?'var(--ok)':e.estatus==='En progreso'?'var(--warn)':e.estatus==='Bloqueado'?'var(--bad)':'var(--muted)';
-          return`<div style="padding:8px 10px;background:${hex2rgba(col,.07)};border-radius:var(--r);margin-bottom:4px;border-left:3px solid ${col}">
-            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px">${e.tarea}</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <span style="font-size:10px;color:var(--muted);font-weight:600">${e.fase}</span>
-              <span style="font-size:10px;color:${sc};font-weight:700">● ${e.estatus}</span>
-              ${e.dept?`<span style="font-size:9px;color:var(--muted)">${e.dept}</span>`:''}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`;
-    });
-
-    html+=`<button onclick="document.getElementById('cal-modal').style.display='none'" style="width:100%;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:var(--r2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-b);margin-top:2px">Cerrar</button>`;
-
-    document.getElementById('cal-modal-inner').innerHTML=html;
-    document.getElementById('cal-modal').style.display='flex';
-  };
-
-  window.refreshCal=function(){
-    const evs=getCalEvents();
-    const year=_calYear,month=_calMonth;
-    const dayMap=buildDayMap(evs,year,month);
-    const firstDay=new Date(year,month,1);
-    const lastDay=new Date(year,month+1,0);
-    const daysInMonth=lastDay.getDate();
-    const startDow=firstDay.getDay();
-    const mesStr=firstDay.toLocaleDateString('es-MX',{month:'long',year:'numeric'});
-    const mesLabel=mesStr.charAt(0).toUpperCase()+mesStr.slice(1);
-
-    // Update labels
-    ['mini-mes-lbl','main-mes-lbl'].forEach(id=>{
-      const el=document.getElementById(id);if(el)el.textContent=mesLabel;
-    });
-
-    // === MINI CALENDAR ===
-    const DOW_SHORT=['D','L','M','X','J','V','S'];
-    let miniHTML=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:4px">
-      ${DOW_SHORT.map(d=>`<div style="text-align:center;font-size:9px;font-weight:700;color:rgba(255,255,255,.5);padding:1px 0">${d}</div>`).join('')}
-    </div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px">`;
-
-    const cells=[];
-    for(let i=0;i<startDow;i++) cells.push(null);
-    for(let d=1;d<=daysInMonth;d++) cells.push(d);
-    while(cells.length%7!==0) cells.push(null);
-
-    cells.forEach(day=>{
-      const hasEvs=day&&(dayMap[day]||[]).length>0;
-      const isToday=day&&year===TODAY.getFullYear()&&month===TODAY.getMonth()&&day===TODAY.getDate();
-      const hasOv=day&&calHasOverlap(dayMap[day]||[]);
-      miniHTML+=`<div onclick="${day&&hasEvs?`openCalDay(${day})`:`_calSelDay=${day};refreshCal()`}"
-        style="height:22px;display:flex;align-items:center;justify-content:center;border-radius:5px;cursor:${hasEvs?'pointer':'default'};
-        background:${isToday?'#fff':hasOv?'rgba(217,119,6,.4)':hasEvs?'rgba(255,255,255,.15)':'transparent'};
-        color:${isToday?'var(--navy)':'rgba(255,255,255,.85)'};
-        font-size:10px;font-weight:${isToday||hasEvs?'700':'400'};
-        position:relative">
-        ${day||''}
-        ${hasEvs&&!isToday?`<div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.8)"></div>`:''}
-      </div>`;
-    });
-    miniHTML+='</div>';
-    const miniEl=document.getElementById('mini-cal-grid');
-    if(miniEl) miniEl.innerHTML=miniHTML;
-
-    // === PROJECT TOGGLES ===
-    const myProjs=isG()||isArea()
-      ?(PROJ.filter(p=>_calFiltEng==='todos'||p.eng===_calFiltEng))
-      :PROJ.filter(p=>p.eng===cu?.perfil);
-    // Only projects with tasks that have dates
-    const projsWithDates=myProjs.filter(p=>{
-      if(!p.tp) return false;
-      return Object.values(p.tp).flat().some(t=>t.fi||t.ini||t.ff||t.fin);
-    });
-    let toggleHTML='';
-    projsWithDates.forEach(p=>{
-      const col=getProjColor(p.id);
-      const visible=_calProjVisible[p.id]!==false;
-      // Count tasks in current month
-      const pEvs=evs.filter(e=>e.pid===p.id);
-      const pDayMap=buildDayMap(pEvs,year,month);
-      const tasksThisMonth=[...new Set(Object.values(pDayMap).flat().map(e=>e.tarea))].length;
-      toggleHTML+=`<div onclick="toggleProjCal('${p.id}')" style="display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
-        <div style="width:14px;height:14px;border-radius:3px;border:2px solid ${col};background:${visible?col:'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s">
-          ${visible?`<svg width="8" height="8" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:10px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre||p.name||p.id}</div>
-          ${tasksThisMonth>0?`<div style="font-size:9px;color:var(--muted)">${tasksThisMonth} tarea${tasksThisMonth!==1?'s':''} este mes</div>`:'<div style="font-size:9px;color:var(--muted)">sin tareas este mes</div>'}
-        </div>
-      </div>`;
-    });
-    const toggleEl=document.getElementById('proj-toggle-list');
-    if(toggleEl) toggleEl.innerHTML=toggleHTML||'<div style="padding:10px 12px;font-size:11px;color:var(--muted)">Sin proyectos</div>';
-
-    // === MAIN CALENDAR GRID ===
-    const DOW_FULL=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    let gridHTML=`<div style="display:grid;grid-template-columns:repeat(7,1fr)">
-      ${DOW_FULL.map(d=>`<div style="background:var(--navy);padding:9px 6px;text-align:center;font-size:11px;font-weight:700;font-family:var(--font-d);color:#fff;letter-spacing:.04em">${d}</div>`).join('')}
-    </div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border2)">`;
-
-    cells.forEach(day=>{
-      const dayEvs=dayMap[day]||[];
-      const isToday=day&&year===TODAY.getFullYear()&&month===TODAY.getMonth()&&day===TODAY.getDate();
-      const hasOv=day&&calHasOverlap(dayEvs);
-      const dow=day?new Date(year,month,day).getDay():0;
-      const isWeekend=day&&(dow===0||dow===6);
-
-      // Group tasks by project for display
-      const byProjList=[];
-      if(day){
-        const seen={};
-        dayEvs.forEach(ev=>{
-          const key=ev.pid+'|'+ev.tarea;
-          if(!seen[key]){seen[key]=true;byProjList.push(ev);}
-        });
-      }
-
-      gridHTML+=`<div style="min-height:120px;background:${day?(isWeekend?'#f8f8fc':'#fff'):'var(--surface2)'};padding:0;position:relative;${hasOv?'outline:2px solid #d97706;outline-offset:-1px;':''};cursor:${dayEvs.length?'pointer':'default'}"
-        onclick="${dayEvs.length?`openCalDay(${day})`:''}">
-
-        <!-- Day number header -->
-        <div style="padding:5px 7px 4px;background:${isToday?'var(--navy)':'transparent'};display:flex;align-items:center;justify-content:space-between">
-          <span style="font-family:var(--font-d);font-size:12px;font-weight:${isToday?'800':'600'};color:${isToday?'#fff':day?'var(--text)':'var(--border)'}">${day||''}</span>
-          ${hasOv?`<span style="font-size:8px;font-weight:800;color:#fff;background:#d97706;border-radius:99px;padding:1px 5px">⚠</span>`:''}
-        </div>
-
-        <!-- Tasks -->
-        <div style="padding:2px 4px;display:flex;flex-direction:column;gap:2px">
-          ${byProjList.slice(0,4).map(ev=>{
-            const shortName=ev.tarea.length>26?ev.tarea.substring(0,26)+'…':ev.tarea;
-            const statusDot=ev.estatus==='Completado'?'✓':ev.estatus==='Bloqueado'?'✕':'';
-            return`<div style="background:${hex2rgba(ev.color,.1)};border-left:3px solid ${ev.color};border-radius:0 3px 3px 0;padding:2px 5px;font-size:9px;font-weight:600;color:${ev.color};line-height:1.3;font-family:var(--font-b)" title="${ev.pnombre}: ${ev.tarea}">
-              ${statusDot?`<span style="font-size:8px;opacity:.7">${statusDot} </span>`:''}${shortName}
-            </div>`;
-          }).join('')}
-          ${byProjList.length>4?`<div style="font-size:8px;color:var(--muted);font-weight:700;padding:1px 4px;text-align:center">+${byProjList.length-4} más</div>`:''}
-        </div>
-      </div>`;
-    });
-    gridHTML+='</div>';
-    const gridEl=document.getElementById('main-cal-grid');
-    if(gridEl) gridEl.innerHTML=gridHTML;
-
-    // Overlap badge
-    const overlapDays=[];
-    for(let d=1;d<=daysInMonth;d++){if(calHasOverlap(dayMap[d]||[]))overlapDays.push(d);}
-    const badgeEl=document.getElementById('cal-overlap-badge');
-    if(badgeEl){
-      badgeEl.innerHTML=overlapDays.length>0
-        ?`<div style="background:var(--warn-bg);border:1px solid rgba(217,119,6,.3);border-radius:var(--r);padding:5px 10px;font-size:11px;font-weight:700;color:var(--warn)">⚠ Empalmes en días: ${overlapDays.join(', ')}</div>`
-        :'';
-    }
-  };
-
-  refreshCal();
-}
+// La vista Calendario se retiro (sep 2026). Mostraba tareas por mes, pero la
+// necesidad que la origino era ver la carga entre proyectos de cada ingeniero, y
+// para eso un calendario mensual dice cuando hay cosas, no quien esta saturado.
+// Esa necesidad la cubre ahora la carga por ingeniero del Dashboard.
 // ─── WELCOME POPUP ──────────────────────────────────────────────────
 const FRASES_DISENO = [
   "Diseñar no es hacer algo bonito; es hacer que algo funcione mejor.",
