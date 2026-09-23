@@ -571,7 +571,7 @@ const bC   = p => p===100?'#1e9e5e':p>=60?'#534AB7':p>=30?'#c47d0a':'#d93535';
 const sC   = e => e==='Terminado'?'ok':e==='En linea'?'purple':e==='En pausa'?'gray':e==='Cancelado'?'gray':'bad';
 const sL   = e => e==='Terminado'?'Terminado':e==='En linea'?'En línea':e==='En pausa'?'En pausa':e==='Cancelado'?'Cancelado':'Fuera de línea';
 const fT   = f => {const d=FD[f];return d?`<span class="tag" style="background:${d.bg};color:${d.tc};border-color:${d.c}33">${f}</span>`:''};
-const dChip= (s,e) => {if(e==='Terminado')return`<span class="dc ok">✓ Terminado</span>`;const d=dN(s,e);if(d===null)return'—';if(d>14)return`<span class="dc ok">+${d}d</span>`;if(d>=0)return`<span class="dc warn">${d}d</span>`;return`<span class="dc bad">Vencida ${Math.abs(d)}d</span>`;};
+const dChip= (s,e) => {if(e==='Terminado')return`<span class="dc ok">✓ Terminado</span>`;if(e==='Cancelado')return'—';const d=dN(s,e);if(d===null)return'—';if(d>14)return`<span class="dc ok">+${d}d</span>`;if(d>=0)return`<span class="dc warn">${d}d</span>`;return`<span class="dc bad">Vencida ${Math.abs(d)}d</span>`;};
 const ecOf = perfil => EC[perfil]||{bg:'#eee',tc:'#333',dot:'#888',init:'?'};
 
 function mkTareas(f){
@@ -681,8 +681,10 @@ function saludFase(p){
   if(dias<=7) return {nivel:'ambar', dias, col:'#d97706', lbl:dias===0?'vence hoy':`vence en ${dias}d`};
   return {nivel:'verde', dias, col:'#16a34a', lbl:`${dias}d de holgura`};
 }
-// Cuenta 'En riesgo' = proyectos con fase vencida (rojo).
-function enRiesgoFase(lista){return (lista||[]).filter(p=>{const s=saludFase(p);return s&&s.nivel==='rojo';}).length;}
+// Cuenta 'En riesgo' = proyectos con la fase vencida, sin contar los pausados.
+// Es el mismo criterio que el mosaico "Vencidos" del Dashboard, para que el globo
+// de la barra lateral y el tablero nunca digan numeros distintos.
+function enRiesgoFase(lista){return (lista||[]).filter(vencidoActivo).length;}
 
 // Vencimiento de CUALQUIER proyecto vivo, sin importar su estatus (sep 2026).
 // saludFase solo mira los activos, asi que un proyecto en pausa y vencido no aparecia
@@ -697,6 +699,17 @@ function vencimientoDe(p){
   const dias=Math.round((fd-TODAY)/86400000);
   return {dias, vencida:dias<0, lbl:dias<0?Math.abs(dias)+'d vencida':(dias===0?'vence hoy':dias+'d restantes')};
 }
+
+// "Vencido", una sola definicion para toda la app (sep 2026). Habia tres y no
+// coincidian: el tablero de Gerencia miraba el fin de fase, el del ingeniero la
+// fecha final del proyecto, y los chips de las tarjetas una fecha que solo se
+// escribe el dia que nace el proyecto y nunca se vuelve a tocar. Un mismo
+// proyecto decia "Fuera de linea" y "+73d" al mismo tiempo.
+// Los pausados se cuentan aparte: su fase esta vencida --eso es un hecho y no se
+// esconde-- pero el proyecto lo detuvo Gerencia, no se atraso el ingeniero.
+const vencido       = p => !!vencimientoDe(p)?.vencida;
+const vencidoActivo = p => p?.estatus!=='En pausa' && vencido(p);
+const vencidoPausa  = p => p?.estatus==='En pausa' && vencido(p);
 
 // "Fuera de linea" deja de capturarse a mano (sep 2026). Antes Rene lo movia proyecto
 // por proyecto al notar el atraso, y mientras no lo hiciera un proyecto podia decir
@@ -1637,7 +1650,8 @@ function rInicio(c){
   const filtEnL=filtAct.filter(p=>p.estatus==='En linea');
   const filtEnP=filtAct.filter(p=>p.estatus==='En pausa');
   const filtFuera=filtAct.filter(p=>p.estatus==='Fuera de linea');
-  const filtRisk=filtAct.filter(p=>{const s=saludFase(p);return s&&s.nivel==='rojo';});
+  const filtRisk=filtAct.filter(vencidoActivo);
+  const filtRiskP=filtAct.filter(vencidoPausa);
   const filtSoon=filtAct.filter(p=>{const s=saludFase(p);return s&&s.nivel==='ambar';});
   const filtAvg=filtProj.length?Math.round(filtProj.reduce((s,p)=>s+p.avance,0)/filtProj.length):0;
   const filtEf=filtProj.length?Math.round(filtTerm.length/filtProj.length*100):0;
@@ -1729,6 +1743,10 @@ function rInicio(c){
   // desaparecian del indicador: ni vencidos ni en tiempo, simplemente no contaban.
   // Aqui se muestran aparte, porque un hueco visible se llena y uno invisible no.
   const sinFecha = filtAct.filter(p=>!finFaseActual(p));
+  // Denominador del mosaico: los que SI se pueden medir y ademas dependen de que
+  // alguien se mueva esta semana. Antes decia "de 10 que se miden" contando dentro
+  // proyectos pausados, que el propio mosaico no evaluaba.
+  const medibles = filtAct.filter(p=>p.estatus!=='En pausa'&&finFaseActual(p));
   const porFase = {};
   filtAct.forEach(p=>{ porFase[p.fase||'—'] = (porFase[p.fase||'—']||0)+1; });
   const maxFase = Math.max(1, ...Object.values(porFase));
@@ -1736,11 +1754,12 @@ function rInicio(c){
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
     <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px">¿Dónde intervengo esta semana?</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
         ${[
-          {l:'Vencidos',      v:filtRisk.length, s:`de ${filtAct.length-sinFecha.length} que se miden`, col:filtRisk.length>0?'var(--bad)':'var(--ok)',  bg:filtRisk.length>0?'var(--bad-bg)':'var(--ok-bg)', click:"sv2('reporte')"},
-          {l:'Sin fecha de fase', v:sinFecha.length, s:'pendientes de brief',           col:'var(--muted)', bg:'var(--surface2)', click:"sv2('proyectos')"},
-          {l:'Esperan cierre',v:filtPAp,         s:'tu visto bueno',                    col:filtPAp>0?'var(--warn)':'var(--ok)', bg:filtPAp>0?'var(--warn-bg)':'var(--ok-bg)', click:"sv2('aprobaciones')"},
+          {l:'Vencidos',         v:filtRisk.length,  s:`de ${medibles.length} que dependen de alguien`, col:filtRisk.length>0?'var(--bad)':'var(--ok)',  bg:filtRisk.length>0?'var(--bad-bg)':'var(--ok-bg)', click:"sv2('reporte')"},
+          {l:'En pausa y vencidos', v:filtRiskP.length, s:'los detuviste tú',            col:filtRiskP.length>0?'var(--warn)':'var(--ok)', bg:filtRiskP.length>0?'var(--warn-bg)':'var(--ok-bg)', click:"sv2('proyectos')"},
+          {l:'Sin fecha de fase', v:sinFecha.length, s:'pendientes de brief',            col:'var(--muted)', bg:'var(--surface2)', click:"sv2('proyectos')"},
+          {l:'Esperan cierre',   v:filtPAp,          s:'tu visto bueno',                 col:filtPAp>0?'var(--warn)':'var(--ok)', bg:filtPAp>0?'var(--warn-bg)':'var(--ok-bg)', click:"sv2('aprobaciones')"},
         ].map(k=>`<div onclick="${k.click}" style="background:${k.bg};border-radius:var(--r2);padding:12px;cursor:pointer">
           <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">${k.l}</div>
           <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:${k.col};line-height:1.1">${k.v}</div>
@@ -2063,7 +2082,7 @@ function renderRepFiltro(){
           <div style="flex:1;height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;min-width:60px"><div style="height:100%;background:${bC(p.avance)};width:${p.avance}%;border-radius:99px"></div></div>
           <span style="font-size:11px;font-weight:700;color:${bC(p.avance)};min-width:28px">${p.avance}%</span>
         </div>
-        ${dChip(p.fechaFase,p.estatus)}
+        ${dChip(finFaseActual(p),p.estatus)}
       </div>
     </div>`;
   });
@@ -2078,7 +2097,10 @@ function rMiDashboard(c){
   const mis=PROJ.filter(p=>p.eng===cu?.perfil&&p.estatus!=='Cancelado');
   const act=mis.filter(p=>p.estatus!=='Terminado');
   const term=mis.filter(p=>p.estatus==='Terminado');
-  const venc=act.filter(p=>{const d=dNF(p);return d!==null&&d<0;});
+  // Mismo criterio que el tablero de Gerencia. Antes media contra la fecha final
+  // del proyecto: Paulina veia "Vencidos 0 · Todo en tiempo" con Flusso llevando
+  // 26 dias de fase vencida, porque el cierre del proyecto aun quedaba lejos.
+  const venc=act.filter(vencidoActivo);
   const riesgo=act.filter(p=>{const s=saludFase(p);return s&&s.nivel==='ambar';});
   const enL=act.filter(p=>p.estatus==='En linea');
   const avg=mis.length?Math.round(mis.reduce((s,p)=>s+p.avance,0)/mis.length):0;
@@ -2383,7 +2405,7 @@ function rMisProyectos(c, filtro){
         </div>
         <div class="pc-right" style="align-items:flex-end;gap:6px">
           <span class="tag ${sC(p.estatus)}">${sL(p.estatus)}</span>
-          ${dChip(p.fechaFase,p.estatus)}
+          ${dChip(finFaseActual(p),p.estatus)}
         </div>
       </div>`;
     });
@@ -2466,7 +2488,7 @@ function rProyectos(c){
       <div><span class="pt-id">${p.id}</span></div>
       <div><div class="pt-name">${p.name}</div><div class="pt-eng"><span class="edot" style="background:${ec.dot}"></span>${NOMBRES[p.eng]||p.eng}</div></div>
       <div><span class="tag ${sC(p.estatus)}">${sL(p.estatus)}</span><div style="margin-top:3px">${fT(p.fase)}</div></div>
-      <div><div class="av-bar"><div class="av-track"><div class="av-fill" style="width:${p.avance}%;background:${bC(p.avance)}"></div></div><span class="av-pct" style="color:${bC(p.avance)}">${p.avance}%</span></div>${dChip(p.fechaFase,p.estatus)}</div>
+      <div><div class="av-bar"><div class="av-track"><div class="av-fill" style="width:${p.avance}%;background:${bC(p.avance)}"></div></div><span class="av-pct" style="color:${bC(p.avance)}">${p.avance}%</span></div>${dChip(finFaseActual(p),p.estatus)}</div>
       <div style="font-size:16px;color:var(--muted)">›</div>
     </div>`;
   });
@@ -2629,7 +2651,9 @@ function rCadencia(c){
       const _todayPct=_pct(TODAY);
       const _months=[]; let _cur=new Date(_minD.getFullYear(),_minD.getMonth(),1);
       while(_cur<=_maxD){_months.push({d:new Date(_cur),p:_pct(new Date(_cur))});_cur.setMonth(_cur.getMonth()+1);}
-      const _axis=`<div style="display:flex;align-items:center;height:16px;margin-bottom:3px"><span style="width:124px;flex:none"></span><div style="position:relative;flex:1;height:16px">${_months.map(m=>`<div style="position:absolute;left:${m.p}%;font-size:9px;color:var(--muted);font-weight:600;transform:translateX(-50%)">${m.d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`).join('')}<div style="position:absolute;left:${_todayPct}%;font-size:9px;color:#dc2626;font-weight:800;transform:translateX(-50%)">HOY</div></div><span style="width:46px;flex:none"></span></div>`;
+      // El eje lleva dos renglones: los meses arriba y HOY abajo. Compartiendo el
+      // mismo renglon, "HOY" se encimaba con la etiqueta del mes que le tocara.
+      const _axis=`<div style="display:flex;align-items:flex-start;height:27px;margin-bottom:3px"><span style="width:124px;flex:none"></span><div style="position:relative;flex:1;height:27px">${_months.map(m=>`<div style="position:absolute;top:0;left:${m.p}%;font-size:9px;color:var(--muted);font-weight:600;transform:translateX(-50%)">${m.d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`).join('')}<div style="position:absolute;top:13px;left:${_todayPct}%;font-size:9px;color:#dc2626;font-weight:800;transform:translateX(-50%)">HOY</div></div><span style="width:46px;flex:none"></span></div>`;
       const _rowsHtml=_rows.map(r=>{
         const segs=r.phases.map(ph=>{
           const s=_pct(ph.ini),e=_pct(ph.fin),w=Math.max(1,e-s);
@@ -3257,7 +3281,10 @@ function rModal(){
     <div class="fgrid">${FK.map(f=>{
       const fd=FD[f],ts=p.tp[f]||[],dn=ts.filter(t=>t.e==='Completado').length,pt=ts.length?Math.round(dn/ts.length*100):0,isc=p.fase===f;
       const {ini,fin}=getFaseDates(p,f);
-      const faseEnd=fin?fmtD(toISO(fin)):p.fase===f?fmtD(p.fechaFase):'—';
+      // Sin fecha capturada se muestra un guion. Antes caia a p.fechaFase, que se
+      // escribe al crear el proyecto y nunca se actualiza: ponia una fecha de
+      // entrega inventada en la fase actual.
+      const faseEnd=fin?fmtD(toISO(fin)):'—';
       return`<div class="fp" style="background:${isc?fd.bg:'var(--surface)'};border-color:${isc?fd.c+'33':'var(--border2)'}">
         <div class="fp-top"><span class="fp-name" style="color:${fd.tc}">${f}${isc?' ◀':''}</span><span class="fp-pct" style="color:${fd.c}">${pt}%</span></div>
         <div class="fp-sub">${dn} de ${ts.length} tareas</div>
@@ -3681,13 +3708,15 @@ function imprimirReporteEjecutivo(){
         if(fin) return{fase:fk,tarea:'Entrega '+fk,fecha:toISO(fin),tipo:'fase'};
       }
     }
-    if(p.fechaFase) return{fase:p.fase,tarea:'Entrega '+p.fase,fecha:p.fechaFase,tipo:'fase'};
+    // Sin fechas de fase capturadas no hay milestone que reportar. El respaldo
+    // anterior era p.fechaFase --la fecha del dia que se creo el proyecto-- y
+    // presentaba como "siguiente entrega" algo que nadie habia comprometido.
     return null;
   }
 
   const act=scope.filter(p=>p.estatus!=='Terminado');
   const term=scope.filter(p=>p.estatus==='Terminado').length;
-  const venc=act.filter(p=>{const d=dNF(p);return d!==null&&d<0;}).length;
+  const venc=act.filter(vencidoActivo).length;
   const avg=act.length?Math.round(act.reduce((s,p)=>s+p.avance,0)/act.length):0;
   const engs=selEng?[USERS.find(u=>u.perfil===selEng)].filter(Boolean):engU;
 
@@ -3755,7 +3784,7 @@ ${engs.map(u=>{
   if(!pp.length) return'';
   const actE=pp.filter(p=>p.estatus!=='Terminado');
   const avgE=actE.length?Math.round(actE.reduce((s,p)=>s+p.avance,0)/actE.length):0;
-  const vencE=actE.filter(p=>{const d=dNF(p);return d!==null&&d<0;}).length;
+  const vencE=actE.filter(vencidoActivo).length;
 
   return`<div class="eng-block">
     <div class="eng-hdr">
@@ -5725,7 +5754,7 @@ function getWelcomeTasks(){
           // Recently completed (last 7 days)
           if(fechaFin){
             const diff=(today-fechaFin)/(1000*60*60*24);
-            if(diff<=7 && diff>=-1) recientes.push({tarea:t.n,proyecto:p.nombre||p.id,color:getProjColor(p.id)});
+            if(diff<=7 && diff>=-1) recientes.push({tarea:t.n,proyecto:p.name||p.id,color:getProjColor(p.id)});
           }
         } else if(est==='En progreso'){
           enProceso++;
@@ -5735,14 +5764,14 @@ function getWelcomeTasks(){
 
         // Criticas: vencidas o bloqueadas
         if(est!=='Completado' && fechaFin && fechaFin < today){
-          criticas.push({tarea:t.n,proyecto:p.nombre||p.id,ff,color:getProjColor(p.id),est});
+          criticas.push({tarea:t.n,proyecto:p.name||p.id,ff,color:getProjColor(p.id),est});
         } else if(est==='Bloqueado'){
-          criticas.push({tarea:t.n,proyecto:p.nombre||p.id,ff,color:getProjColor(p.id),est});
+          criticas.push({tarea:t.n,proyecto:p.name||p.id,ff,color:getProjColor(p.id),est});
         }
 
         // Vencen esta semana
         if(est!=='Completado' && fechaFin && fechaFin>=today && fechaFin<=endWeek){
-          semana.push({tarea:t.n,proyecto:p.nombre||p.id,ff,color:getProjColor(p.id)});
+          semana.push({tarea:t.n,proyecto:p.name||p.id,ff,color:getProjColor(p.id)});
         }
       });
     });
