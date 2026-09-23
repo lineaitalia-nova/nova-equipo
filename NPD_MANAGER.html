@@ -1643,15 +1643,21 @@ function rInicio(c){
   const filtEf=filtProj.length?Math.round(filtTerm.length/filtProj.length*100):0;
   const filtPAp=filtProj.filter(esperaCierre).length;
 
-  // ── TOP KPIs ──
-  let h=`<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
+  // ── ENCABEZADO ──
+  // Eran seis mosaicos (sep 2026). Se retiran dos:
+  //   "Efectividad" no medía efectividad: era el porcentaje de proyectos cerrados, que
+  //     baja cada vez que se abre uno nuevo. Un año de 10 lanzamientos y 20 arranques
+  //     se veía peor que uno sin actividad. Castigaba el trabajo.
+  //   "Vencidos" pasa al bloque "¿Dónde intervengo?", junto a los que no se pueden
+  //     medir por falta de fecha, que es el contexto que le faltaba.
+  // Los cuatro que quedan son el estado del portafolio, sin duplicar la dona que
+  // repetía exactamente estos mismos números.
+  let h=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
     ${[
       {l:'Total proyectos',  v:filtProj.length,              sub:'en el portafolio',        col:'var(--text)',   bg:'rgba(26,31,60,.08)', click:"sv2('reporte')"},
-      {l:'Activos',          v:filtEnL.length,               sub:'en línea y en tiempo',    col:'var(--ok)',     bg:'var(--ok-bg)',       click:"sv2('reporte')"},
+      {l:'En línea',         v:filtEnL.length,               sub:'activos y en tiempo',     col:'var(--ok)',     bg:'var(--ok-bg)',       click:"sv2('reporte')"},
       {l:'En pausa',         v:filtEnP.length,               sub:'detenidos temporalmente', col:'var(--warn)',   bg:'var(--warn-bg)',     click:"sv2('reporte')"},
-      {l:'Terminados',       v:filtTerm.length,              sub:`${filtEf}% del portafolio`,col:'var(--blue)',  bg:'var(--blue-bg)',     click:"sv2('reporte')"},
-      {l:'Vencidos',         v:filtRisk.length,              sub:'fecha de fase pasada',    col:filtRisk.length>0?'var(--bad)':'var(--ok)',  bg:filtRisk.length>0?'var(--bad-bg)':'var(--ok-bg)', click:"sv2('reporte')"},
-      {l:'Efectividad',      v:filtEf+'%',                   sub:`${filtTerm.length} de ${filtProj.length} terminados`, col:filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)', bg:filtEf>=70?'var(--ok-bg)':filtEf>=40?'var(--warn-bg)':'var(--bad-bg)', click:"sv2('reporte')"},
+      {l:'Terminados',       v:filtTerm.length,              sub:'cerrados',                col:'var(--blue)',   bg:'var(--blue-bg)',     click:"sv2('reporte')"},
     ].map(k=>`
       <div onclick="${k.click}" style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;cursor:pointer;transition:box-shadow .15s;position:relative;overflow:hidden" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow=''">
         <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${k.l}</div>
@@ -1672,66 +1678,89 @@ function rInicio(c){
     ${fEng2!=='todos'?`<span style="font-size:11px;color:var(--muted)">Mostrando datos de <strong>${NOMBRES[fEng2]||fEng2}</strong></span>`:''}
   </div>`;
 
-  // ── FILA PRINCIPAL: Donut + Barras por ingeniero + Gauge ──
+  // ── BLOQUE 1: ¿A QUIÉN LE ASIGNO EL PRÓXIMO PROYECTO? ──
+  // Sustituye a la dona de estatus y a las barras de "Avance por ingeniero" (sep 2026).
+  // Aquellas barras comparaban PORCENTAJES entre cargas incomparables -- Rene aparecia
+  // en rojo con 0% teniendo un solo proyecto, junto a Francisco en morado con 61% y
+  // once. La escala de color sugeria una lectura de desempeno que los datos no
+  // sostenian. Y contaban los TERMINADOS como carga: Francisco figuraba con 11
+  // proyectos cuando tenia 4 vivos. Guiarse por ese panel llevaba a quitarle trabajo
+  // a quien mas habia entregado.
+  // Ahora se cuentan proyectos VIVOS, en numeros y no en porcentajes, segmentados por
+  // estatus. La dona no se repone: repetia los mismos cuatro numeros de los mosaicos.
+  // Solo ingenieros de producto: las cuentas de area (Calidad, Costos, Procesos) no
+  // llevan proyectos, ejecutan tareas dentro de ellos. Aparecian con carga 0 y
+  // "tiene espacio", invitando a asignarles algo que no les toca.
+  const cargaEng = engU.filter(u=>!['CAL','COS','PRO'].includes(u.perfil)).map(u=>{
+    const suyos = PROJ.filter(p=>p.eng===u.perfil);
+    const enL = suyos.filter(p=>p.estatus==='En linea').length;
+    const enP = suyos.filter(p=>p.estatus==='En pausa').length;
+    const fue = suyos.filter(p=>p.estatus==='Fuera de linea').length;
+    return {u, enL, enP, fue, vivos:enL+enP+fue, term:suyos.filter(p=>p.estatus==='Terminado').length};
+  }).sort((a,b)=>b.vivos-a.vivos);
+  const maxCarga = Math.max(1, ...cargaEng.map(x=>x.vivos));
+
+  h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:12px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">¿A quién le asigno el próximo proyecto?</div>
+      <div style="display:flex;gap:12px;font-size:10px;color:var(--muted)">
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#1e9e5e;margin-right:4px"></span>En línea</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#c47d0a;margin-right:4px"></span>En pausa</span>
+        <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#d93535;margin-right:4px"></span>Fuera de línea</span>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Proyectos vivos. Los terminados no cuentan como carga.</div>
+    ${cargaEng.map(x=>{
+      const w=v=>Math.round(v/maxCarga*280);
+      const seg=(v,col)=>v?`<span title="${v}" style="width:${w(v)}px;height:18px;background:${col};display:inline-block"></span>`:'';
+      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+        <span style="width:110px;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.u.nombre}</span>
+        <span style="display:flex;gap:2px;border-radius:3px;overflow:hidden">${seg(x.enL,'#1e9e5e')}${seg(x.enP,'#c47d0a')}${seg(x.fue,'#d93535')}</span>
+        <span style="font-size:13px;font-weight:800;color:var(--text);min-width:18px">${x.vivos}</span>
+        <span style="font-size:10px;color:var(--muted)">${x.vivos<=2?'tiene espacio':''}</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--muted)">${x.term} entregados</span>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // ── BLOQUE 2: ¿DÓNDE INTERVENGO ESTA SEMANA? ──
+  // El mosaico de vencidos contaba solo los proyectos que saludFase puede evaluar, y
+  // esa funcion devuelve null cuando no hay fecha de fase. Los proyectos sin brief
+  // desaparecian del indicador: ni vencidos ni en tiempo, simplemente no contaban.
+  // Aqui se muestran aparte, porque un hueco visible se llena y uno invisible no.
+  const sinFecha = filtAct.filter(p=>!finFaseActual(p));
+  const porFase = {};
+  filtAct.forEach(p=>{ porFase[p.fase||'—'] = (porFase[p.fase||'—']||0)+1; });
+  const maxFase = Math.max(1, ...Object.values(porFase));
+
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
-
-    <!-- ARRIBA IZQUIERDA: Estatus -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Estatus de proyectos</div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
-        <canvas id="donutChart" width="200" height="200" style="display:block"></canvas>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;width:100%">
-          ${[
-            {l:'En línea',      v:filtEnL.length,   c:'#1e9e5e'},
-            {l:'En pausa',      v:filtEnP.length,   c:'#c47d0a'},
-            {l:'Fuera de línea',v:filtFuera.length, c:'#d93535'},
-            {l:'Terminados',    v:filtTerm.length,  c:'#185FA5'},
-          ].map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:11px">
-            <div style="width:8px;height:8px;border-radius:2px;background:${x.c};flex-shrink:0"></div>
-            <span style="flex:1;color:var(--muted)">${x.l}</span>
-            <span style="font-weight:700;color:var(--text)">${x.v}</span>
-          </div>`).join('')}
-        </div>
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px">¿Dónde intervengo esta semana?</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${[
+          {l:'Vencidos',      v:filtRisk.length, s:`de ${filtAct.length-sinFecha.length} que se miden`, col:filtRisk.length>0?'var(--bad)':'var(--ok)',  bg:filtRisk.length>0?'var(--bad-bg)':'var(--ok-bg)', click:"sv2('reporte')"},
+          {l:'Sin fecha de fase', v:sinFecha.length, s:'pendientes de brief',           col:'var(--muted)', bg:'var(--surface2)', click:"sv2('proyectos')"},
+          {l:'Esperan cierre',v:filtPAp,         s:'tu visto bueno',                    col:filtPAp>0?'var(--warn)':'var(--ok)', bg:filtPAp>0?'var(--warn-bg)':'var(--ok-bg)', click:"sv2('aprobaciones')"},
+        ].map(k=>`<div onclick="${k.click}" style="background:${k.bg};border-radius:var(--r2);padding:12px;cursor:pointer">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">${k.l}</div>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:${k.col};line-height:1.1">${k.v}</div>
+          <div style="font-size:9px;color:var(--muted)">${k.s}</div>
+        </div>`).join('')}
       </div>
     </div>
 
-    <!-- ARRIBA DERECHA: Avance por ingeniero -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Avance por ingeniero</div>
-      <canvas id="engChart" style="width:100%;display:block"></canvas>
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px">Embudo del portafolio</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Dónde se acumulan los proyectos vivos</div>
+      ${FK_PROYECTO.map(f=>{
+        const n=porFase[f]||0;
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="width:108px;font-size:11px;color:var(--muted)">${f}</span>
+          <span style="width:${Math.round(n/maxFase*180)}px;height:16px;background:${FD[f]?.c||'#888'};border-radius:0 3px 3px 0;min-width:${n?'3px':'0'}"></span>
+          <span style="font-size:12px;font-weight:700;color:var(--text)">${n}</span>
+        </div>`;
+      }).join('')}
     </div>
-
-    <!-- ABAJO IZQUIERDA: Efectividad NPD -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px">Efectividad NPD</div>
-      <div style="display:flex;align-items:center;gap:14px">
-        <div style="text-align:center;flex-shrink:0">
-          <canvas id="gaugeChart" width="180" height="100" style="display:block;margin:0 auto"></canvas>
-          <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:${filtEf>=70?'var(--ok)':filtEf>=40?'var(--warn)':'var(--bad)'};margin-top:-4px">${filtEf}%</div>
-          <div style="font-size:10px;color:var(--muted)">${filtTerm.length} de ${filtProj.length} terminados</div>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
-          ${[
-            {l:'Vencidos',   v:filtRisk.length,  col:filtRisk.length>0?'var(--bad)':'var(--ok)'},
-            {l:'Por vencer', v:filtSoon.length,  col:filtSoon.length>0?'var(--warn)':'var(--ok)'},
-            {l:'Aprobaciones',v:filtPAp,         col:filtPAp>0?'var(--bad)':'var(--ok)'},
-          ].map(k=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px">
-            <span style="color:var(--muted)">${k.l}</span>
-            <span style="font-weight:800;color:${k.col}">${k.v}</span>
-          </div>`).join('')}
-          <button onclick="sv2('aprobaciones')" style="margin-top:4px;padding:5px;background:${filtPAp>0?'var(--bad-bg)':'var(--ok-bg)'};border:1px solid ${filtPAp>0?'rgba(217,53,53,.2)':'rgba(30,158,94,.2)'};border-radius:var(--r);font-size:10px;font-weight:700;color:${filtPAp>0?'var(--bad)':'var(--ok)'};cursor:pointer;font-family:var(--font-b);text-align:center">
-            ${filtPAp>0?filtPAp+' aprobaciones pendientes':'✓ Aprobaciones al día'} →
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABAJO DERECHA: Proyectos por fase -->
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Proyectos por fase</div>
-      <canvas id="faseChart" style="width:100%;display:block"></canvas>
-    </div>
-
   </div>`;
 
 
@@ -1746,19 +1775,36 @@ function rInicio(c){
   const _meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const _mV=new Array(12).fill(0);
   _termTend.forEach(p=>{const f=p.fechaFinal||p.fechasFase?.['Lanzamiento']?.fin||'';if(f&&String(f).slice(0,4)===_anioT){const m=parseInt(String(f).slice(5,7),10);if(m>=1&&m<=12)_mV[m-1]++;}});
-  const _yearsSel=[...new Set([..._yrs.map(String),String(TODAY.getFullYear())])].sort().reverse();
-  const _anioTendOpts=_yearsSel.map(a=>`<option value="${a}"${_anioT===a?' selected':''}>${a}</option>`).join('');
+  // "Cerrados por mes" se retiro (sep 2026): casi todos los meses en cero, y la
+  // decision que alimenta esta pantalla es anual -- mantenerse en el estandar o no.
+  // El detalle mensual no cambiaba ninguna decision y ocupaba media fila.
+  const _ritmoAct = _aV.length ? _aV[_aV.length-1] : 0;
+  const _ritmoPrev = _aV.length>1 ? _aV[_aV.length-2] : 0;
+  const _mesesTranscurridos = TODAY.getMonth()+1;
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
     <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Proyectos cerrados por año</div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px">¿Qué le reporto a Dirección?</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Proyectos cerrados por año · tu estándar</div>
       ${_aL.length?svgLineTend(_aL,_aV,'#185FA5'):'<div style="text-align:center;color:var(--muted);font-size:12px;padding:34px 0">Aún no hay proyectos terminados.</div>'}
     </div>
     <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Cerrados por mes</div>
-        <select onchange="window._dashAnioTend=this.value;rInicio(document.getElementById('vc'))" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);font-weight:600;cursor:pointer">${_anioTendOpts}</select>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px">Ritmo del año</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:var(--surface2);border-radius:var(--r2);padding:12px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700">Cerrados ${_aL.length?_aL[_aL.length-1]:TODAY.getFullYear()}</div>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--text);line-height:1.1">${_ritmoAct}</div>
+          <div style="font-size:9px;color:var(--muted)">${(_ritmoAct/_mesesTranscurridos).toFixed(2)} por mes · a ${_meses[TODAY.getMonth()].toLowerCase()}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:var(--r2);padding:12px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700">Cerrados ${_aL.length>1?_aL[_aL.length-2]:'año previo'}</div>
+          <div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--text);line-height:1.1">${_ritmoPrev}</div>
+          <div style="font-size:9px;color:var(--muted)">${(_ritmoPrev/12).toFixed(2)} por mes · año completo</div>
+        </div>
       </div>
-      ${svgLineTend(_meses,_mV,'#185FA5')}
+      <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5">
+        La fecha de cierre se toma de la fecha final del proyecto. Cuando el visto bueno
+        se dé conforme cierran, esa será la fecha real y este número dejará de ser estimado.
+      </div>
     </div>
   </div>`;
 
@@ -1791,28 +1837,24 @@ function rInicio(c){
   const _dLog=_dMetasMes.filter(t=>t.estatus==='Lograda'||t.estatus==='Parcial').length;
   const _dPct=_dMetasMes.length?Math.round(_dLog/_dMetasMes.length*100):null;
   const _dPctCol=_dPct===null?'var(--muted)':_dPct>=80?'var(--ok)':_dPct>=60?'var(--warn)':'var(--bad)';
-  const _atN=filtRisk.length;
-  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px 18px;display:flex;flex-direction:column">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Atención requerida</div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px"><span style="font-size:34px;font-weight:800;color:${_atN>0?'var(--bad)':'var(--ok)'};line-height:1">${_atN}</span><span style="font-size:13px;color:var(--muted)">proyectos con fase vencida</span></div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;min-height:14px">${filtRisk.slice(0,3).map(p=>p.name).join(', ')||'Todo en tiempo ✓'}</div>
-      <a onclick="sv2('reporte')" style="margin-top:auto;font-size:12px;font-weight:700;color:var(--blue);cursor:pointer">Ver en Reporte ejecutivo →</a>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px 18px;display:flex;flex-direction:column">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Cumplimiento del equipo</div>
+  // "Atención requerida" se retiró: repetía el mosaico de Vencidos del bloque
+  // "¿Dónde intervengo?", que además muestra los que no se pueden medir.
+  // "Cumplimiento del equipo" se conserva —es el instrumento de Gerencia para los
+  // 1 a 1— pero se queda solo en el Dashboard: fuera del Reporte ejecutivo, porque
+  // mide actividad y a Dirección le importa el resultado.
+  h+=`<div style="margin-bottom:12px">
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px 18px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Cumplimiento del equipo · uso interno</div>
       <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px"><span style="font-size:34px;font-weight:800;color:${_dPctCol};line-height:1">${_dPct===null?'—':_dPct+'%'}</span><span style="font-size:13px;color:var(--muted)">metas SMART · este mes</span></div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;min-height:14px">${_dMetasMes.length?_dLog+' de '+_dMetasMes.length+' metas logradas':'sin metas este mes'}</div>
-      <a onclick="sv2('cadencia')" style="margin-top:auto;font-size:12px;font-weight:700;color:var(--blue);cursor:pointer">Ver en Cadencia →</a>
+      <div style="font-size:11px;color:var(--muted)">${_dMetasMes.length?_dLog+' de '+_dMetasMes.length+' metas logradas':'sin metas este mes'}</div>
     </div>
   </div>`;
 
   // ── ACCESOS RÁPIDOS ──
-  h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+  h+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
     ${[
-      {ico:'↗',bg:'rgba(26,31,60,.1)',l:'Reporte ejecutivo',s:'Dashboard del equipo',click:"sv2('reporte')"},
-
-      {ico:'✓',bg:filtPAp>0?'var(--bad-bg)':'var(--ok-bg)',l:'Aprobaciones',s:filtPAp>0?filtPAp+' pendientes de revisión':'Sin pendientes',click:"sv2('aprobaciones')"},
+      {ico:'↗',bg:'rgba(26,31,60,.1)',l:'Reporte ejecutivo',s:'Para la junta de seguimiento',click:"sv2('cadencia')"},
+      {ico:'✓',bg:filtPAp>0?'var(--warn-bg)':'var(--ok-bg)',l:'Cierre de proyectos',s:filtPAp>0?filtPAp+' esperan tu visto bueno':'Sin pendientes',click:"sv2('aprobaciones')"},
       {ico:'＋',bg:'var(--blue-bg)',l:'Nuevo proyecto',s:'Crear y asignar',click:'nuevoProyecto()'},
     ].map(a=>`
       <div onclick="${a.click}" style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:box-shadow .15s" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow=''">
