@@ -763,9 +763,35 @@ function autoBackup(){
 }
 function saveUsers(){try{localStorage.setItem(VER+'users',JSON.stringify(USERS));fbPush();}catch(e){Falla.critica('guardar los usuarios',e);}}
 
+// Claves de localStorage que corresponden a proyectos ya borrados (sep 2026).
+// Se usa para dos cosas: no volver a subirlas y limpiarlas del navegador.
+function clavesBorradas(){
+  try{
+    const arr=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
+    return new Set((Array.isArray(arr)?arr:[])
+      .map(x=>typeof x==='string'?x:(x&&x.id))
+      .filter(Boolean).map(id=>VER+id));
+  }catch(e){return new Set();}
+}
+
+// Borrar un proyecto lo sacaba de la vista pero no de ningun lado mas: la clave
+// seguia en el navegador de cada persona y fbPush la volvia a subir. Por eso 18
+// proyectos borrados seguian ocupando el 29% del nodo y regresaban solos aunque
+// se limpiaran en Firebase. Ahora se limpian aqui, al cargar.
+function purgarBorrados(){
+  const muertas=clavesBorradas(); let n=0;
+  try{ muertas.forEach(k=>{ if(localStorage.getItem(k)!==null){ localStorage.removeItem(k); n++; } }); }
+  catch(e){ Falla.registrar('limpiar proyectos borrados del navegador',e); }
+  if(n) console.info('[NPD] se limpiaron '+n+' proyecto(s) borrado(s) del navegador');
+  return n;
+}
+
 function fbPush(){
   if(!FB_NPD)return;
-  const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER));
+  // Nunca subir lo que ya esta borrado: si no, el primer guardado de cualquier
+  // persona resucita los proyectos que se limpiaron en Firebase.
+  const muertas=clavesBorradas();
+  const keys=Object.keys(localStorage).filter(k=>k.startsWith(VER)&&!muertas.has(k));
   const data={};
   keys.forEach(k=>{try{data[k]=JSON.parse(localStorage.getItem(k));}catch(e){Falla.critica('sincronizar con Firebase',e);}});
   data['__deleted']=JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
@@ -854,6 +880,9 @@ function _loadFromStorage(){
       USERS = JSON.parse(JSON.stringify(DEFAULT_USERS));
     }
     saveUsers();
+    // Se limpian antes de armar PROJ, para que un borrado deje de ocupar lugar en
+    // el navegador y no lo resucite el siguiente guardado.
+    purgarBorrados();
     const deleted = JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
     PROJ = RAW
       .filter(r=>!deleted.includes(r.id))
