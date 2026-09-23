@@ -439,6 +439,14 @@ const FD = {
   ]},
 };
 const FK = Object.keys(FD);
+// Las fases que componen el PROYECTO. Seguimiento queda fuera a proposito (sep 2026):
+// el proyecto cierra en Lanzamiento y Seguimiento es monitoreo posterior al lanzamiento,
+// no una quinta etapa del trabajo. Contando sus 11 tareas, un proyecto terminado nunca
+// llegaba a 100% -- se quedaba en 83% (52 de 63 tareas) y en el reporte a Direccion
+// ningun proyecto aparecia completo. El diagrama de proceso ya mostraba solo 4 fases y
+// Seguimiento es la unica sin gate: el calculo era lo unico desalineado.
+const FK_PROYECTO = FK.filter(f => f !== 'Seguimiento');
+const tareasDelProyecto = p => FK_PROYECTO.flatMap(f => (p.tp && p.tp[f]) || []);
 const CK = ['Modelo 3D','Planos','DXF','IGS','Instructivo','Ficha técnica','Precio lista','Alta ERP','Empaque'];
 
 // USUARIOS DEFAULT
@@ -605,7 +613,7 @@ function mkProj(r){
 function fpct(p,f){const t=p.tp[f]||[];return t.length?Math.round(t.filter(x=>x.e==='Completado').length/t.length*100):0;}
 function ckpct(sk){return Math.round(CK.filter(c=>sk.checks[c]).length/CK.length*100);}
 function rcAvance(p){
-  const all=Object.values(p.tp).flat();
+  const all=tareasDelProyecto(p);
   if(!all.length) return;
   p.avance=Math.round(all.filter(t=>t.e==='Completado').length/all.length*100);
 
@@ -675,6 +683,44 @@ function saludFase(p){
 }
 // Cuenta 'En riesgo' = proyectos con fase vencida (rojo).
 function enRiesgoFase(lista){return (lista||[]).filter(p=>{const s=saludFase(p);return s&&s.nivel==='rojo';}).length;}
+
+// Vencimiento de CUALQUIER proyecto vivo, sin importar su estatus (sep 2026).
+// saludFase solo mira los activos, asi que un proyecto en pausa y vencido no aparecia
+// en ningun lado. Esto permite mostrar "En pausa · vencida 45d" sin cambiarle el
+// estatus: la pausa es decision de Gerencia, el vencimiento es un hecho.
+function vencimientoDe(p){
+  if(!p||p.estatus==='Terminado'||p.estatus==='Cancelado') return null;
+  const fin=finFaseActual(p);
+  if(!fin) return null;
+  const fd=pd(fin);
+  if(!fd) return null;
+  const dias=Math.round((fd-TODAY)/86400000);
+  return {dias, vencida:dias<0, lbl:dias<0?Math.abs(dias)+'d vencida':(dias===0?'vence hoy':dias+'d restantes')};
+}
+
+// "Fuera de linea" deja de capturarse a mano (sep 2026). Antes Rene lo movia proyecto
+// por proyecto al notar el atraso, y mientras no lo hiciera un proyecto podia decir
+// "En linea" llevando 299 dias de retraso. Ahora se enciende y se apaga solo al
+// comparar la fecha de fin de fase con hoy.
+// Solo alterna entre En linea y Fuera de linea: En pausa, Terminado y Cancelado son
+// decisiones de Gerencia y no se tocan nunca.
+function autoEstatus(p){
+  if(!p) return false;
+  if(p.estatus!=='En linea'&&p.estatus!=='Fuera de linea') return false;
+  const v=vencimientoDe(p);
+  if(!v) return false;                       // sin fecha de fase todavia: no se opina
+  const debe=v.vencida?'Fuera de linea':'En linea';
+  if(p.estatus===debe) return false;
+  p.estatus=debe;
+  return true;
+}
+
+// Cola de cierre (sep 2026). Un proyecto espera el visto bueno cuando TERMINA, no al
+// cruzar un porcentaje. El umbral era avance>=80 y funcionaba de casualidad: un
+// terminado se quedaba en 83%. Ademas, 14 proyectos que nunca llegaron ahi cargaban el
+// estado "pendiente" por defecto, como si estuvieran esperando algo.
+const esperaCierre = p => !!p && p.estatus==='Terminado' && p.aprob?.g?.s!=='aprobado';
+const cerrado      = p => !!p && p.aprob?.g?.s==='aprobado';
 
 // ─── PERSISTENCIA ───────────────────────────────────────────────────
 // ─── FIREBASE SYNC ──────────────────────────────────────────────────
@@ -790,7 +836,7 @@ function _loadFromStorage(){
     const deleted = JSON.parse(localStorage.getItem(VER+'__deleted')||'[]');
     PROJ = RAW
       .filter(r=>!deleted.includes(r.id))
-      .map(r=>{const s=localStorage.getItem(VER+r.id);if(s){try{const p=JSON.parse(s);if(!p.aprob||!p.aprob.g)p.aprob={g:{s:'pendiente',f:''}};return p;}catch(e){Falla.registrar('cargar los datos guardados',e);}}return mkProj(r);});
+      .map(r=>{const s=localStorage.getItem(VER+r.id);if(s){try{const p=JSON.parse(s);return p;}catch(e){Falla.registrar('cargar los datos guardados',e);}}return mkProj(r);});
     Object.keys(localStorage).forEach(k=>{
       if(k.startsWith(VER)&&k!==VER+'users'&&k!==VER+'__deleted'){
         const id=k.replace(VER,'');
@@ -848,9 +894,9 @@ function _loadFromStorage(){
       }
     });
 
-    const all=Object.values(p.tp).flat();
+    const all=tareasDelProyecto(p);
     if(!all.length) return;
-    // Recalcular avance
+    // Recalcular avance — sin Seguimiento, que es monitoreo post-lanzamiento
     const newAvance=Math.round(all.filter(t=>t.e==='Completado').length/all.length*100);
     // Recalcular fase activa
     let faseActual=FK[FK.length-1];
@@ -859,10 +905,16 @@ function _loadFromStorage(){
       const ts=p.tp[f]||[];
       if(ts.length&&ts.some(t=>t.e!=='Completado')){faseActual=f;break;}
     }
+    // Se anota si cambiaron ANTES de asignar: comparar despues siempre daria falso.
+    const cambioAvance=p.avance!==newAvance, cambioFase=p.fase!==faseActual;
+    // El avance y la fase deben quedar asignados antes de evaluar el vencimiento,
+    // porque finFaseActual depende de la fase en curso.
+    p.avance=newAvance;
+    p.fase=faseActual;
+    // "Fuera de linea" se enciende o se apaga solo segun la fecha de la fase.
+    const cambioEstatus=autoEstatus(p);
     // Solo guardar si cambió algo para no generar ruido
-    if(p.avance!==newAvance||p.fase!==faseActual||migrated){
-      p.avance=newAvance;
-      p.fase=faseActual;
+    if(cambioAvance||cambioFase||cambioEstatus||migrated){
       try{localStorage.setItem(VER+p.id,JSON.stringify(p));}catch(e){Falla.critica('cargar los datos guardados',e);}
     }
   });
@@ -948,7 +1000,7 @@ function rSB(){
   const ec=ecOf(cu?.perfil);
   const act=PROJ.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
   const risk=enRiesgoFase(act);
-  const pAp=PROJ.filter(p=>p.avance>=80&&p.aprob?.g?.s==='pendiente').length;
+  const pAp=PROJ.filter(esperaCierre).length;
   let nav=[];
   if(isDir()){
     nav=[
@@ -1584,7 +1636,7 @@ function rInicio(c){
   const filtSoon=filtAct.filter(p=>{const s=saludFase(p);return s&&s.nivel==='ambar';});
   const filtAvg=filtProj.length?Math.round(filtProj.reduce((s,p)=>s+p.avance,0)/filtProj.length):0;
   const filtEf=filtProj.length?Math.round(filtTerm.length/filtProj.length*100):0;
-  const filtPAp=filtProj.filter(p=>p.avance>=80&&p.aprob?.g?.s==='pendiente').length;
+  const filtPAp=filtProj.filter(esperaCierre).length;
 
   // ── TOP KPIs ──
   let h=`<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
@@ -2880,8 +2932,8 @@ function rReporte(c){
 
 // ─── APROBACIONES ────────────────────────────────────────────────────
 function rAprobaciones(c){
-  const pend=PROJ.filter(p=>p.avance>=80&&p.aprob?.g?.s==='pendiente');
-  const aprobados=PROJ.filter(p=>p.aprob?.g?.s==='aprobado');
+  const pend=PROJ.filter(esperaCierre);
+  const aprobados=PROJ.filter(cerrado);
   let h='';
   if(pend.length){
     h+=`<div class="sec"><div class="sec-head"><div class="sec-title">Pendientes de aprobación (${pend.length})</div></div>`;
@@ -3131,7 +3183,7 @@ function rModal(){
   h+=`<div class="mpg active" id="mp-resumen">
     ${diasBanner}
     <div class="mg">
-      <div class="mg-i"><div class="mg-l">Estatus</div><div class="mg-v">${ed?`<select style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 7px;background:var(--surface);color:var(--text);font-family:var(--font-b)" onchange="uf('${p.id}','estatus',this.value)">${['Terminado','En linea','En pausa','Fuera de linea'].map(s=>`<option${p.estatus===s?' selected':''}>${s}</option>`).join('')}</select>`:`<span class="tag ${sC(p.estatus)}">${sL(p.estatus)}</span>`}</div></div>
+      <div class="mg-i"><div class="mg-l">Estatus</div><div class="mg-v">${ed?`<select style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 7px;background:var(--surface);color:var(--text);font-family:var(--font-b)" onchange="uf('${p.id}','estatus',this.value)">${['Terminado','En linea','En pausa','Cancelado'].map(s=>`<option${p.estatus===s?' selected':''}>${s}</option>`).join('')}${p.estatus==='Fuera de linea'?`<option selected>Fuera de linea</option>`:''}</select>`:`<span class="tag ${sC(p.estatus)}">${sL(p.estatus)}</span>`}${(()=>{const v=vencimientoDe(p);return v&&v.vencida?`<span class="tag" style="background:#fee2e2;color:#991b1b;margin-left:6px">${v.lbl}</span>`:'';})()}</div></div>
       <div class="mg-i"><div class="mg-l">Avance total</div><div class="mg-v" style="font-size:20px;font-weight:800;font-family:var(--font-d);color:${bC(p.avance)}">${p.avance}%</div></div>
       <div class="mg-i"><div class="mg-l">Fecha final</div><div class="mg-v">
         ${isG()
@@ -3433,7 +3485,7 @@ function rModal(){
       <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border2);margin-bottom:8px">
         <div style="flex:1"><div style="font-size:12px;font-weight:700">Gerencia de Innovación y Diseño</div><div style="font-size:10px;color:var(--muted)">${p.aprob?.g?.s==='aprobado'?'Aprobado el '+p.aprob.g.f:'Pendiente de revisión'}</div></div>
         <span class="tag${p.aprob?.g?.s==='aprobado'?' ok':' warn'}">${p.aprob?.g?.s==='aprobado'?'✓ Aprobado':'Pendiente'}</span>
-        ${isG()&&p.aprob?.g?.s==='pendiente'&&p.avance>=80?`<button class="btn sm ok-btn" onclick="aprobarModal('${p.id}')">✓ Dar aprobación</button>`:''}
+        ${isG()&&esperaCierre(p)?`<button class="btn sm ok-btn" onclick="aprobarModal('${p.id}')">✓ Dar aprobación</button>`:''}
       </div>
       ${p.aprob?.g?.s==='aprobado'?`<div style="padding:9px;background:var(--ok-bg);border:1px solid rgba(30,158,94,.25);border-radius:var(--r);font-size:12px;font-weight:700;color:var(--ok);margin-bottom:8px">✓ Proyecto aprobado formalmente.</div>`:''}
       <div style="display:flex;gap:8px;justify-content:flex-end">
