@@ -750,24 +750,64 @@ function credibilidad(p,med){
   const fin=p?.fechasFase?.['Lanzamiento']?.fin;
   if(!fin) return null;
   const i=FK_PROYECTO.indexOf(p.fase);
-  let necesita=0;
-  FK_PROYECTO.slice(i<0?0:i).forEach(f=>{ const x=med[f]; if(x) necesita+=x.dias; });
-  if(!necesita) return null;
+  if(i<0) return null;
+  // La fase en curso se cobra solo por lo que le falta (sep 2026). Sumar la
+  // mediana completa daba la misma fecha a un proyecto al 85% de su fase y a uno
+  // al 0%: once de trece caian en el mismo mes, y eso no lo cree nadie.
+  const hechoDe = f => { const ts=(p.tp&&p.tp[f])||[];
+    return ts.length ? ts.filter(t=>t&&t.e==='Completado').length/ts.length : 0; };
+  let necesita=0, hayDatos=false;
+  FK_PROYECTO.slice(i).forEach((f,k)=>{
+    const m=med[f]?med[f].dias:0;
+    if(med[f]) hayDatos=true;
+    necesita += k===0 ? Math.round(m*(1-hechoDe(f))) : m;
+  });
+  if(!hayDatos) return null;
   const quedan=Math.round((pd(fin)-TODAY)/86400000);
-  return {quedan, necesita, brecha:necesita-quedan,
+  const listo=new Date(TODAY.getTime()+necesita*86400000);
+  return {quedan, necesita, listo, brecha:necesita-quedan,
     nivel: quedan>=necesita?'sostiene':(quedan>=Math.round(necesita*0.7)?'apretada':'no sostiene')};
 }
 
-// Lanzamientos cerrados por ano y proyeccion del ano en curso. Es el titular que
-// faltaba: el objetivo 2026 es maximizar lanzamientos y el reporte no lo medía.
-function ritmoDeLanzamientos(){
+// Lanzamientos cerrados por ano y lo que el pipeline promete para el resto.
+// La proyeccion NO se extrapola del ritmo (sep 2026): se cuenta cuantos proyectos
+// vivos tienen fecha realista dentro del ano. Extrapolando, el bloque de arriba
+// decia 7 mientras el roadmap de abajo implicaba 15 -- dos respuestas distintas a
+// la misma pregunta en la misma hoja.
+function ritmoDeLanzamientos(med){
   const term=PROJ.filter(p=>p.estatus==='Terminado');
   const anioDe=p=>String(p.fechasFase?.['Lanzamiento']?.fin||p.fechaFinal||'').slice(0,4);
   const y=TODAY.getFullYear(), meses=TODAY.getMonth()+1;
   const esteAnio=term.filter(p=>anioDe(p)===String(y)).length;
   const anterior=term.filter(p=>anioDe(p)===String(y-1)).length;
-  const ritmo=meses?esteAnio/meses:0;
-  return {y, esteAnio, anterior, meses, ritmo, proyeccion:Math.round(ritmo*12)};
+  const finAnio=new Date(y,11,31);
+  const vivos=PROJ.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
+  const crs=med?vivos.map(p=>credibilidad(p,med)).filter(Boolean):[];
+  const pipeline=crs.filter(cr=>cr.listo<=finAnio).length;
+  return {y, esteAnio, anterior, meses,
+    ritmo: meses?esteAnio/meses:0,
+    ritmoAnterior: anterior/12,
+    pipeline, proyeccion: esteAnio+pipeline, vivos:vivos.length};
+}
+
+// ¿Cabe el plan? Agrupa los proyectos vivos por el mes en el que realmente
+// estarian listos y lo compara con lo que esta empresa ha demostrado que cierra
+// por mes. Es el dato que el reporte tenia enfrente y no decia.
+function capacidadDelPlan(med){
+  const vivos=PROJ.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
+  const porMes={};
+  vivos.forEach(p=>{ const cr=credibilidad(p,med); if(!cr) return;
+    const k=cr.listo.getFullYear()+'-'+String(cr.listo.getMonth()+1).padStart(2,'0');
+    (porMes[k]=porMes[k]||[]).push(p); });
+  const meses=Object.keys(porMes).sort();
+  if(!meses.length) return null;
+  const total=meses.reduce((s,k)=>s+porMes[k].length,0);
+  const ventana=meses.length;
+  const pide=total/ventana;
+  const r=ritmoDeLanzamientos();
+  const demostrado=Math.max(r.ritmo, r.ritmoAnterior);
+  return {porMes, meses, total, ventana, pide, demostrado,
+    veces: demostrado>0?pide/demostrado:null};
 }
 
 // "Fuera de linea" deja de capturarse a mano (sep 2026). Antes Rene lo movia proyecto
@@ -2906,16 +2946,18 @@ function rCadencia(c){
   // ---- El año en un renglón ----
   // El objetivo 2026 es maximizar lanzamientos y el reporte no lo medía por ningún
   // lado: vivía en el dashboard personal de Gerencia. Es el titular, va primero.
-  const _r = ritmoDeLanzamientos();
-  const _dif = _r.proyeccion - _r.anterior;
-  const _rCol = _dif < 0 ? 'var(--bad)' : _dif > 0 ? 'var(--ok)' : 'var(--warn)';
+  const _r = ritmoDeLanzamientos(_med);
+  // Este bloque contesta DONDE VAS, no si el plan cabe: eso lo contesta el de
+  // capacidad, abajo. Separarlos evita que la hoja celebre un pipeline de 15
+  // mientras el renglon siguiente explica que no es posible.
+  const _dif = _r.ritmo - _r.ritmoAnterior;
+  const _rCol = _dif < -0.05 ? 'var(--bad)' : _dif > 0.05 ? 'var(--ok)' : 'var(--warn)';
   const _rFrase = !_r.anterior
     ? `Primer año con registro de cierres.`
-    : _dif < 0
-      ? `A este ritmo el año cierra con ${Math.abs(_dif)} lanzamiento${Math.abs(_dif)>1?'s':''} menos que ${_r.y-1}.`
-      : _dif > 0
-        ? `A este ritmo el año cierra con ${_dif} lanzamiento${_dif>1?'s':''} más que ${_r.y-1}.`
-        : `A este ritmo el año cierra igual que ${_r.y-1}.`;
+    : `Vas a ${_r.ritmo.toFixed(2)} lanzamientos por mes contra ${_r.ritmoAnterior.toFixed(2)} en ${_r.y-1}` +
+      (_dif < -0.05 ? `. El motor va más lento que el año pasado.`
+       : _dif > 0.05 ? `. El motor va más rápido que el año pasado.`
+       : `, prácticamente el mismo ritmo.`);
   const _cifra=(v,l,s,col)=>`<div style="flex:1;min-width:120px">
       <div style="font-family:var(--font-d);font-size:34px;font-weight:800;line-height:1;color:${col||'var(--text)'}">${v}</div>
       <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:4px">${l}</div>
@@ -2925,11 +2967,49 @@ function rCadencia(c){
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px">El año · productos puestos en el mercado</div>
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
       ${_cifra(_r.esteAnio,'lanzados en '+_r.y,'al cierre de '+TODAY.toLocaleDateString('es-MX',{month:'long'}))}
-      ${_cifra(_r.proyeccion,'proyección del año','al ritmo de '+_r.ritmo.toFixed(2)+' por mes',_rCol)}
+      ${_cifra(_r.pipeline,'prometidos para este año','proyectos vivos con fecha realista antes de diciembre 31')}
       ${_cifra(_r.anterior,'cerró '+(_r.y-1),'año completo')}
     </div>
     <div style="font-size:12px;font-weight:600;color:${_rCol};margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">${_rFrase}</div>
   </div>`;
+
+  // ---- ¿Cabe el plan? ----
+  // El reporte tenia este dato enfrente y no lo decia: los proyectos vivos
+  // aterrizan casi todos en el mismo par de meses. Comparar lo que pide el plan
+  // contra lo que la empresa ha demostrado convierte un atraso en una decision
+  // de portafolio, que es de Direccion y no de Gerencia.
+  const _cap = capacidadDelPlan(_med);
+  let capHtml='';
+  if(_cap && _cap.veces){
+    const apretado=_cap.veces>=1.5;
+    const col=apretado?'var(--bad)':_cap.veces>=1?'var(--warn)':'var(--ok)';
+    const maxMes=Math.max(..._cap.meses.map(k=>_cap.porMes[k].length));
+    const barras=_cap.meses.map(k=>{
+      const n=_cap.porMes[k].length;
+      const [yy,mm]=k.split('-');
+      const lbl=new Date(+yy,+mm-1,1).toLocaleDateString('es-MX',{month:'short',year:'2-digit'});
+      const nombres=_cap.porMes[k].map(p=>p.name).join(' · ');
+      return `<div style="display:flex;align-items:center;gap:9px;margin-bottom:5px" title="${nombres}">
+        <span style="width:54px;flex:none;font-size:10px;color:var(--muted);font-weight:600">${lbl}</span>
+        <span style="height:15px;width:${Math.round(n/maxMes*190)}px;background:${n/_cap.demostrado>=1.5?'var(--bad)':'var(--navy)'};border-radius:3px;display:inline-block"></span>
+        <span style="font-size:11px;font-weight:700;color:var(--text)">${n}</span>
+        <span style="font-size:10px;color:var(--muted)">${n===1?'lanzamiento':'lanzamientos'}</span>
+      </div>`;}).join('');
+    capHtml=`<div style="background:var(--surface);border:1px solid var(--border2);border-left:4px solid ${col};border-radius:var(--r2);padding:16px 18px;margin-top:12px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px">¿Cabe el plan?</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px">
+        ${_cifra(_cap.demostrado.toFixed(1),'por mes demostrado','tu mejor año, el real')}
+        ${_cifra(_cap.pide.toFixed(1),'por mes que pide el plan',_cap.total+' proyectos en '+_cap.ventana+' mes'+(_cap.ventana>1?'es':''),col)}
+        ${_cifra(_cap.veces.toFixed(0)+'×','por encima de tu ritmo','si todo saliera como está planeado',col)}
+      </div>
+      ${barras}
+      <div style="font-size:12px;font-weight:600;color:${col};margin-top:12px;padding-top:12px;border-top:1px solid var(--border2)">
+        ${apretado
+          ? `Los ${_cap.total} proyectos vivos aterrizan en ${_cap.ventana} mes${_cap.ventana>1?'es':''}. Esto no es un calendario, es una pila: hay que decidir cuáles van primero.`
+          : `El plan cabe dentro del ritmo demostrado.`}
+      </div>
+    </div>`;
+  }
 
   // ---- Las fechas que no se sostienen, en una frase ----
   const _crList=_roadProjs.map(p=>({p,cr:credibilidad(p,_med)})).filter(x=>x.cr);
@@ -2990,6 +3070,7 @@ function rCadencia(c){
       <span style="font-size:11px;color:var(--muted)">${periodoLbl}</span>
     </div>
     ${anioHtml}
+    ${capHtml}
 
     <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
       <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Cuándo llega cada producto al mercado</div>
@@ -3021,14 +3102,22 @@ function rCadencia(c){
       invita a una pregunta incomoda que el dato no puede contestar.
       Siguen siendo el instrumento de Gerencia para los 1 a 1, y viven en el Dashboard.
     -->
-    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:20px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+    <!--
+      El detalle por proyecto se pliega (sep 2026). Es el material de respaldo para
+      cuando alguien pregunta por un proyecto en particular, no parte del recorrido
+      de la junta: abierto, empujaba el reporte mas alla de lo que alguien lee de pie.
+    -->
+    <details style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:20px">
+      <summary style="cursor:pointer;font-size:12px;color:var(--muted);font-weight:600;list-style:none">
         <span style="font-size:10px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--navy);padding:3px 9px;border-radius:99px">DETALLE POR PROYECTO</span>
+        <span style="margin-left:8px">abrir el respaldo · milestones y metas de un proyecto</span>
+      </summary>
+      <div style="display:flex;align-items:center;gap:10px;margin:12px 0;flex-wrap:wrap">
         <select onchange="window._cadProj=this.value;rCadencia(document.getElementById('vc'))" style="font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font-b);outline:none;cursor:pointer;max-width:320px">${_projOptions}</select>
         <span style="font-size:11px;color:var(--muted)">Milestones → Metas · acumulado</span>
       </div>
       ${detalleHtml}
-    </div>
+    </details>
   </div>`;
 }
 
