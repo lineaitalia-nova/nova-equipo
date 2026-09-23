@@ -6383,6 +6383,56 @@ function rCalPrototipos(c){
     </div>`).join('')}
   </div>`;
 
+  // ── CUMPLIMIENTO DEL ACUERDO DE CORTE (sep 2026) ──
+  // Este calendario nacio de un acuerdo: se perdieron dos semanas esperando el corte
+  // de madera para unos prototipos, porque Manufactura optimizaba su programa diario
+  // y los prototipos no existian en el. PCP aparto 30 minutos diarios y este
+  // calendario es donde Innovacion declara que dia necesita el corte.
+  // El dato para saber si el acuerdo se cumple ya estaba capturado -- fechaProto es lo
+  // pedido y completadoEn lo entregado -- pero nadie lo veia. Esto lo saca a la vista,
+  // que es ademas lo que Direccion pidio como "que pasa con el trabajo externo".
+  const _cump = protos.filter(x=>x.fecha && x.completadoEn).map(x=>({
+    ...x,
+    dias: Math.round((new Date(x.completadoEn+'T12:00:00') - new Date(x.fecha+'T12:00:00'))/86400000)
+  }));
+  if(_cump.length){
+    const _ord = _cump.map(x=>x.dias).sort((a,b)=>a-b);
+    const _prom = Math.round(_ord.reduce((s,v)=>s+v,0)/_ord.length);
+    const _med  = _ord[Math.floor(_ord.length/2)];
+    const _aTiempo = _ord.filter(v=>v<=0).length;
+    const _porProy = {};
+    _cump.forEach(x=>{ (_porProy[x.proyecto]=_porProy[x.proyecto]||[]).push(x.dias); });
+    const _filas = Object.entries(_porProy)
+      .map(([n,v])=>({n, n_:v.length, prom:Math.round(v.reduce((s,d)=>s+d,0)/v.length), max:Math.max(...v)}))
+      .sort((a,b)=>b.prom-a.prom);
+    const _col = d => d<=0?'var(--ok)':d<=5?'var(--warn)':'var(--bad)';
+    h+=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px">Cumplimiento del acuerdo de corte</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Días entre la fecha pedida y la entrega registrada · ${_cump.length} prototipos medibles</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+        ${[
+          {l:'Atraso mediano', v:_med+' d',  col:_col(_med)},
+          {l:'Atraso promedio',v:_prom+' d', col:_col(_prom)},
+          {l:'Peor caso',      v:_ord[_ord.length-1]+' d', col:_col(_ord[_ord.length-1])},
+          {l:'A tiempo o antes',v:_aTiempo+' de '+_ord.length, col:_aTiempo>0?'var(--ok)':'var(--bad)'},
+        ].map(k=>`<div style="background:var(--surface2);border-radius:var(--r2);padding:12px;text-align:center">
+          <div style="font-family:var(--font-d);font-size:24px;font-weight:800;color:${k.col};line-height:1.1">${k.v}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.04em">${k.l}</div>
+        </div>`).join('')}
+      </div>
+      ${_filas.map(f=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;font-size:11px">
+        <span style="width:190px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.n}</span>
+        <span style="width:${Math.min(240, Math.max(2, f.prom*8))}px;height:14px;background:${_col(f.prom)};border-radius:0 3px 3px 0"></span>
+        <span style="font-weight:700;color:${_col(f.prom)};min-width:34px">${f.prom} d</span>
+        <span style="color:var(--muted);font-size:10px">promedio · ${f.n_} prototipo${f.n_>1?'s':''} · peor ${f.max} d</span>
+      </div>`).join('')}
+      <div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5;border-top:1px solid var(--border2);padding-top:8px">
+        La entrega se toma de la fecha en que se marca el prototipo como completado. Marcarlo
+        el mismo día que llega hace este número exacto; marcarlo días después lo infla.
+      </div>
+    </div>`;
+  }
+
   // (alertas de empalme retiradas — la regla de no programar más de 3 juntos ya es clara con el equipo)
 
   // Controles del calendario
