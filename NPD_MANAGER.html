@@ -957,6 +957,28 @@ function borrarAcuerdo(id){
   guardarAcuerdos(acuerdos().filter(x=>x.id!==id));
   rCadencia(document.getElementById('vc'));
 }
+
+// Edicion en el mismo renglon (sep 2026). Buena parte de estos acuerdos se
+// redactan a partir de lo que se dijo en la junta, asi que una frase puede quedar
+// mal entendida o mal escrita. Sin poder corregirla, la unica salida era borrar y
+// volver a capturar, y en la practica eso significa que se queda como esta.
+// Tambien se puede mover entre compromiso y tema: de los ocho compromisos del 21
+// de septiembre, tres en realidad eran temas o una Roca.
+function editarAcuerdo(id){ window._acEdit=id; rCadencia(document.getElementById('vc')); }
+function cancelarEdicion(){ window._acEdit=null; rCadencia(document.getElementById('vc')); }
+function guardarEdicion(id){
+  const arr=acuerdos(); const d=arr.find(x=>x.id===id); if(!d) return;
+  const t=(document.getElementById('ed-txt')?.value||'').trim();
+  if(!t){ toast('El texto no puede quedar vacío'); return; }
+  d.texto = t;
+  d.dueno = (document.getElementById('ed-dueno')?.value||'').trim();
+  d.fecha = document.getElementById('ed-fecha')?.value||'';
+  const pr=document.getElementById('ed-proj'); if(pr) d.proyecto=pr.value;
+  const tp=document.getElementById('ed-tipo'); if(tp) d.tipo=tp.value;
+  window._acEdit=null;
+  guardarAcuerdos(arr); rCadencia(document.getElementById('vc'));
+  toast('Acuerdo actualizado ✓');
+}
 // Al cerrar la junta se archivan los cumplidos para que la semana arranque
 // limpia. El porcentaje de la semana que termino queda guardado como historial.
 function archivarAcuerdos(){
@@ -3130,7 +3152,27 @@ function rCadencia(c){
   const _fila=(d,esTodo)=>{
     const hecho=d.estado==='hecho';
     const venc=d.fecha&&!hecho&&pd(d.fecha)<TODAY;
-    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;background:var(--surface2);border-left:3px solid ${hecho?'var(--ok)':venc?'var(--bad)':'var(--navy)'};border-radius:0 var(--r) var(--r) 0;margin-bottom:6px">
+    const _inp='padding:6px 9px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:var(--font-b);background:var(--surface);color:var(--text)';
+    if(isG() && window._acEdit===d.id){
+      return `<div style="padding:11px 13px;background:var(--surface);border:1px solid var(--navy);border-radius:var(--r2);margin-bottom:6px">
+        <textarea id="ed-txt" rows="2" style="${_inp};width:100%;box-sizing:border-box;resize:vertical;line-height:1.45">${d.texto.replace(/</g,'&lt;')}</textarea>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px">
+          <input id="ed-dueno" value="${(d.dueno||'').replace(/"/g,'&quot;')}" placeholder="Dueño" style="${_inp};width:120px">
+          <select id="ed-tipo" style="${_inp}">
+            <option value="todo"${d.tipo==='todo'?' selected':''}>Compromiso</option>
+            <option value="tema"${d.tipo!=='todo'?' selected':''}>Tema a resolver</option>
+          </select>
+          <select id="ed-proj" style="${_inp}">
+            <option value="">Sin proyecto</option>
+            ${_vivos.map(p=>`<option value="${p.id}"${d.proyecto===p.id?' selected':''}>${p.name}</option>`).join('')}
+          </select>
+          <input id="ed-fecha" type="date" value="${d.fecha||''}" style="${_inp}">
+          <button onclick="guardarEdicion('${d.id}')" style="padding:6px 14px;background:var(--navy);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b)">Guardar</button>
+          <button onclick="cancelarEdicion()" style="padding:6px 12px;background:none;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;cursor:pointer;color:var(--muted);font-family:var(--font-b)">Cancelar</button>
+        </div>
+      </div>`;
+    }
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 13px;background:var(--surface2);border-left:3px solid ${hecho?'var(--ok)':venc?'var(--bad)':'var(--navy)'};border-radius:0 var(--r) var(--r) 0;margin-bottom:6px">
       <div style="flex:1;min-width:0">
         <div style="font-size:12.5px;color:var(--text);font-weight:600;line-height:1.45;${hecho?'text-decoration:line-through;opacity:.5':''}">${d.texto}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:3px">
@@ -3138,6 +3180,7 @@ function rCadencia(c){
         </div>
       </div>
       ${isG()?`<button onclick="cerrarAcuerdo('${d.id}')" style="flex:none;background:${hecho?'var(--ok-bg)':'none'};border:1px solid var(--border2);border-radius:var(--r);padding:3px 9px;font-size:10px;cursor:pointer;color:${hecho?'var(--ok)':'var(--muted)'};font-family:var(--font-b)">${hecho?'✓ hecho':esTodo?'marcar':'resuelto'}</button>
+      <button onclick="editarAcuerdo('${d.id}')" title="Editar" style="flex:none;background:none;border:1px solid var(--border2);border-radius:var(--r);padding:3px 9px;font-size:10px;cursor:pointer;color:var(--muted);font-family:var(--font-b)">editar</button>
       <button onclick="borrarAcuerdo('${d.id}')" title="Quitar" style="flex:none;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:0 2px">×</button>`:''}
     </div>`;
   };
