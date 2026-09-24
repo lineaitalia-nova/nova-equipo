@@ -793,6 +793,56 @@ function ritmoDeLanzamientos(med){
     pipeline, proyeccion: esteAnio+pipeline, vivos:vivos.length};
 }
 
+// ─── SCORECARD SEMANAL · estilo EOS (sep 2026) ──────────────────────
+// La L10 abre con el Scorecard: pocas medidas, con dueno y meta, que se leen en
+// cinco minutos y se contestan solo con "en meta" o "fuera de meta". La clave es
+// que se muevan CADA SEMANA -- por eso no entran los lanzamientos del ano, que
+// cambian medio punto al mes y ya viven en el Dashboard.
+function scorecardSemanal(){
+  const desde=new Date(TODAY.getTime()-7*86400000);
+  const hace30=new Date(TODAY.getTime()-30*86400000);
+  const vivos=PROJ.filter(p=>p.estatus!=='Terminado'&&p.estatus!=='Cancelado');
+
+  const movidos=vivos.filter(p=>(p.act||[]).some(a=>a&&a.ts&&new Date(a.ts)>=desde)).length;
+
+  const desv=PROJ.reduce((s,p)=>s+(p.notas||[]).filter(n=>{
+    if(!/desviaci/i.test(n.texto||'')) return false;
+    const m=(n.fecha||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    return m ? new Date(+m[3],+m[2]-1,+m[1])>=desde : false;
+  }).length,0);
+
+  // Prototipos entregados en los ultimos 30 dias y cuantos llegaron en fecha.
+  const protos=[];
+  PROJ.forEach(p=>(p.skus||[]).forEach(sk=>{
+    if(sk.fechaProto&&sk.completadoEn&&pd(sk.completadoEn)>=hace30)
+      protos.push(pd(sk.completadoEn)<=pd(sk.fechaProto));
+  }));
+  const protoOk=protos.filter(Boolean).length;
+
+  // Sin los pausados, igual que Control de proyectos y que el roadmap: un proyecto
+  // detenido por Gerencia no tiene fecha que re-comprometer hasta que se reactive.
+  // Contandolos, esta medida decia 9 y la pantalla donde se actua decia 6.
+  const med=medianasDeFase();
+  const porRecomp=vivos.filter(p=>p.estatus!=='En pausa')
+    .filter(p=>{const c=credibilidad(p,med);return c&&c.nivel!=='sostiene';}).length;
+
+  const tds=acuerdos().filter(x=>x.tipo==='todo');
+  const tdOk=tds.filter(x=>x.estado==='hecho').length;
+
+  return [
+    {m:'Proyectos con movimiento', v:movidos+' de '+vivos.length,
+     ok: vivos.length? movidos/vivos.length>=0.8 : true, meta:'80% de los vivos', d:'Todos'},
+    {m:'Desviaciones capturadas',  v:String(desv),
+     ok: desv>0, meta:'al menos 1', d:'Ingenieros'},
+    {m:'Prototipos en la fecha pedida', v: protos.length? protoOk+' de '+protos.length : 'sin entregas',
+     ok: protos.length? protoOk/protos.length>=0.9 : true, meta:'90% · últimos 30 d', d:'Planta'},
+    {m:'Fechas por re-comprometer', v:String(porRecomp),
+     ok: porRecomp===0, meta:'cero', d:'René'},
+    {m:'To-dos cumplidos', v: tds.length? Math.round(tdOk/tds.length*100)+'%' : '—',
+     ok: tds.length? tdOk/tds.length>=0.9 : true, meta:'90%', d:'Todos'}
+  ];
+}
+
 // ¿Cabe el plan? Agrupa los proyectos vivos por el mes en el que realmente
 // estarian listos y lo compara con lo que esta empresa ha demostrado que cierra
 // por mes. Es el dato que el reporte tenia enfrente y no decia.
@@ -857,40 +907,72 @@ function autoBackup(){
 }
 function saveUsers(){try{localStorage.setItem(VER+'users',JSON.stringify(USERS));fbPush();}catch(e){Falla.critica('guardar los usuarios',e);}}
 
-// ─── DECISIONES PARA DIRECCION (sep 2026) ───────────────────────────
-// El reporte terminaba sin pedir nada. Un reporte ejecutivo que no pide una
-// decision es un informe de actividades: se escucha, se agradece y no pasa nada.
-// Aqui se escriben las pocas cosas que Gerencia necesita que Direccion resuelva,
-// con fecha de respuesta, para que la junta cierre con acuerdos y no con avances.
-// Se guarda con el prefijo VER, asi que fbPush la sincroniza sin nada extra.
-function decisiones(){
-  try{ const a=JSON.parse(localStorage.getItem(VER+'decisiones')||'[]'); return Array.isArray(a)?a:[]; }
-  catch(e){ Falla.registrar('leer las decisiones',e); return []; }
+// ─── ACUERDOS DE LA JUNTA · estilo Level 10 (sep 2026) ──────────────
+// El reporte terminaba sin pedir nada y sin memoria de la junta anterior. EOS
+// resuelve las dos cosas con la misma estructura, y la empresa ya trabaja asi:
+//
+//   TO-DO  compromiso de 7 dias, con dueno, binario hecho/no hecho. La meta es
+//          cerrar el 90%. Si algo no cabe en una semana NO es un to-do: es un
+//          tema o una Roca del trimestre, y meterlo aqui ensucia la medicion.
+//   TEMA   (Issue) lo que requiere decidirse entre varios. Se prioriza y se
+//          resuelve en la junta, y cada solucion genera un to-do.
+//
+// Viven aqui, no en Nova, porque EOS es explicito: los pendientes viven en la
+// lista de la junta donde nacieron y donde se rinden cuentas de ellos.
+function acuerdos(){
+  try{
+    const g=localStorage.getItem(VER+'acuerdos');
+    if(g){ const a=JSON.parse(g); return Array.isArray(a)?a:[]; }
+    // Migracion del bloque anterior, que solo guardaba decisiones de Direccion.
+    const viejo=JSON.parse(localStorage.getItem(VER+'decisiones')||'[]');
+    return (Array.isArray(viejo)?viejo:[]).map(d=>({...d, tipo:'tema', dueno:d.dueno||'',
+      estado: d.estado==='resuelta'?'hecho':'pendiente'}));
+  }catch(e){ Falla.registrar('leer los acuerdos',e); return []; }
 }
-function guardarDecisiones(arr){
-  try{ localStorage.setItem(VER+'decisiones',JSON.stringify(arr)); fbPush(); }
-  catch(e){ Falla.critica('guardar las decisiones',e); }
+function guardarAcuerdos(arr){
+  try{ localStorage.setItem(VER+'acuerdos',JSON.stringify(arr)); fbPush(); }
+  catch(e){ Falla.critica('guardar los acuerdos',e); }
 }
-function addDecision(){
-  const t=(document.getElementById('dec-txt')?.value||'').trim();
-  if(!t){ toast('Escribe qué necesitas que resuelvan'); return; }
-  const arr=decisiones();
-  arr.push({id:'D'+Date.now(), texto:t,
-    proyecto:(document.getElementById('dec-proj')?.value||''),
-    fecha:(document.getElementById('dec-fecha')?.value||''),
+function addAcuerdo(tipo){
+  const pre = tipo==='todo'?'td':'is';
+  const t=(document.getElementById(pre+'-txt')?.value||'').trim();
+  if(!t){ toast(tipo==='todo'?'Escribe el compromiso':'Escribe el tema a resolver'); return; }
+  const arr=acuerdos();
+  arr.push({id:(tipo==='todo'?'T':'I')+Date.now(), tipo, texto:t,
+    dueno:(document.getElementById(pre+'-dueno')?.value||''),
+    proyecto:(document.getElementById(pre+'-proj')?.value||''),
+    fecha:(document.getElementById(pre+'-fecha')?.value||''),
     estado:'pendiente', creadoEn:Date.now(), autor:cu?.nombre||''});
-  guardarDecisiones(arr); rCadencia(document.getElementById('vc')); toast('Decisión agregada ✓');
+  guardarAcuerdos(arr); rCadencia(document.getElementById('vc'));
+  toast(tipo==='todo'?'Compromiso agregado ✓':'Tema agregado ✓');
 }
-function cerrarDecision(id){
-  const arr=decisiones(); const d=arr.find(x=>x.id===id); if(!d) return;
-  d.estado = d.estado==='resuelta'?'pendiente':'resuelta';
-  d.resueltaEn = d.estado==='resuelta'?Date.now():null;
-  guardarDecisiones(arr); rCadencia(document.getElementById('vc'));
+function cerrarAcuerdo(id){
+  const arr=acuerdos(); const d=arr.find(x=>x.id===id); if(!d) return;
+  d.estado = d.estado==='hecho'?'pendiente':'hecho';
+  d.hechoEn = d.estado==='hecho'?Date.now():null;
+  guardarAcuerdos(arr); rCadencia(document.getElementById('vc'));
 }
-function borrarDecision(id){
-  if(!confirm('¿Quitar esta decisión del reporte?')) return;
-  guardarDecisiones(decisiones().filter(x=>x.id!==id));
+function borrarAcuerdo(id){
+  if(!confirm('¿Quitar este acuerdo del reporte?')) return;
+  guardarAcuerdos(acuerdos().filter(x=>x.id!==id));
   rCadencia(document.getElementById('vc'));
+}
+// Al cerrar la junta se archivan los cumplidos para que la semana arranque
+// limpia. El porcentaje de la semana que termino queda guardado como historial.
+function archivarAcuerdos(){
+  const arr=acuerdos();
+  const tds=arr.filter(x=>x.tipo==='todo');
+  const hechos=tds.filter(x=>x.estado==='hecho').length;
+  if(!arr.some(x=>x.estado==='hecho')){ toast('No hay acuerdos cumplidos que archivar'); return; }
+  if(!confirm(`Cerrar la semana: se archivan ${arr.filter(x=>x.estado==='hecho').length} acuerdos cumplidos.\n\nCumplimiento de to-dos: ${tds.length?Math.round(hechos/tds.length*100):0}% (${hechos} de ${tds.length}).`)) return;
+  try{
+    const hist=JSON.parse(localStorage.getItem(VER+'acuerdosHist')||'[]');
+    hist.push({ts:Date.now(), todos:tds.length, hechos, items:arr.filter(x=>x.estado==='hecho')});
+    localStorage.setItem(VER+'acuerdosHist',JSON.stringify(hist.slice(-26)));
+  }catch(e){ Falla.registrar('archivar el historial de acuerdos',e); }
+  guardarAcuerdos(arr.filter(x=>x.estado!=='hecho'));
+  rCadencia(document.getElementById('vc'));
+  toast('Semana cerrada ✓');
 }
 
 // Por que esta detenido un proyecto. "En pausa" a secas se lee como "nadie esta
@@ -3020,38 +3102,74 @@ function rCadencia(c){
   // mismo que la columna: es un veredicto sobre el trabajo del equipo y no se
   // emite en la junta de Direccion. Vive en Control de proyectos.
 
-  // ---- Decisiones que necesito de Dirección ----
-  const _dec=decisiones();
-  const _pend=_dec.filter(d=>d.estado!=='resuelta');
-  const _res=_dec.filter(d=>d.estado==='resuelta');
+  // ---- Scorecard semanal (EOS) ----
+  const _sc=scorecardSemanal();
+  const _scFuera=_sc.filter(x=>!x.ok).length;
+  const scHtml=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;margin-bottom:18px">
+    <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:10px">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Scorecard de la semana</span>
+      <span style="font-size:10px;color:var(--muted)">cinco números, se leen en cinco minutos</span>
+      <span style="margin-left:auto;font-size:11px;font-weight:700;color:${_scFuera?'var(--bad)':'var(--ok)'}">${_scFuera?_scFuera+' fuera de meta':'todo en meta'}</span>
+    </div>
+    ${_sc.map(x=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--border2);font-size:12px;flex-wrap:wrap">
+      <span style="width:9px;height:9px;border-radius:50%;background:${x.ok?'var(--ok)':'var(--bad)'};flex:none"></span>
+      <span style="flex:1;min-width:150px;color:var(--text)">${x.m}</span>
+      <span style="font-size:10px;color:var(--muted);min-width:70px">${x.d}</span>
+      <span style="font-size:10px;color:var(--muted);min-width:110px;text-align:right">meta ${x.meta}</span>
+      <span style="font-weight:800;color:${x.ok?'var(--ok)':'var(--bad)'};min-width:72px;text-align:right">${x.v}</span>
+    </div>`).join('')}
+  </div>`;
+
+  // ---- Acuerdos de la junta: to-dos y temas (EOS) ----
+  const _ac=acuerdos();
+  const _todos=_ac.filter(x=>x.tipo==='todo');
+  const _temas=_ac.filter(x=>x.tipo!=='todo');
+  const _tdOk=_todos.filter(x=>x.estado==='hecho').length;
+  const _tdPct=_todos.length?Math.round(_tdOk/_todos.length*100):null;
   const _nomProj=id=>(PROJ.find(p=>p.id===id)||{}).name||'';
-  const _filaDec=d=>{
-    const venc=d.fecha&&pd(d.fecha)<TODAY;
-    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:var(--surface2);border-left:3px solid ${d.estado==='resuelta'?'var(--ok)':'var(--navy)'};border-radius:0 var(--r) var(--r) 0;margin-bottom:7px">
+  const _fila=(d,esTodo)=>{
+    const hecho=d.estado==='hecho';
+    const venc=d.fecha&&!hecho&&pd(d.fecha)<TODAY;
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;background:var(--surface2);border-left:3px solid ${hecho?'var(--ok)':venc?'var(--bad)':'var(--navy)'};border-radius:0 var(--r) var(--r) 0;margin-bottom:6px">
       <div style="flex:1;min-width:0">
-        <div style="font-size:12.5px;color:var(--text);font-weight:600;line-height:1.45;${d.estado==='resuelta'?'text-decoration:line-through;opacity:.55':''}">${d.texto}</div>
+        <div style="font-size:12.5px;color:var(--text);font-weight:600;line-height:1.45;${hecho?'text-decoration:line-through;opacity:.5':''}">${d.texto}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:3px">
-          ${d.proyecto?_nomProj(d.proyecto)+' · ':''}${d.fecha?`respuesta para el ${fmtD(d.fecha)}`:'sin fecha de respuesta'}${venc&&d.estado!=='resuelta'?' <span style="color:var(--bad);font-weight:700">· vencida</span>':''}
+          ${d.dueno?`<strong style="color:var(--text2,#475569)">${d.dueno}</strong> · `:''}${d.proyecto?_nomProj(d.proyecto)+' · ':''}${d.fecha?fmtD(d.fecha):(esTodo?'sin fecha':'sin fecha de respuesta')}${venc?' <span style="color:var(--bad);font-weight:700">· vencido</span>':''}
         </div>
       </div>
-      ${isG()?`<button onclick="cerrarDecision('${d.id}')" title="${d.estado==='resuelta'?'Reabrir':'Marcar como resuelta'}" style="flex:none;background:none;border:1px solid var(--border2);border-radius:var(--r);padding:3px 9px;font-size:10px;cursor:pointer;color:var(--muted);font-family:var(--font-b)">${d.estado==='resuelta'?'reabrir':'resuelta'}</button>
-      <button onclick="borrarDecision('${d.id}')" title="Quitar" style="flex:none;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:0 2px">×</button>`:''}
+      ${isG()?`<button onclick="cerrarAcuerdo('${d.id}')" style="flex:none;background:${hecho?'var(--ok-bg)':'none'};border:1px solid var(--border2);border-radius:var(--r);padding:3px 9px;font-size:10px;cursor:pointer;color:${hecho?'var(--ok)':'var(--muted)'};font-family:var(--font-b)">${hecho?'✓ hecho':esTodo?'marcar':'resuelto'}</button>
+      <button onclick="borrarAcuerdo('${d.id}')" title="Quitar" style="flex:none;background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:0 2px">×</button>`:''}
     </div>`;
   };
-  const decHtml=`<div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
-    <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Qué necesito de Dirección</div>
-    <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Las decisiones que no puedo tomar solo, con fecha de respuesta</div>
-    ${_pend.length?_pend.map(_filaDec).join(''):`<div style="padding:13px;color:var(--muted);font-size:12px;background:var(--surface2);border-radius:var(--r2)">Sin decisiones pendientes. ${isG()?'Si llegas a la junta sin pedir nada, el reporte es un informe de actividades.':''}</div>`}
-    ${_res.length?`<details style="margin-top:8px"><summary style="font-size:10px;color:var(--muted);cursor:pointer">${_res.length} resuelta${_res.length>1?'s':''}</summary><div style="margin-top:7px">${_res.map(_filaDec).join('')}</div></details>`:''}
-    ${isG()?`<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px;padding-top:11px;border-top:1px solid var(--border2)">
-      <input id="dec-txt" placeholder="Qué necesitas que Dirección resuelva" style="flex:1;min-width:230px;padding:7px 11px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
-      <select id="dec-proj" style="padding:7px 9px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
+  const _alta=(tipo,ph)=>{const pre=tipo==='todo'?'td':'is';
+    return `<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)">
+      <input id="${pre}-txt" placeholder="${ph}" style="flex:1;min-width:210px;padding:7px 11px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
+      <input id="${pre}-dueno" placeholder="Dueño" style="width:110px;padding:7px 9px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
+      <select id="${pre}-proj" style="padding:7px 9px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
         <option value="">Sin proyecto</option>
-        ${_roadProjs.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}
+        ${_vivos.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}
       </select>
-      <input id="dec-fecha" type="date" style="padding:7px 9px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
-      <button onclick="addDecision()" style="padding:7px 15px;background:var(--navy);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b)">Agregar</button>
-    </div>`:''}
+      <input id="${pre}-fecha" type="date" style="padding:7px 9px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;font-family:var(--font-b);background:var(--surface);color:var(--text)">
+      <button onclick="addAcuerdo('${tipo}')" style="padding:7px 15px;background:var(--navy);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-b)">Agregar</button>
+    </div>`;};
+
+  const decHtml=`<div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 4px">
+      <span style="font-size:13px;font-weight:700;color:var(--text2,#475569)">Compromisos de la semana</span>
+      ${_tdPct!==null?`<span style="font-size:12px;font-weight:800;color:${_tdPct>=90?'var(--ok)':'var(--bad)'}">${_tdPct}%</span>
+        <span style="font-size:10px;color:var(--muted)">${_tdOk} de ${_todos.length} · la meta de EOS es 90%</span>`:''}
+      ${isG()&&_ac.some(x=>x.estado==='hecho')?`<button onclick="archivarAcuerdos()" style="margin-left:auto;background:none;border:1px solid var(--border2);border-radius:var(--r);padding:3px 10px;font-size:10px;cursor:pointer;color:var(--muted);font-family:var(--font-b)">cerrar la semana</button>`:''}
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin:0 0 12px">De 7 días, con dueño, y se contestan hecho o no hecho. Lo que no cabe en una semana es un tema o una Roca, no un compromiso</div>
+    ${_todos.length?_todos.map(d=>_fila(d,true)).join(''):`<div style="padding:13px;color:var(--muted);font-size:12px;background:var(--surface2);border-radius:var(--r2)">Sin compromisos esta semana.</div>`}
+    ${isG()?_alta('todo','Qué te comprometes a cerrar antes del próximo lunes'):''}
+  </div>
+
+  <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
+    <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Temas a resolver</div>
+    <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Lo que necesita decidirse entre varios. Se prioriza, se discute y cada solución se convierte en un compromiso</div>
+    ${_temas.length?_temas.map(d=>_fila(d,false)).join(''):`<div style="padding:13px;color:var(--muted);font-size:12px;background:var(--surface2);border-radius:var(--r2)">Sin temas abiertos. ${isG()?'Si llegas a la junta sin pedir nada, el reporte es un informe de actividades.':''}</div>`}
+    ${isG()?_alta('tema','Qué hay que decidir, y con quién'):''}
   </div>`;
 
   c.innerHTML = `
@@ -3069,6 +3187,8 @@ function rCadencia(c){
       </select>
       <span style="font-size:11px;color:var(--muted)">${periodoLbl}</span>
     </div>
+    ${scHtml}
+
     <div style="padding-top:4px">
       <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Cuándo llega cada producto al mercado</div>
       <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Ordenado por fecha de lanzamiento comprometida</div>
