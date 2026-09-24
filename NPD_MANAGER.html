@@ -2876,7 +2876,9 @@ function rCadencia(c){
       while(_cur<=_maxD){_months.push({d:new Date(_cur),p:_pct(new Date(_cur))});_cur.setMonth(_cur.getMonth()+1);}
       // El eje lleva dos renglones: los meses arriba y HOY abajo. Compartiendo el
       // mismo renglon, "HOY" se encimaba con la etiqueta del mes que le tocara.
-      const _axis=`<div style="display:flex;align-items:flex-start;height:27px;margin-bottom:3px"><span style="width:124px;flex:none"></span><div style="position:relative;flex:1;height:27px">${_months.map(m=>`<div style="position:absolute;top:0;left:${m.p}%;font-size:9px;color:var(--muted);font-weight:600;transform:translateX(-50%)">${m.d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`).join('')}<div style="position:absolute;top:13px;left:${_todayPct}%;font-size:9px;color:#dc2626;font-weight:800;transform:translateX(-50%)">HOY</div></div><span style="width:46px;flex:none"></span></div>`;
+      // Los espaciadores igualan las columnas del renglon (150 nombre + 38 avance,
+      // y 104 de la etiqueta) para que los meses caigan sobre las barras.
+      const _axis=`<div style="display:flex;align-items:flex-start;height:27px;margin-bottom:3px"><span style="width:188px;flex:none"></span><div style="position:relative;flex:1;height:27px">${_months.map(m=>`<div style="position:absolute;top:0;left:${m.p}%;font-size:9px;color:var(--muted);font-weight:600;transform:translateX(-50%)">${m.d.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`).join('')}<div style="position:absolute;top:13px;left:${_todayPct}%;font-size:9px;color:#dc2626;font-weight:800;transform:translateX(-50%)">HOY</div></div><span style="width:104px;flex:none"></span></div>`;
       const _rowsHtml=_rows.map(r=>{
         const segs=r.phases.map(ph=>{
           const s=_pct(ph.ini),e=_pct(ph.fin),w=Math.max(1,e-s);
@@ -2896,23 +2898,21 @@ function rCadencia(c){
           else if(_d<=14){ etq=`en ${_d} d`; col='var(--warn)'; bg='var(--warn-bg)'; }
           else { etq=r.lanzFin.toLocaleDateString('es-MX',{month:'short',year:'2-digit'}); }
         }
-        const cr=credibilidad(r.p,_med);
-        const crCol = !cr?'var(--muted)':cr.nivel==='sostiene'?'var(--ok)':cr.nivel==='apretada'?'var(--warn)':'var(--bad)';
-        // Cuando la fecha no se sostiene, lo util no es el hueco en dias sino la
-        // fecha que SI se sostiene: hoy + lo que historicamente falta. Eso es lo
-        // que Direccion puede anotar en su calendario.
-        const crTxt = !cr?'' : cr.nivel==='sostiene' ? 'la fecha se sostiene'
-                    : `realista: ${new Date(TODAY.getTime()+cr.necesita*86400000).toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}`;
-        const enPausa = r.p.estatus==='En pausa';
+        // Aqui NO va la fecha "realista" (sep 2026). Es una mediana contradiciendo
+        // en publico la fecha que comprometio el ingeniero, delante de Direccion,
+        // Planta y Mejora Continua. Que un ingeniero calculara mal sus tiempos es
+        // conversacion de 1 a 1; re-comprometer la fecha es decision de Gerencia.
+        // La senal vive en Control de proyectos, que es donde se preparan los 1 a 1.
+        const _av = r.p.avance||0;
         return `<div style="display:flex;align-items:center;min-height:32px;margin-bottom:6px">
-          <span style="width:150px;flex:none;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px" title="${r.p.name}">${r.p.name}${enPausa?' <span style="font-size:8px;font-weight:700;color:var(--warn);background:var(--warn-bg);padding:1px 5px;border-radius:99px;vertical-align:middle">en pausa</span>':''}<span style="display:block;font-size:9px;font-weight:400;color:var(--muted)">${(USERS.find(u=>u.perfil===r.p.eng)||{}).nombre||''}</span></span>
-          <div style="position:relative;flex:1;height:22px;background:var(--surface2);border-radius:5px;${enPausa?'opacity:.45':''}">
+          <span style="width:150px;flex:none;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px" title="${r.p.name}">${r.p.name}<span style="display:block;font-size:9px;font-weight:400;color:var(--muted)">${(USERS.find(u=>u.perfil===r.p.eng)||{}).nombre||''}</span></span>
+          <span style="width:38px;flex:none;text-align:right;padding-right:10px;font-size:11px;font-weight:800;color:${bC(_av)}" title="Avance del proyecto">${_av}%</span>
+          <div style="position:relative;flex:1;height:22px;background:var(--surface2);border-radius:5px">
             <div style="position:absolute;left:${_todayPct}%;top:-4px;bottom:-4px;width:2px;background:#dc2626;z-index:2"></div>
             ${segs}
           </div>
-          <span style="width:132px;flex:none;text-align:right;padding-left:8px">
+          <span style="width:104px;flex:none;text-align:right;padding-left:8px">
             <span style="font-size:10px;font-weight:700;color:${col};background:${bg};padding:3px 8px;border-radius:var(--r);white-space:nowrap">${etq}</span>
-            ${crTxt?`<span style="display:block;font-size:9px;color:${crCol};font-weight:600;margin-top:2px">${crTxt}</span>`:''}
           </span>
         </div>`;
       }).join('');
@@ -3016,14 +3016,9 @@ function rCadencia(c){
   // La capacidad se movio al Dashboard, junto a la carga por ingeniero: es insumo
   // de decision de Gerencia, no lamina de junta.
 
-  // ---- Las fechas que no se sostienen, en una frase ----
-  const _crList=_roadProjs.map(p=>({p,cr:credibilidad(p,_med)})).filter(x=>x.cr);
-  const _noSost=_crList.filter(x=>x.cr.nivel==='no sostiene');
-  const credHtml = _crList.length ? `<div style="margin-top:12px;padding:11px 14px;background:${_noSost.length?'var(--bad-bg)':'var(--ok-bg)'};border-radius:var(--r2);font-size:11px;color:var(--text);line-height:1.6">
-      ${_noSost.length
-        ? `<strong style="color:var(--bad)">${_noSost.length} de ${_crList.length} fechas no se sostienen.</strong> La columna «realista» es hoy más lo que a esta empresa le ha tomado cerrar las fases que faltan: Diseño ${_med['Diseño']?.dias||'—'} d · Desarrollo ${_med['Desarrollo']?.dias||'—'} d · Implementación ${_med['Implementacion']?.dias||'—'} d · Lanzamiento ${_med['Lanzamiento']?.dias||'—'} d, medianas de ${_med['Diseño']?.n||0} proyectos ya cerrados. Es una vara generosa: cuenta solo días de fase activa, no el tiempo muerto entre fases.`
-        : `<strong style="color:var(--ok)">Las ${_crList.length} fechas se sostienen</strong> contra el ritmo histórico de la empresa.`}
-    </div>` : '';
+  // El resumen "N de M fechas no se sostienen" tambien se retira de aqui, por lo
+  // mismo que la columna: es un veredicto sobre el trabajo del equipo y no se
+  // emite en la junta de Direccion. Vive en Control de proyectos.
 
   // ---- Decisiones que necesito de Dirección ----
   const _dec=decisiones();
@@ -3076,9 +3071,8 @@ function rCadencia(c){
     </div>
     <div style="padding-top:4px">
       <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Cuándo llega cada producto al mercado</div>
-      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Ordenado por fecha de lanzamiento comprometida · a la derecha, si esa fecha se sostiene contra lo que esta empresa ha tardado antes</div>
+      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Ordenado por fecha de lanzamiento comprometida</div>
       ${roadmapHtml}
-      ${credHtml}
     </div>
 
     ${decHtml}
@@ -3125,6 +3119,7 @@ function rCadencia(c){
 
 function rReporte(c){
   const engU=USERS.filter(u=>u.perfil!=='GI');
+  const _medRep=medianasDeFase();
   const d=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const filterVal=document.getElementById('rep-eng-sel')?.value||_repFiltEng;
   const filterEst=document.getElementById('rep-est-sel')?.value||_repFiltEst;
@@ -3261,8 +3256,22 @@ function rReporte(c){
           <!-- Líder -->
           <span style="font-size:11px;color:var(--muted);padding-right:8px">${u.nombre}</span>
 
-          <!-- Fecha final -->
-          <span style="font-size:11px;font-weight:700;color:${ffVenc?'var(--bad)':'var(--text)'}">${fmtD(p.fechaFinal)}</span>
+          <!-- Fecha final · y si la fecha de lanzamiento todavia se sostiene -->
+          <!--
+            La senal de credibilidad vive aqui y no en el Reporte ejecutivo
+            (sep 2026). Alla era una mediana desmintiendo en publico la fecha que
+            comprometio el ingeniero, delante de Direccion, Planta y Mejora
+            Continua. Aqui es material de 1 a 1: esta pantalla ya esta agrupada
+            por ingeniero y es con la que Gerencia prepara esas conversaciones.
+          -->
+          <div>
+            <span style="font-size:11px;font-weight:700;color:${ffVenc?'var(--bad)':'var(--text)'}">${fmtD(p.fechaFinal)}</span>
+            ${(()=>{ const cr=credibilidad(p,_medRep);
+              if(!cr||p.estatus==='Terminado'||p.estatus==='Cancelado') return '';
+              if(cr.nivel==='sostiene') return '';
+              return `<div style="font-size:9px;font-weight:700;color:var(--bad);margin-top:1px" title="Al ritmo con el que la empresa ha cerrado sus últimos proyectos, lo que falta no cabe en el tiempo que queda. Toca re-comprometer la fecha con ${u.nombre}.">⚠ re-comprometer · ${cr.listo.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`;
+            })()}
+          </div>
 
           <!-- Avance -->
           <div style="display:flex;align-items:center;gap:6px;padding-right:8px">
