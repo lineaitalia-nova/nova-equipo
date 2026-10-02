@@ -1089,13 +1089,26 @@ async function fbPullIfChanged(){
   }catch(e){return false;}
 }
 
+// Redibujar borra lo que alguien este escribiendo: render() reconstruye la pantalla
+// y los campos vuelven vacios. El auto-sync redibuja cuando otra persona guarda, asi
+// que con varios usuarios activos pasaba a media captura (oct 2026). Mientras haya un
+// campo con foco o con texto, el redibujado espera al siguiente ciclo.
+var _TIPOS_SIN_TEXTO=['button','checkbox','radio','submit','hidden','range','color','file'];
+function _escribiendoAhora(){
+  const a=document.activeElement;
+  if(a&&(a.tagName==='TEXTAREA'||(a.tagName==='INPUT'&&!_TIPOS_SIN_TEXTO.includes(a.type)))) return true;
+  return [...document.querySelectorAll('#shell input,#shell textarea')].some(e=>
+    e.offsetParent!==null&&!_TIPOS_SIN_TEXTO.includes(e.type)&&(e.value||'').trim()!=='');
+}
+
 function loadAll(){
   fbPull().then(()=>{_loadFromStorage();}).catch(()=>{_loadFromStorage();});
   // Auto-sync cada 30s para detectar cambios de otros usuarios (con centinela)
   if(!window._autoSyncInterval){
     window._autoSyncInterval=setInterval(()=>{
       fbPullIfChanged().then(ok=>{
-        if(ok){_loadFromStorage();render();}
+        if(ok){_loadFromStorage();window._renderPendiente=true;}
+        if(window._renderPendiente&&!_escribiendoAhora()){window._renderPendiente=false;render();}
       });
     },30000);
   }
