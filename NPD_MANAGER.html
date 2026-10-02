@@ -819,13 +819,6 @@ function scorecardSemanal(){
   }));
   const protoOk=protos.filter(Boolean).length;
 
-  // Sin los pausados, igual que Control de proyectos y que el roadmap: un proyecto
-  // detenido por Gerencia no tiene fecha que re-comprometer hasta que se reactive.
-  // Contandolos, esta medida decia 9 y la pantalla donde se actua decia 6.
-  const med=medianasDeFase();
-  const porRecomp=vivos.filter(p=>p.estatus!=='En pausa')
-    .filter(p=>{const c=credibilidad(p,med);return c&&c.nivel!=='sostiene';}).length;
-
   const tds=acuerdos().filter(x=>x.tipo==='todo');
   const tdOk=tds.filter(x=>x.estado==='hecho').length;
 
@@ -836,8 +829,6 @@ function scorecardSemanal(){
      ok: desv>0, meta:'al menos 1', d:'Ingenieros'},
     {m:'Prototipos en la fecha pedida', v: protos.length? protoOk+' de '+protos.length : 'sin entregas',
      ok: protos.length? protoOk/protos.length>=0.9 : true, meta:'90% · últimos 30 d', d:'Planta'},
-    {m:'Fechas por re-comprometer', v:String(porRecomp),
-     ok: porRecomp===0, meta:'cero', d:'René'},
     {m:'To-dos cumplidos', v: tds.length? Math.round(tdOk/tds.length*100)+'%' : '—',
      ok: tds.length? tdOk/tds.length>=0.9 : true, meta:'90%', d:'Todos'}
   ];
@@ -3038,79 +3029,9 @@ function rCadencia(c){
     }
   }
 
-  // ---- ¿Qué se movió desde la última junta? y ¿Qué no se movió? (sep 2026) ----
-  // Direccion dijo que no veia cadencia en los proyectos. El portafolio si se mueve
-  // -- 7 de 9 activos tocados por semana, cientos de eventos registrados -- pero el
-  // reporte mostraba ESTADO (fecha, avance, estatus, fase), y esas cuatro cosas casi
-  // no cambian de lunes a lunes. Se reportaba el saldo cuando pedian el estado de
-  // cuenta. Estos dos bloques muestran el CAMBIO, que es de lo que trata una junta
-  // de seguimiento.
-  const _desde = new Date(TODAY.getTime() - 7*86400000);
-  const _esExterno = txt => /plantilla|prototipo|herramienta|dispositivo|herramental/i.test(txt||'');
-  const _mov = _roadProjs.map(p=>({
-    p,
-    ev:(p.act||[]).filter(a=>a&&a.ts&&new Date(a.ts)>=_desde)
-        .sort((a,b)=>new Date(a.ts)-new Date(b.ts))
-  })).filter(x=>x.ev.length).sort((a,b)=>b.ev.length-a.ev.length);
-  const _quietos = _roadProjs.filter(p=>!(p.act||[]).some(a=>a&&a.ts&&new Date(a.ts)>=_desde))
-    .map(p=>{
-      const ult=(p.act||[]).filter(a=>a&&a.ts).sort((a,b)=>new Date(b.ts)-new Date(a.ts))[0];
-      return {p, dias: ult?Math.round((TODAY-new Date(ult.ts))/86400000):null};
-    }).sort((a,b)=>(b.dias||999)-(a.dias||999));
-
-  // Un titular por proyecto, no el log (sep 2026). "Validacion de tiempos
-  // preliminares -> Completado" es excelente para el 1 a 1 y es ruido en la junta
-  // de Direccion: nadie puede decidir nada con eso. Arriba va la frase, el detalle
-  // queda plegado para cuando alguien pregunte.
-  const movHtml = _mov.length ? _mov.map(x=>{
-    const eng=(USERS.find(u=>u.perfil===x.p.eng)||{}).nombre||'';
-    const taller=x.ev.filter(a=>_esExterno(a.msg)).length;
-    const cruces=x.ev.filter(a=>/→\s*Completado/.test(a.msg||'')&&/^(Diseño|Desarrollo|Implementacion|Lanzamiento)\s·/.test(a.msg||'')).length;
-    const partes=[];
-    if(cruces) partes.push(`${cruces} tarea${cruces>1?'s':''} cerrada${cruces>1?'s':''}`);
-    if(taller) partes.push(`${taller} de taller`);
-    const titular = partes.length? partes.join(' · ') : `${x.ev.length} registro${x.ev.length>1?'s':''}`;
-    return `<div style="border-left:3px solid ${FD[x.p.fase]?.c||'var(--border)'};padding:9px 0 9px 12px;margin-bottom:9px">
-      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-        <span style="font-size:13px;font-weight:700;color:var(--text)">${x.p.name}</span>
-        <span style="font-size:11px;color:var(--muted)">${eng} · ${x.p.fase}</span>
-        <span style="margin-left:auto;font-size:11px;color:var(--text2,#475569);font-weight:600">${titular}${taller?` <span style="font-size:9px;background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:99px;font-weight:700">taller</span>`:''}</span>
-      </div>
-      <details style="margin-top:5px">
-        <summary style="font-size:10px;color:var(--muted);cursor:pointer">ver los ${x.ev.length} movimientos</summary>
-        <div style="margin-top:5px">
-        ${x.ev.slice(-8).map(a=>`<div style="display:flex;align-items:baseline;gap:8px;font-size:11px;margin-bottom:3px">
-          <span style="width:48px;flex:none;color:var(--muted);font-family:var(--font-m)">${new Date(a.ts).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span>
-          <span style="flex:1;color:var(--text)">${(a.msg||'').replace(/"/g,'')}${_esExterno(a.msg)?' <span style="font-size:9px;background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:99px;font-weight:700">taller</span>':''}</span>
-          <span style="flex:none;color:var(--muted);font-size:10px">${a.who||''}</span>
-        </div>`).join('')}
-        </div>
-      </details>
-    </div>`;
-  }).join('') : `<div style="padding:14px;color:var(--muted);font-size:12px">Sin movimientos registrados en los últimos 7 días.</div>`;
-
-  const quietosHtml = _quietos.length ? _quietos.map(q=>{
-    const eng=(USERS.find(u=>u.perfil===q.p.eng)||{}).nombre||'';
-    const pausa=q.p.estatus==='En pausa';
-    // Contra la fecha de LLEGADA AL MERCADO, igual que el roadmap de arriba. Medir
-    // aqui el fin de la fase en curso daba dos numeros distintos para el mismo
-    // proyecto en la misma pantalla: "venció hace 76 d" arriba y "119 d" abajo.
-    const _lz=q.p.fechasFase?.['Lanzamiento']?.fin;
-    const _dz=_lz?Math.round((pd(_lz)-TODAY)/86400000):null;
-    const cons = _dz!==null&&_dz<0 ? `${Math.abs(_dz)} d encima de su llegada al mercado`
-               : _dz!==null ? `llega en ${_dz} d`
-               : (pausa?'detenido por Gerencia':'sin fecha de llegada');
-    const col = _dz!==null&&_dz<0 ? 'var(--bad)' : pausa ? 'var(--warn)' : 'var(--muted)';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:var(--surface2);border-left:3px solid ${col};border-radius:0 var(--r) var(--r) 0;font-size:12px;flex-wrap:wrap">
-      <span style="flex:1;min-width:150px;color:var(--text);font-weight:600">${q.p.name}
-        <span style="color:var(--muted);font-size:11px;font-weight:400">· ${eng}</span>
-        ${pausa?'<span style="font-size:8px;font-weight:700;color:var(--warn);background:var(--warn-bg);padding:1px 5px;border-radius:99px;vertical-align:middle">en pausa</span>':''}
-      </span>
-      <span style="color:var(--muted);font-size:10px">${q.p.fase} · ${q.p.avance||0}%</span>
-      <span style="color:${col};font-size:10px;font-weight:700;min-width:118px;text-align:right">${cons}</span>
-      <span style="color:var(--muted);font-size:10px;min-width:80px;text-align:right">${q.dias===null?'sin registro':'sin tocar '+q.dias+' d'}</span>
-    </div>`;
-  }).join('') : `<div style="padding:14px;color:var(--muted);font-size:12px">Todos los proyectos vivos tuvieron movimiento. ✓</div>`;
+  // Los bloques "Que se movio desde la ultima junta" y "Que sigue atorado" se
+  // retiraron (oct 2026): no aportaban a la junta. La actividad semanal sigue
+  // medida en el Scorecard ("Proyectos con movimiento").
 
   // El bloque "El año" y el de "¿Cabe el plan?" vivieron aqui unas horas y se
   // retiraron (sep 2026). Los dos median ESTADO --lanzamientos del año, ritmo por
@@ -3130,7 +3051,7 @@ function rCadencia(c){
   const scHtml=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;margin-bottom:18px">
     <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:10px">
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Scorecard de la semana</span>
-      <span style="font-size:10px;color:var(--muted)">cinco números, se leen en cinco minutos</span>
+      <span style="font-size:10px;color:var(--muted)">cuatro números, se leen en cinco minutos</span>
       <span style="margin-left:auto;font-size:11px;font-weight:700;color:${_scFuera?'var(--bad)':'var(--ok)'}">${_scFuera?_scFuera+' fuera de meta':'todo en meta'}</span>
     </div>
     ${_sc.map(x=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--border2);font-size:12px;flex-wrap:wrap">
@@ -3239,18 +3160,6 @@ function rCadencia(c){
     </div>
 
     ${decHtml}
-
-    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
-      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Qué se movió desde la última junta</div>
-      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Últimos 7 días · lo marcado como <span style="font-size:9px;background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:99px;font-weight:700">taller</span> es trabajo externo de plantillas o prototipos</div>
-      ${movHtml}
-    </div>
-
-    <div style="border-top:1px dashed var(--border2);padding-top:18px;margin-top:22px">
-      <div style="font-size:13px;font-weight:700;color:var(--text2,#475569);margin:0 0 4px">Qué sigue atorado</div>
-      <div style="font-size:11px;color:var(--muted);margin:0 0 12px">Proyectos vivos sin un solo registro en los últimos 7 días${_quietos.length?' · cada uno necesita un dueño y una fecha de reactivación':''}</div>
-      ${quietosHtml}
-    </div>
 
     <!--
       El cumplimiento de metas SMART por ingeniero y el cumplimiento semanal se
@@ -3419,21 +3328,9 @@ function rReporte(c){
           <!-- Líder -->
           <span style="font-size:11px;color:var(--muted);padding-right:8px">${u.nombre}</span>
 
-          <!-- Fecha final · y si la fecha de lanzamiento todavia se sostiene -->
-          <!--
-            La senal de credibilidad vive aqui y no en el Reporte ejecutivo
-            (sep 2026). Alla era una mediana desmintiendo en publico la fecha que
-            comprometio el ingeniero, delante de Direccion, Planta y Mejora
-            Continua. Aqui es material de 1 a 1: esta pantalla ya esta agrupada
-            por ingeniero y es con la que Gerencia prepara esas conversaciones.
-          -->
+          <!-- Fecha final -->
           <div>
             <span style="font-size:11px;font-weight:700;color:${ffVenc?'var(--bad)':'var(--text)'}">${fmtD(p.fechaFinal)}</span>
-            ${(()=>{ const cr=credibilidad(p,_medRep);
-              if(!cr||p.estatus==='Terminado'||p.estatus==='Cancelado') return '';
-              if(cr.nivel==='sostiene') return '';
-              return `<div style="font-size:9px;font-weight:700;color:var(--bad);margin-top:1px" title="Al ritmo con el que la empresa ha cerrado sus últimos proyectos, lo que falta no cabe en el tiempo que queda. Toca re-comprometer la fecha con ${u.nombre}.">⚠ re-comprometer · ${cr.listo.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`;
-            })()}
           </div>
 
           <!-- Avance -->
