@@ -819,13 +819,6 @@ function scorecardSemanal(){
   }));
   const protoOk=protos.filter(Boolean).length;
 
-  // Sin los pausados, igual que Control de proyectos y que el roadmap: un proyecto
-  // detenido por Gerencia no tiene fecha que re-comprometer hasta que se reactive.
-  // Contandolos, esta medida decia 9 y la pantalla donde se actua decia 6.
-  const med=medianasDeFase();
-  const porRecomp=vivos.filter(p=>p.estatus!=='En pausa')
-    .filter(p=>{const c=credibilidad(p,med);return c&&c.nivel!=='sostiene';}).length;
-
   const tds=acuerdos().filter(x=>x.tipo==='todo');
   const tdOk=tds.filter(x=>x.estado==='hecho').length;
 
@@ -836,8 +829,6 @@ function scorecardSemanal(){
      ok: desv>0, meta:'al menos 1', d:'Ingenieros'},
     {m:'Prototipos en la fecha pedida', v: protos.length? protoOk+' de '+protos.length : 'sin entregas',
      ok: protos.length? protoOk/protos.length>=0.9 : true, meta:'90% · últimos 30 d', d:'Planta'},
-    {m:'Fechas por re-comprometer', v:String(porRecomp),
-     ok: porRecomp===0, meta:'cero', d:'René'},
     {m:'To-dos cumplidos', v: tds.length? Math.round(tdOk/tds.length*100)+'%' : '—',
      ok: tds.length? tdOk/tds.length>=0.9 : true, meta:'90%', d:'Todos'}
   ];
@@ -3130,7 +3121,7 @@ function rCadencia(c){
   const scHtml=`<div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;margin-bottom:18px">
     <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:10px">
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Scorecard de la semana</span>
-      <span style="font-size:10px;color:var(--muted)">cinco números, se leen en cinco minutos</span>
+      <span style="font-size:10px;color:var(--muted)">cuatro números, se leen en cinco minutos</span>
       <span style="margin-left:auto;font-size:11px;font-weight:700;color:${_scFuera?'var(--bad)':'var(--ok)'}">${_scFuera?_scFuera+' fuera de meta':'todo en meta'}</span>
     </div>
     ${_sc.map(x=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--border2);font-size:12px;flex-wrap:wrap">
@@ -3419,21 +3410,9 @@ function rReporte(c){
           <!-- Líder -->
           <span style="font-size:11px;color:var(--muted);padding-right:8px">${u.nombre}</span>
 
-          <!-- Fecha final · y si la fecha de lanzamiento todavia se sostiene -->
-          <!--
-            La senal de credibilidad vive aqui y no en el Reporte ejecutivo
-            (sep 2026). Alla era una mediana desmintiendo en publico la fecha que
-            comprometio el ingeniero, delante de Direccion, Planta y Mejora
-            Continua. Aqui es material de 1 a 1: esta pantalla ya esta agrupada
-            por ingeniero y es con la que Gerencia prepara esas conversaciones.
-          -->
+          <!-- Fecha final -->
           <div>
             <span style="font-size:11px;font-weight:700;color:${ffVenc?'var(--bad)':'var(--text)'}">${fmtD(p.fechaFinal)}</span>
-            ${(()=>{ const cr=credibilidad(p,_medRep);
-              if(!cr||p.estatus==='Terminado'||p.estatus==='Cancelado') return '';
-              if(cr.nivel==='sostiene') return '';
-              return `<div style="font-size:9px;font-weight:700;color:var(--bad);margin-top:1px" title="Al ritmo con el que la empresa ha cerrado sus últimos proyectos, lo que falta no cabe en el tiempo que queda. Toca re-comprometer la fecha con ${u.nombre}.">⚠ re-comprometer · ${cr.listo.toLocaleDateString('es-MX',{month:'short',year:'2-digit'})}</div>`;
-            })()}
           </div>
 
           <!-- Avance -->
