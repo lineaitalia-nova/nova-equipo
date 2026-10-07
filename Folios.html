@@ -345,6 +345,9 @@ tr:hover td{background:var(--bg);cursor:pointer}
     <div class="fg"><label>Error</label>
       <select id="fl-err" onchange="renderList()"><option value="">Todos</option><option value="si">Con error</option><option value="no">Sin error</option></select>
     </div>
+    <div class="fg"><label>Rechazo en planta</label>
+      <select id="fl-rech" onchange="renderList()"><option value="">Todos</option><option value="si">Con</option><option value="no">Sin</option></select>
+    </div>
     <div class="fg"><label>Buscar</label>
       <input id="fl-q" placeholder="Folio, vendedor, cliente…" oninput="renderList()" style="width:130px">
     </div>
@@ -355,7 +358,7 @@ tr:hover td{background:var(--bg);cursor:pointer}
     <div class="tscroll">
       <table>
         <thead><tr>
-          <th onclick="sfl(0)">Folio ↕</th><th>Tipo</th><th onclick="sfl(2)">Fecha ↕</th><th>Vendedor</th><th>Sucursal</th><th>Cliente</th><th>Responsable</th><th>Checklist</th><th>Status</th><th style="text-align:right">Precio</th><th>Pedido</th><th>Garantía</th><th>Error</th><th style="text-align:right">Costo gar.</th><th>Acciones</th>
+          <th onclick="sfl(0)">Folio ↕</th><th>Tipo</th><th onclick="sfl(2)">Fecha ↕</th><th>Vendedor</th><th>Sucursal</th><th>Cliente</th><th>Responsable</th><th>Checklist</th><th>Status</th><th style="text-align:right">Precio</th><th>Pedido</th><th>Garantía</th><th>Error</th><th>Planta</th><th style="text-align:right">Costo gar.</th><th>Acciones</th>
         </tr></thead>
         <tbody id="tb-list"></tbody>
       </table>
@@ -657,7 +660,7 @@ tr:hover td{background:var(--bg);cursor:pointer}
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>¿Tuvo error de diseño? <span style="font-weight:400;color:var(--tx3);font-size:10px">(detectado en planta)</span></label>
+        <label>¿Tuvo error de diseño? <span style="font-weight:400;color:var(--tx3);font-size:10px">(detectado antes de fabricación)</span></label>
         <select id="f-error" onchange="window.toggleErrorFields()">
           <option value="false">No</option>
           <option value="true">Sí — registrar</option>
@@ -675,6 +678,78 @@ tr:hover td{background:var(--bg);cursor:pointer}
           <option value="ED6">ED6 · Error en material / acabado</option>
           <option value="ED7">ED7 · Otro</option>
         </select>
+      </div>
+    </div>
+    <div class="form-row" id="err-extra" style="display:none">
+      <div class="form-group">
+        <label>Fecha de detección</label>
+        <input id="f-errfecha" type="date">
+      </div>
+      <div class="form-group">
+        <label>Documento con NG</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;padding-top:6px">
+          <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:500;font-size:12px;color:var(--tx);cursor:pointer"><input type="checkbox" id="f-errdoc-esp" style="padding:0;width:auto"> Especificación</label>
+          <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:500;font-size:12px;color:var(--tx);cursor:pointer"><input type="checkbox" id="f-errdoc-car" style="padding:0;width:auto"> Carátula</label>
+          <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:500;font-size:12px;color:var(--tx);cursor:pointer"><input type="checkbox" id="f-errdoc-lm" style="padding:0;width:auto"> Lista de materiales</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Estatus de corrección</label>
+        <select id="f-errestatus" onchange="window.toggleErrorFields()">
+          <option value="">— Selecciona —</option>
+          <option value="sin_actualizar">Sin actualizar</option>
+          <option value="actualizado">Actualizado</option>
+        </select>
+      </div>
+      <div class="form-group" id="err-fact-wrap" style="display:none">
+        <label>Fecha de actualización</label>
+        <input id="f-errfact" type="date">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>¿Tuvo rechazo en planta? <span style="font-weight:400;color:var(--tx3);font-size:10px">(F-CAL-08)</span></label>
+        <select id="f-rechazo" onchange="window.toggleRechazoFields()">
+          <option value="false">No</option>
+          <option value="true">Sí — registrar</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" id="rech-fields" style="display:none">
+      <div class="form-group">
+        <label>N° de rechazo</label>
+        <input id="f-rechnum" type="number" min="0" step="1">
+      </div>
+      <div class="form-group">
+        <label>Fecha de detección</label>
+        <input id="f-rechfecha" type="date">
+      </div>
+      <div class="form-group">
+        <label>Pieza</label>
+        <input id="f-rechpieza" type="text" placeholder="Pieza afectada">
+      </div>
+      <div class="form-group">
+        <label>Cantidad</label>
+        <input id="f-rechcant" type="number" min="0" step="1">
+      </div>
+      <div class="form-group">
+        <label>Tipo de error</label>
+        <select id="f-rechtipo">
+          <option value="">— Selecciona el tipo —</option>
+          <option value="ED1">ED1 · Error en dato / medida</option>
+          <option value="ED2">ED2 · Error dimensional</option>
+          <option value="ED3">ED3 · Error en estabilidad del mueble</option>
+          <option value="ED4">ED4 · Error en especificación / carátula</option>
+          <option value="ED5">ED5 · Error en accesorios / tornillería</option>
+          <option value="ED6">ED6 · Error en material / acabado</option>
+          <option value="ED7">ED7 · Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row full" id="rech-desc-row" style="display:none">
+      <div class="form-group">
+        <label>Descripción de la anomalía</label>
+        <textarea id="f-rechdesc" placeholder="Qué se rechazó en planta y por qué…"></textarea>
       </div>
     </div>
     <div class="form-row" id="gar-fields" style="display:none">
@@ -1335,6 +1410,7 @@ window.renderList = function() {
   var fped = (document.getElementById('fl-ped')||{}).value||'';
   var fgar = (document.getElementById('fl-gar')||{}).value||'';
   var ferr = (document.getElementById('fl-err')||{}).value||'';
+  var frech = (document.getElementById('fl-rech')||{}).value||'';
   var f = STATE.folios.filter(function(d) {
     if (tipo && d.tipo!==tipo) return false;
     if (ing  && d.ing!==ing)   return false;
@@ -1346,6 +1422,8 @@ window.renderList = function() {
     if (fgar==='no' && d.garantia===true) return false;
     if (ferr==='si' && d.errorDiseno!==true) return false;
     if (ferr==='no' && d.errorDiseno===true) return false;
+    if (frech==='si' && d.rechazoPlanta!==true) return false;
+    if (frech==='no' && d.rechazoPlanta===true) return false;
     if (q) {
       var s = ((d.id||'')+(d.vendedor||'')+(d.cliente||'')+(d.ing||'')).toLowerCase();
       if (s.indexOf(q)===-1) return false;
@@ -1393,6 +1471,7 @@ window.renderList = function() {
       +'<td style="text-align:center">'+(d.pedido==='con_pedido'?'<span style="font-size:10px;font-weight:600;background:#ECFDF5;color:#059669;padding:2px 7px;border-radius:3px">✓</span>':'<span style="font-size:10px;color:var(--tx3)">—</span>')+'</td>'
       +'<td style="text-align:center">'+(d.garantia?'<span style="color:var(--rd)">⚠️</span>':'<span style="color:var(--tx3)">—</span>')+'</td>'
       +'<td style="text-align:center;font-size:11px">'+(d.errorDiseno?'<span style="font-weight:600;color:var(--rd)">'+(d.tipoError||'Sí')+'</span>':'<span style="color:var(--tx3)">—</span>')+'</td>'
+      +'<td style="text-align:center;font-size:11px">'+(d.rechazoPlanta?'<span style="font-weight:600;color:var(--rd)">'+(d.rechTipo||'Sí')+'</span>':'<span style="color:var(--tx3)">—</span>')+'</td>'
       +'<td style="text-align:right;font-family:JetBrains Mono,monospace;font-size:11px;color:var(--tx2)">'+(d.costoGar>0?'$'+Math.round(d.costoGar).toLocaleString():'<span style="color:var(--tx3)">—</span>')+'</td>'
       +'<td><button onclick="event.stopPropagation();window.editFolio(\''+d.id+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--br);background:var(--w);cursor:pointer;color:var(--tx2)">Editar</button></td>'
       +'</tr>';
@@ -1720,7 +1799,23 @@ window.openModal = function(id) {
   window.toggleGarFields();
   var fer=document.getElementById('f-error'); if(fer) fer.value=folio&&folio.errorDiseno?'true':'false';
   var fte=document.getElementById('f-tipoerror'); if(fte) fte.value=folio&&folio.tipoError?folio.tipoError:'';
+  var _vf=function(id,v){var e=document.getElementById(id); if(e) e.value=(v===undefined||v===null)?'':v;};
+  var _docs=(folio&&folio.errDocs)||[];
+  _vf('f-errfecha',folio&&folio.errFecha);
+  var _c1=document.getElementById('f-errdoc-esp'); if(_c1) _c1.checked=_docs.indexOf('especificacion')>=0;
+  var _c2=document.getElementById('f-errdoc-car'); if(_c2) _c2.checked=_docs.indexOf('caratula')>=0;
+  var _c3=document.getElementById('f-errdoc-lm');  if(_c3) _c3.checked=_docs.indexOf('lista_materiales')>=0;
+  _vf('f-errestatus',folio&&folio.errEstatus);
+  _vf('f-errfact',folio&&folio.errFechaAct);
   window.toggleErrorFields();
+  var frc=document.getElementById('f-rechazo'); if(frc) frc.value=folio&&folio.rechazoPlanta?'true':'false';
+  _vf('f-rechnum',folio&&folio.rechNum);
+  _vf('f-rechfecha',folio&&folio.rechFecha);
+  _vf('f-rechpieza',folio&&folio.rechPieza);
+  _vf('f-rechcant',folio&&folio.rechCant);
+  _vf('f-rechtipo',folio&&folio.rechTipo);
+  _vf('f-rechdesc',folio&&folio.rechDesc);
+  window.toggleRechazoFields();
   var fno=document.getElementById('f-nota'); if(fno) fno.value=folio?folio.nota||'':'';
   var _curSuc=folio?(folio.sucursal||''):''; if(window.fillSucursalSelects) window.fillSucursalSelects(_curSuc);
   var fsuc=document.getElementById('f-sucursal'); if(fsuc) fsuc.value=_curSuc||'';
@@ -1778,6 +1873,11 @@ window.saveModal = function() {
   var pedido=(document.getElementById('f-pedido')||{}).value||'sin_pedido';
   var esGar=((document.getElementById('f-garantia')||{}).value)==='true';
   var esErr=((document.getElementById('f-error')||{}).value)==='true';
+  var esRech=((document.getElementById('f-rechazo')||{}).value)==='true';
+  var _g=function(id){return (document.getElementById(id)||{}).value||'';};
+  var _ck=function(id){var e=document.getElementById(id); return !!(e&&e.checked);};
+  var errDocs=[]; if(_ck('f-errdoc-esp')) errDocs.push('especificacion'); if(_ck('f-errdoc-car')) errDocs.push('caratula'); if(_ck('f-errdoc-lm')) errDocs.push('lista_materiales');
+  var errEstatus=esErr?_g('f-errestatus'):'';
   var obj={
     id:id, tipo:tipo, fecha:fecha, mes:fecha.slice(0,7), ing:ing,
     vendedor:asesor, asesor:asesor,
@@ -1790,6 +1890,17 @@ window.saveModal = function() {
     descGar: esGar?((document.getElementById('f-descgar')||{}).value||''):'',
     errorDiseno: esErr,
     tipoError: esErr?((document.getElementById('f-tipoerror')||{}).value||''):'',
+    errFecha: esErr?_g('f-errfecha'):'',
+    errDocs: esErr?errDocs:[],
+    errEstatus: errEstatus,
+    errFechaAct: errEstatus==='actualizado'?_g('f-errfact'):'',
+    rechazoPlanta: esRech,
+    rechNum: esRech?(parseInt(_g('f-rechnum'),10)||''):'',
+    rechFecha: esRech?_g('f-rechfecha'):'',
+    rechPieza: esRech?_g('f-rechpieza').trim():'',
+    rechCant: esRech?(parseInt(_g('f-rechcant'),10)||''):'',
+    rechTipo: esRech?_g('f-rechtipo'):'',
+    rechDesc: esRech?_g('f-rechdesc'):'',
     nota:(document.getElementById('f-nota')||{}).value||'',
     checklist:ck, flujoStep:flujoStep, pedido:pedido,
     atraso:false, limite:'',
@@ -1921,6 +2032,14 @@ function pesosMX(n){ return '$'+Math.round(n||0).toLocaleString('es-MX'); }
 window.toggleErrorFields = function() {
   var v = ((document.getElementById('f-error')||{}).value)==='true';
   var w = document.getElementById('err-tipo-wrap'); if(w) w.style.display = v?'':'none';
+  var x = document.getElementById('err-extra'); if(x) x.style.display = v?'':'none';
+  var act = ((document.getElementById('f-errestatus')||{}).value)==='actualizado';
+  var fa = document.getElementById('err-fact-wrap'); if(fa) fa.style.display = (v&&act)?'':'none';
+};
+window.toggleRechazoFields = function() {
+  var v = ((document.getElementById('f-rechazo')||{}).value)==='true';
+  var a = document.getElementById('rech-fields');   if(a) a.style.display = v?'':'none';
+  var b = document.getElementById('rech-desc-row'); if(b) b.style.display = v?'':'none';
 };
 window.toggleGarFields = function() {
   var v = ((document.getElementById('f-garantia')||{}).value)==='true';
