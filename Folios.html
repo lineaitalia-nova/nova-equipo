@@ -77,6 +77,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .cf-D{background:var(--rdb);color:var(--rd);border-left-color:var(--rd)}
 .cf-done{opacity:.5;text-decoration:line-through}
 .cf-problema{border-left-color:#DC2626!important;background:#FEF2F2!important}
+.cf-urgente{border-left:3px solid #EA580C!important;background:#FFF7ED!important;box-shadow:inset 0 0 0 1px #FDBA74;font-weight:800}
+.urg-ico{color:#DC2626;font-weight:900}
+.urg-btn{flex-shrink:0;width:15px;height:15px;margin-top:1px;border-radius:4px;border:2px solid var(--br2);color:var(--tx3);font-size:10px;line-height:11px;text-align:center;cursor:pointer;font-weight:900;background:transparent}
+.urg-btn.on{border-color:#EA580C;background:#EA580C;color:#fff}
+.urg-count{display:none;align-items:center;gap:6px;background:#FFF7ED;color:#C2410C;border:1px solid #FDBA74;border-radius:99px;padding:3px 11px;font-size:11px;font-weight:700;cursor:pointer;align-self:flex-end;height:30px;box-sizing:border-box}
+.urg-banner{background:#FFF7ED;border:1px solid #FDBA74;border-left:4px solid #EA580C;color:#9A3412;border-radius:var(--r2);padding:8px 12px;font-size:12px;font-weight:600;margin-bottom:12px}
+tr.tr-urg td{background:#FFF7ED}
 .more-link{font-size:10px;color:var(--ac);cursor:pointer;margin-top:2px}
 
 /* ALERT BANNER */
@@ -264,7 +271,7 @@ tr:hover td{background:var(--bg);cursor:pointer}
       <button class="cal-btn" onclick="changeMonth(1)">›</button>
       <button class="cal-today" onclick="goToday()">Hoy</button>
     </div>
-    <div class="cal-count" id="cal-count"></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="urg-count" id="urg-count-cal" onclick="window.irAUrgentes()"></span><div class="cal-count" id="cal-count"></div></div>
   </div>
   <div class="cal-grid">
     <div class="cal-head">
@@ -303,6 +310,10 @@ tr:hover td{background:var(--bg);cursor:pointer}
         <option>ROMO</option><option>ALEXIS</option><option>OBED</option><option>ENRIQUE</option><option>EVERARDO</option><option>RAMON</option><option>EVERARDO</option><option>RAMON</option>
       </select>
     </div>
+    <div class="fg"><label>Urgencia</label>
+      <select id="wk-urg" onchange="renderWeek()"><option value="">Todas</option><option value="si">Solo urgentes</option></select>
+    </div>
+    <span class="urg-count" id="urg-count-sem" onclick="window.irAUrgentes()"></span>
   </div>
   <div class="week-grid">
     <div class="week-head" id="wk-head"></div>
@@ -347,6 +358,9 @@ tr:hover td{background:var(--bg);cursor:pointer}
     </div>
     <div class="fg"><label>Rechazo en planta</label>
       <select id="fl-rech" onchange="renderList()"><option value="">Todos</option><option value="si">Con</option><option value="no">Sin</option></select>
+    </div>
+    <div class="fg"><label>Urgencia</label>
+      <select id="fl-urg" onchange="renderList()"><option value="">Todas</option><option value="si">Solo urgentes</option></select>
     </div>
     <div class="fg"><label>Buscar</label>
       <input id="fl-q" placeholder="Folio, vendedor, cliente…" oninput="renderList()" style="width:130px">
@@ -779,6 +793,28 @@ tr:hover td{background:var(--bg);cursor:pointer}
         <textarea id="f-descgar" placeholder="Qué falló y por qué: pieza afectada, detalle…"></textarea>
       </div>
     </div>
+    <div id="urg-edit" style="display:none">
+      <div class="form-row">
+        <div class="form-group">
+          <label>⚠ ¿Urgente? <span style="font-weight:400;color:var(--tx3);font-size:10px">(solo René y Brenda)</span></label>
+          <select id="f-urgente" onchange="window.toggleUrgFields()">
+            <option value="false">No</option>
+            <option value="true">Sí — marcar urgente</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" id="urg-fields" style="display:none">
+        <div class="form-group">
+          <label>Fecha de entrega requerida</label>
+          <input id="f-urgfecha" type="date">
+        </div>
+        <div class="form-group">
+          <label>Nota para el ingeniero</label>
+          <input id="f-urgnota" type="text" placeholder="Ej. P-10114907 · pedido grande">
+        </div>
+      </div>
+    </div>
+    <div id="urg-ro" class="urg-banner" style="display:none"></div>
     <div class="form-row">
       <div class="form-group">
         <label>Precio del folio (MXN)</label>
@@ -1253,16 +1289,16 @@ window.renderCal = function() {
     var mm = String(curMonth+1).padStart(2,'0');
     var dateStr = curYear+'-'+mm+'-'+dd;
     var isToday = dateStr===todayStr;
-    var dayFolios = active ? STATE.folios.filter(function(f){return f.fecha===dateStr;}) : [];
+    var dayFolios = active ? window.urgentesPrimero(STATE.folios.filter(function(f){return f.fecha===dateStr;})) : [];
     var cls = 'cal-cell'+(active?'':' other-month')+(isToday?' today':'');
     var badge = diaCount[dateStr]>5 ? '<span class="cal-badge">'+diaCount[dateStr]+'</span>' : '';
     html += '<div class="'+cls+'" ondblclick="window.quickAddDate(\''+dateStr+'\')">';
     if (active) {
       html += '<div class="cal-day-num'+(isToday?' today-num':'')+'">'+cellDay+badge+'</div>';
       dayFolios.slice(0,4).forEach(function(f) {
-        var ec = (f.status==='terminado'?' cf-done':'')+(f.garantia?' cf-problema':'');
-        html += '<span class="cal-folio cf-'+f.tipo+ec+'" onclick="window.editFolio(\''+f.id+'\')" title="'+f.id+'">';
-        html += (f.status==='terminado'?'✓ ':'')+f.id+(f.ing?' · '+f.ing:'');
+        var ec = (f.status==='terminado'?' cf-done':'')+(f.garantia?' cf-problema':'')+(window.esUrgente(f)?' cf-urgente':'');
+        html += '<span class="cal-folio cf-'+f.tipo+ec+'" onclick="window.editFolio(\''+f.id+'\')" title="'+(window.esUrgente(f)?window.urgTituloAttr(f):f.id)+'">';
+        html += (f.status==='terminado'?'✓ ':'')+(window.esUrgente(f)?'<span class="urg-ico">⚠</span> ':'')+f.id+(f.ing?' · '+f.ing:'');
         html += '</span>';
       });
       if (dayFolios.length>4) html += '<div class="more-link" onclick="window.showDay(\''+dateStr+'\')">+'+(dayFolios.length-4)+' más</div>';
@@ -1271,6 +1307,7 @@ window.renderCal = function() {
   }
   var cb = document.getElementById('cal-body');
   if (cb) cb.innerHTML = html;
+  window.renderUrgCount();
 };
 window.quickAddDate = function(d) { window.openModal(); var fe=document.getElementById('f-fecha'); if(fe) fe.value=d; };
 window.showDay = function(d) { window.goTab('list'); var fm=document.getElementById('fl-mes'); if(fm)fm.value=d.slice(0,7); window.renderList(); };
@@ -1411,6 +1448,7 @@ window.renderList = function() {
   var fgar = (document.getElementById('fl-gar')||{}).value||'';
   var ferr = (document.getElementById('fl-err')||{}).value||'';
   var frech = (document.getElementById('fl-rech')||{}).value||'';
+  var furg = (document.getElementById('fl-urg')||{}).value||'';
   var f = STATE.folios.filter(function(d) {
     if (tipo && d.tipo!==tipo) return false;
     if (ing  && d.ing!==ing)   return false;
@@ -1424,6 +1462,7 @@ window.renderList = function() {
     if (ferr==='no' && d.errorDiseno===true) return false;
     if (frech==='si' && d.rechazoPlanta!==true) return false;
     if (frech==='no' && d.rechazoPlanta===true) return false;
+    if (furg==='si' && !window.esUrgente(d)) return false;
     if (q) {
       var s = ((d.id||'')+(d.vendedor||'')+(d.cliente||'')+(d.ing||'')).toLowerCase();
       if (s.indexOf(q)===-1) return false;
@@ -1441,6 +1480,7 @@ window.renderList = function() {
       return bn-an;
     });
   }
+  window.renderUrgCount();
   var cntEl = document.getElementById('list-cnt');
   if (cntEl) cntEl.textContent = f.length;
   var stL = {
@@ -1457,8 +1497,8 @@ window.renderList = function() {
     var ckT = 5;
     var ckP = Math.round(ckD/ckT*100);
     var ckColor = ckP===100?'var(--gn)':'var(--ac)';
-    return '<tr onclick="window.editFolio(\''+d.id+'\')">'
-      +'<td class="mono">'+d.id+'</td>'
+    return '<tr class="'+(window.esUrgente(d)?'tr-urg':'')+'" onclick="window.editFolio(\''+d.id+'\')">'
+      +'<td class="mono">'+(window.esUrgente(d)?'<span class="urg-ico" title="'+window.urgTituloAttr(d)+'">⚠</span> ':'')+d.id+'</td>'
       +'<td><span class="b b'+d.tipo+'">'+d.tipo+'</span></td>'
       +'<td style="color:var(--tx3);font-size:11px">'+(d.fecha||'—')+'</td>'
       +'<td style="font-size:11px">'+(d.vendedor||'—')+'</td>'
@@ -1473,7 +1513,7 @@ window.renderList = function() {
       +'<td style="text-align:center;font-size:11px">'+(d.errorDiseno?'<span style="font-weight:600;color:var(--rd)">'+(d.tipoError||'Sí')+'</span>':'<span style="color:var(--tx3)">—</span>')+'</td>'
       +'<td style="text-align:center;font-size:11px">'+(d.rechazoPlanta?'<span style="font-weight:600;color:var(--rd)">'+(d.rechTipo||'Sí')+'</span>':'<span style="color:var(--tx3)">—</span>')+'</td>'
       +'<td style="text-align:right;font-family:JetBrains Mono,monospace;font-size:11px;color:var(--tx2)">'+(d.costoGar>0?'$'+Math.round(d.costoGar).toLocaleString():'<span style="color:var(--tx3)">—</span>')+'</td>'
-      +'<td><button onclick="event.stopPropagation();window.editFolio(\''+d.id+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--br);background:var(--w);cursor:pointer;color:var(--tx2)">Editar</button></td>'
+      +'<td style="white-space:nowrap">'+(window.puedeMarcarUrgente()&&d.status!=='terminado'?'<button class="urg-btn'+(window.esUrgente(d)?' on':'')+'" title="Marcar o quitar urgencia" onclick="window.toggleUrgente(\''+d.id+'\',event)" style="width:22px;height:22px;line-height:18px;margin:0 4px 0 0;vertical-align:middle">⚠</button>':'')+'<button onclick="event.stopPropagation();window.editFolio(\''+d.id+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px solid var(--br);background:var(--w);cursor:pointer;color:var(--tx2);vertical-align:middle">Editar</button></td>'
       +'</tr>';
   }).join('');
 };
@@ -1731,8 +1771,9 @@ window.renderWeek = function() {
   dias.forEach(function(d,i){
     var fecha=new Date(base); fecha.setDate(base.getDate()+i);
     var ds=fecha.getFullYear()+'-'+(fecha.getMonth()<9?'0':'')+(fecha.getMonth()+1)+'-'+(fecha.getDate()<10?'0':'')+fecha.getDate();
-    var fDia=STATE.folios.filter(function(f){return f.fecha===ds&&(!ing||f.ing===ing);});
-    headHtml+='<div class="week-head-d">'+d+' '+fecha.getDate()+'/'+(fecha.getMonth()+1)+'<br><span style="font-size:10px;opacity:.6">'+fDia.length+' folios</span></div>';
+    var soloUrg=((document.getElementById('wk-urg')||{}).value)==='si';
+    var fDia=window.urgentesPrimero(STATE.folios.filter(function(f){return f.fecha===ds&&(!ing||f.ing===ing)&&(!soloUrg||window.esUrgente(f));}));
+    headHtml+='<div class="week-head-d">'+d+' '+fecha.getDate()+'/'+(fecha.getMonth()+1)+'<br><span style="font-size:10px;opacity:.6">'+fDia.length+' folios'+(window.contarUrg(fDia)?' · <span style="color:#FDBA74;opacity:1;font-weight:800">⚠ '+window.contarUrg(fDia)+'</span>':'')+'</span></div>';
     bodyHtml+='<div class="week-col">';
     fDia.forEach(function(f){
       var lib = f.liberadoDiseno===true;
@@ -1740,7 +1781,8 @@ window.renderWeek = function() {
       bodyHtml+='<div style="display:flex;align-items:flex-start;gap:4px;margin-bottom:4px">'
         +'<div onclick="window.toggleDiseno(\''+f.id+'\',event)" title="Liberado de diseño (ingeniero)" style="flex-shrink:0;width:15px;height:15px;margin-top:1px;border-radius:4px;border:2px solid '+(lib?'#2563EB':'var(--br2)')+';background:'+(lib?'#2563EB':'transparent')+';color:#fff;font-size:10px;line-height:11px;text-align:center;cursor:pointer;font-weight:700">'+(lib?'\u2713':'')+'</div>'
         +'<div onclick="window.toggleProduccion(\''+f.id+'\',event)" title="Liberado a producción (Luis)" style="flex-shrink:0;width:15px;height:15px;margin-top:1px;border-radius:4px;border:2px solid '+(term?'#059669':'var(--br2)')+';background:'+(term?'#059669':'transparent')+';color:#fff;font-size:12px;line-height:11px;text-align:center;cursor:pointer;font-weight:700">'+(term?'\u2013':'')+'</div>'
-        +'<span class="cal-folio cf-'+f.tipo+(term?' cf-done':'')+(f.garantia?' cf-problema':'')+'" onclick="window.editFolio(\''+f.id+'\')" style="flex:1;display:block;font-size:11px'+(term?';opacity:.55;text-decoration:line-through':(lib?';opacity:.85':''))+'">'+f.id+(f.ing?'<br><span style="font-size:9px;opacity:.7">'+f.ing+'</span>':'')+'</span>'
+        +'<span class="cal-folio cf-'+f.tipo+(term?' cf-done':'')+(f.garantia?' cf-problema':'')+(window.esUrgente(f)?' cf-urgente':'')+'" title="'+(window.esUrgente(f)?window.urgTituloAttr(f):'')+'" onclick="window.editFolio(\''+f.id+'\')" style="flex:1;display:block;font-size:11px'+(term?';opacity:.55;text-decoration:line-through':(lib?';opacity:.85':''))+'">'+(window.esUrgente(f)?'<span class="urg-ico">⚠</span> ':'')+f.id+(f.ing?'<br><span style="font-size:9px;opacity:.7">'+f.ing+'</span>':'')+'</span>'
+        +(window.puedeMarcarUrgente()&&!term?'<div class="urg-btn'+(window.esUrgente(f)?' on':'')+'" title="'+(window.esUrgente(f)?'Quitar urgencia':'Marcar como urgente')+'" onclick="window.toggleUrgente(\''+f.id+'\',event)">⚠</div>':'')
         +'</div>';
     });
     bodyHtml+='<div style="margin-top:6px"><button onclick="window.quickAddDate(\''+ds+'\')" style="font-size:10px;padding:3px 8px;border-radius:4px;border:1px dashed var(--br2);background:none;color:var(--tx3);cursor:pointer;width:100%">+ Agregar</button></div>';
@@ -1748,6 +1790,7 @@ window.renderWeek = function() {
   });
   var wh=document.getElementById('wk-head'); if(wh) wh.innerHTML=headHtml;
   var wb=document.getElementById('wk-body'); if(wb) wb.innerHTML=bodyHtml;
+  window.renderUrgCount();
 };
 
 window.toggleDiseno = function(id, ev){
@@ -1763,9 +1806,73 @@ window.toggleProduccion = function(id, ev){
   var f=STATE.folios.find(function(x){return x.id===id;});
   if(!f) return;
   if(f.status==='terminado'){ f.status = f.garantia ? 'problema' : 'pendiente'; }
-  else { f.status='terminado'; f.liberadoDiseno=true; }
+  else { f.status='terminado'; f.liberadoDiseno=true; window.limpiarUrgSiLiberado(f); }
   if(window.stampFolio) window.stampFolio(f); else f._m=Date.now();
   saveState(); window.renderWeek(); if(window.renderKPIs) window.renderKPIs();
+};
+
+// ── URGENCIAS (nov 2026) ──────────────────────────────────────
+// Plan y Control de la Produccion avisa que folios ya urgen (forman parte de un pedido grande con fecha de
+// entrega). Solo Rene y Brenda marcan o quitan la alerta; todos la ven. Se quita sola al liberar a produccion
+// (estatus terminado) y no reaparece si el folio se reabre. Campos opcionales en el mismo nodo del folio:
+// urgente, urgentePor, urgenteEn, urgenteFecha, urgenteNota, urgenteQuitadoEn, urgenteQuitadoPor.
+// No toca el estatus ni las casillas de diseno / produccion.
+window.puedeMarcarUrgente=function(){return !!(CU&&(CU.u==='rene'||CU.u==='brenda'));};
+window.esUrgente=function(f){return !!f&&f.urgente===true&&f.status!=='terminado';};
+window.urgTitulo=function(f){
+  if(!f)return '';
+  var p=['URGENTE: atender primero'];
+  if(f.urgenteFecha)p.push('entrega requerida '+String(f.urgenteFecha).split('-').reverse().join('/'));
+  if(f.urgenteNota)p.push(f.urgenteNota);
+  if(f.urgentePor)p.push('marcó '+f.urgentePor);
+  return p.join(' · ');
+};
+window.urgTituloAttr=function(f){return window.urgTitulo(f).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');};
+window.urgentesPrimero=function(arr){
+  return arr.map(function(f,i){return {f:f,i:i};}).sort(function(a,b){
+    var ua=window.esUrgente(a.f)?0:1, ub=window.esUrgente(b.f)?0:1; return (ua-ub)||(a.i-b.i);
+  }).map(function(x){return x.f;});
+};
+window.contarUrg=function(arr){return arr.filter(function(f){return window.esUrgente(f);}).length;};
+window.limpiarUrgSiLiberado=function(f){
+  if(f&&f.urgente===true&&f.status==='terminado'){
+    f.urgente=false; f.urgenteQuitadoEn=Date.now(); f.urgenteQuitadoPor='liberado a producción';
+  }
+};
+window.renderUrgCount=function(){
+  var n=window.contarUrg(STATE.folios||[]);
+  ['urg-count-cal','urg-count-sem'].forEach(function(id){
+    var e=document.getElementById(id); if(!e)return;
+    e.style.display=n?'inline-flex':'none';
+    e.textContent='⚠ '+n+' urgente'+(n>1?'s':'')+' sin liberar';
+    e.title='Ver solo los urgentes en la lista';
+  });
+};
+window.irAUrgentes=function(){
+  window.goTab('list');
+  var s=document.getElementById('fl-urg'); if(s)s.value='si';
+  window.renderList();
+};
+window.toggleUrgFields=function(){
+  var v=((document.getElementById('f-urgente')||{}).value)==='true';
+  var e=document.getElementById('urg-fields'); if(e)e.style.display=v?'':'none';
+};
+window.refrescarUrgencias=function(){
+  if(window.renderCal)window.renderCal();
+  var ws=document.getElementById('wk-sel'); if(ws&&ws.value&&window.renderWeek)window.renderWeek();
+  if(window.renderList)window.renderList();
+  window.renderUrgCount();
+};
+window.toggleUrgente=function(id,ev){
+  if(ev){ ev.stopPropagation(); }
+  if(!window.puedeMarcarUrgente())return;
+  var f=STATE.folios.find(function(x){return x.id===id;});
+  if(!f)return;
+  if(f.status==='terminado'){alert('Este folio ya está liberado a producción: no puede marcarse como urgente.');return;}
+  if(window.esUrgente(f)){ f.urgente=false; f.urgenteQuitadoEn=Date.now(); f.urgenteQuitadoPor=CU.n+' (manual)'; }
+  else { f.urgente=true; f.urgentePor=CU.n; f.urgenteEn=Date.now(); }
+  if(window.stampFolio) window.stampFolio(f); else f._m=Date.now();
+  saveState(); window.refrescarUrgencias();
 };
 
 // ── MODAL ──
@@ -1816,6 +1923,13 @@ window.openModal = function(id) {
   _vf('f-rechtipo',folio&&folio.rechTipo);
   _vf('f-rechdesc',folio&&folio.rechDesc);
   window.toggleRechazoFields();
+  var _pu=window.puedeMarcarUrgente(), _eu=window.esUrgente(folio);
+  var ue=document.getElementById('urg-edit'); if(ue) ue.style.display=_pu?'':'none';
+  var ur=document.getElementById('urg-ro'); if(ur){ ur.style.display=(!_pu&&_eu)?'':'none'; ur.textContent=_eu?('⚠ '+window.urgTitulo(folio)):''; }
+  _vf('f-urgente',_eu?'true':'false');
+  _vf('f-urgfecha',folio&&folio.urgenteFecha);
+  _vf('f-urgnota',folio&&folio.urgenteNota);
+  window.toggleUrgFields();
   var fno=document.getElementById('f-nota'); if(fno) fno.value=folio?folio.nota||'':'';
   var _curSuc=folio?(folio.sucursal||''):''; if(window.fillSucursalSelects) window.fillSucursalSelects(_curSuc);
   var fsuc=document.getElementById('f-sucursal'); if(fsuc) fsuc.value=_curSuc||'';
@@ -1906,6 +2020,17 @@ window.saveModal = function() {
     atraso:false, limite:'',
     _m: Date.now(),
   };
+  // Urgencia: solo René y Brenda la cambian; para los demás estos campos no se tocan (el merge conserva los existentes).
+  if(window.puedeMarcarUrgente()){
+    var _prev=editId?STATE.folios.find(function(x){return x.id===editId;}):null;
+    var _eraU=window.esUrgente(_prev);
+    var _urg=((document.getElementById('f-urgente')||{}).value)==='true' && obj.status!=='terminado';
+    obj.urgente=_urg;
+    obj.urgenteFecha=_urg?_g('f-urgfecha'):'';
+    obj.urgenteNota=_urg?_g('f-urgnota').trim():'';
+    if(_urg&&!_eraU){ obj.urgentePor=CU.n; obj.urgenteEn=Date.now(); }
+    if(!_urg&&_eraU){ obj.urgenteQuitadoEn=Date.now(); obj.urgenteQuitadoPor=(obj.status==='terminado')?'liberado a producción':CU.n+' (manual)'; }
+  }
   if(precio>0) obj.precio=precio;
   if(editId){
     var idx=STATE.folios.findIndex(function(f){return f.id===editId;});
@@ -1914,6 +2039,7 @@ window.saveModal = function() {
       obj.sucursal=(document.getElementById('f-sucursal')||{}).value||STATE.folios[idx].sucursal||'';
       obj.desc=STATE.folios[idx].desc||'';
       STATE.folios[idx]=Object.assign({},STATE.folios[idx],obj);
+      window.limpiarUrgSiLiberado(STATE.folios[idx]);
     }
   } else {
     if(STATE.folios.find(function(f){return f.id===id;})){alert('Ya existe un folio con ese número');return;}
@@ -1951,6 +2077,7 @@ window.openPanelIng = function(id) {
     ['Pedido',f.pedido==='con_pedido'?'Con pedido':'Sin pedido'],
     ['Descripción',f.desc||'—'],
   ];
+  if(window.esUrgente(f)) rows.unshift(['⚠ URGENTE','<span style="color:#C2410C;font-weight:800">'+window.urgTituloAttr(f)+'</span>']);
   var infoEl=document.getElementById('ing-panel-info');
   if(infoEl) infoEl.innerHTML=rows.map(function(r){
     return '<div class="ing-row"><span class="ing-lbl">'+r[0]+'</span><span class="ing-val">'+r[1]+'</span></div>';
