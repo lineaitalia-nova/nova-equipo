@@ -1967,6 +1967,16 @@ window.closeModal = function() {
   editId=null;
 };
 
+// Repinta todas las vistas que muestran folios (antes solo se repintaba la Lista y, al guardar desde Por semana
+// o Calendario, el folio nuevo no aparecia hasta cambiar de pestana).
+window.refrescarVistas=function(){
+  if(window.renderKPIs)window.renderKPIs();
+  if(window.renderCal)window.renderCal();
+  var ws=document.getElementById('wk-sel'); if(ws&&ws.value&&window.renderWeek)window.renderWeek();
+  if(window.renderList)window.renderList();
+  var pd=document.getElementById('p-dash'); if(pd&&pd.classList.contains('on')&&window.renderDash)window.renderDash();
+  var pg=document.getElementById('p-gar'); if(pg&&pg.classList.contains('on')&&window.renderGar)window.renderGar();
+};
 window.saveModal = function() {
   var id=(document.getElementById('f-id')||{}).value||'';
   id=id.trim();
@@ -2045,14 +2055,14 @@ window.saveModal = function() {
     if(STATE.folios.find(function(f){return f.id===id;})){alert('Ya existe un folio con ese número');return;}
     STATE.folios.push(obj);
   }
-  saveState(); window.closeModal(); window.renderKPIs(); window.renderList();
+  saveState(); window.closeModal(); window.refrescarVistas();
 };
 
 window.eliminarFolio = function() {
   if(!editId) return;
   if(!confirm('¿Eliminar el folio '+editId+'? Esta acción no se puede deshacer.')) return;
   var idx=STATE.folios.findIndex(function(f){return f.id===editId;});
-  if(idx>=0){STATE.del=STATE.del||{}; STATE.del[editId]=Date.now(); STATE.folios.splice(idx,1); saveState(); window.closeModal(); window.renderList(); window.renderKPIs();}
+  if(idx>=0){STATE.del=STATE.del||{}; STATE.del[editId]=Date.now(); STATE.folios.splice(idx,1); saveState(); window.closeModal(); window.refrescarVistas();}
 };
 
 // ── PANEL INGENIERO ──
